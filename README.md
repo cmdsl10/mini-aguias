@@ -16,3 +16,4 @@ Site oficial do G.D. Mini-Águias.
 ## Deploy
 Ligar este repositório ao projeto Vercel `mini-aguias`.
 Branch de produção: `main`.
+Deploy automático Vercel ativo.

@@ -38,8 +38,11 @@ footer{background:linear-gradient(100deg,#071f34,#082b46 65%,#10466b);color:#fff
   #digitalCard{position:absolute!important;left:0;top:0;width:360px!important;box-shadow:none!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 .season-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 18px}.season-tab{border:1px solid #b6c8df;background:#fff;color:var(--blue);border-radius:999px;padding:8px 14px;font-weight:850;cursor:pointer}.season-tab.active{background:var(--blue);color:#fff;border-color:var(--blue)}.season-hero{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(260px,.75fr);gap:20px;align-items:start}.season-official{width:100%;max-height:540px;object-fit:cover;border-radius:16px;border:1px solid var(--line);background:#fff}.roster-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.player-card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:14px}.player-card h4{margin:0 0 4px;font-size:17px}.season-gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}.season-gallery img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:12px;border:1px solid var(--line)}.season-admin{margin:18px 0}.season-admin-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.season-list{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}.season-admin-chip{border:1px solid var(--line);background:#fff;border-radius:999px;padding:7px 11px;cursor:pointer;font-weight:750}.season-admin-chip.active{background:var(--blue);color:#fff}.roster-admin-list{display:grid;gap:8px;margin-top:10px}.roster-admin-row{display:flex;justify-content:space-between;gap:10px;align-items:center;border-bottom:1px solid var(--line);padding:8px 0}.official-preview{width:100%;max-height:250px;object-fit:cover;border-radius:12px;border:1px solid var(--line);margin-top:10px}@media(max-width:800px){.season-hero,.season-admin-grid{grid-template-columns:1fr}.roster-grid,.season-gallery{grid-template-columns:1fr 1fr}}@media(max-width:520px){.roster-grid,.season-gallery{grid-template-columns:1fr}}
-.home-feature-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,.85fr);gap:18px;align-items:start}
-.event-poster-card,.next-game-card{background:linear-gradient(160deg,#fff 0%,#f4f8ff 70%,#fff7d8 100%);border:1px solid #cfdbea;border-top:5px solid var(--yellow);border-radius:18px;padding:16px;box-shadow:0 10px 30px #073b7a12}
+.home-feature-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;align-items:stretch}
+.event-poster-card,.next-game-card,.masters-spotlight-card{background:linear-gradient(160deg,#fff 0%,#f4f8ff 70%,#fff7d8 100%);border:1px solid #cfdbea;border-top:5px solid var(--yellow);border-radius:18px;padding:16px;box-shadow:0 10px 30px #073b7a12;min-width:0}
+.masters-spotlight-card{display:flex;flex-direction:column}
+.masters-spotlight-card img{display:block;width:100%;height:230px;object-fit:cover;border-radius:14px;margin:10px 0;background:#e7edf6}
+.masters-spotlight-card .btn{margin-top:auto}
 .event-poster-card h3,.next-game-card h3{margin:8px 0;color:var(--blue)}
 .event-poster{display:block;width:100%;max-height:640px;object-fit:contain;border-radius:14px;background:#fff;border:1px solid var(--line)}
 .next-game-poster{display:block;width:100%;max-height:520px;object-fit:contain;border-radius:12px;background:#fff;margin-top:10px}
@@ -49,7 +52,7 @@ footer{background:linear-gradient(100deg,#071f34,#082b46 65%,#10466b);color:#fff
 .roster-admin-player{display:flex;align-items:center;gap:10px}
 .roster-admin-player img,.roster-admin-player .player-photo-placeholder{width:52px;height:62px;border-radius:8px;font-size:20px}
 .admin-feature-card{border-left:5px solid var(--yellow)}
-@media(max-width:800px){.home-feature-grid{grid-template-columns:1fr}}
+@media(max-width:800px){.home-feature-grid{grid-template-columns:1fr}.masters-spotlight-card img{height:240px}}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>
@@ -78,6 +81,11 @@ footer{background:linear-gradient(100deg,#071f34,#082b46 65%,#10466b);color:#fff
     <span class="pill">Próximo jogo</span>
     <h3>Campeonato Masters</h3>
     <p class="muted">A carregar próximo jogo…</p>
+  </article>
+  <article id="mastersSpotlight" class="masters-spotlight-card">
+    <span class="pill">Equipa Masters</span>
+    <h3>Futebol Masters</h3>
+    <p class="muted">A carregar fotografia da equipa…</p>
   </article>
 </div>
 <div style="margin-top:20px"><div id="publicNews" class="cards"><div class="card">A carregar…</div></div></div>
@@ -234,6 +242,9 @@ async function loadPublic(){
  ]);
  masterTeamId=(t.data||[]).find(x=>x.slug==='masters')?.id;
  publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[];
+ const firstSeason=publicSeasons[0];
+ const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
+ $('#mastersSpotlight').innerHTML=`<span class="pill">Equipa Masters</span><h3>Futebol Masters</h3>${mastersPhoto?`<img src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<p class="muted">Fotografia da equipa em atualização.</p>'}<a class="btn primary" href="#futebol">Ver equipa →</a>`;
  const news=n.data||[]; $('#publicNews').innerHTML=news.length?news.map(x=>`<article class="card ${x.featured?'feature':''}"><span class="pill">${x.featured?'Destaque':'Notícia'}</span><h3>${esc(x.title)}</h3><p>${esc(x.summary||x.body||'')}</p></article>`).join(''):'<div class="card feature"><span class="pill">Próximo destaque</span><h3>Aniversário do Clube</h3><p>Domingo, 20 de setembro, a partir das 15h00.</p></div><div class="card"><h3>Novidades</h3><p class="muted">As próximas publicações aparecerão aqui.</p></div><div class="card"><h3>Próximo jogo</h3><p class="muted">Calendário em atualização.</p></div>';
  renderSeasonTabs();
  const games=g.data||[];

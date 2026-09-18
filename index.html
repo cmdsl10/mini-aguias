@@ -147,6 +147,16 @@ footer{background:linear-gradient(100deg,#071f34,#082b46 65%,#10466b);color:#fff
 <div id="nextGamePosterMsg"></div>
 <div id="nextGamePosterPreview"></div>
 </div>
+<div class="panel season-admin admin-feature-card">
+<div class="toolbar"><div><h3>Adicionar próximo jogo</h3><p class="muted">O jogo criado aparece automaticamente no cartão da Home.</p></div></div>
+<form id="newGameForm" class="form-grid">
+<label>Adversário<input name="opponent" required placeholder="Ex.: A.D. Oeiras"></label>
+<label>Data e hora<input name="game_date" type="datetime-local" required></label>
+<label>Local<input name="venue" placeholder="Ex.: Campo do Moinho da Fonte"></label>
+<label><input name="home_game" type="checkbox" checked style="width:auto"> Jogamos em casa</label>
+<button class="btn primary full">Adicionar jogo</button><div id="gameCreateMsg" class="full"></div>
+</form>
+</div>
 <div class="panel season-admin">
 <div class="toolbar"><div><h3>Futebol · Épocas e plantéis</h3><p class="muted">Cada época funciona como uma pasta. Ativa “Visível no site” para criar a respetiva aba pública.</p></div></div>
 <div class="season-admin-grid">
@@ -170,8 +180,8 @@ footer{background:linear-gradient(100deg,#071f34,#082b46 65%,#10466b);color:#fff
 <label class="full">Descrição<textarea name="description"></textarea></label>
 <button class="btn primary full">Guardar época</button><div id="seasonEditMsg" class="full"></div>
 </form>
-<label style="margin-top:12px">Foto oficial da época<input id="officialSeasonPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
-<button id="uploadOfficialSeasonPhoto" class="btn secondary sm" style="margin-top:8px">Guardar foto oficial</button>
+<label style="margin-top:12px">Foto da equipa Masters<input id="officialSeasonPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<button id="uploadOfficialSeasonPhoto" class="btn secondary sm" style="margin-top:8px">Guardar foto da equipa</button>
 <div id="officialSeasonPhotoPreview"></div>
 <label style="margin-top:12px">Adicionar foto à galeria<input id="seasonGalleryPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
 <button id="uploadSeasonGalleryPhoto" class="btn ghost sm" style="margin-top:8px">Adicionar à galeria</button>
@@ -340,6 +350,12 @@ async function uploadPublicFile(file,path){const u=await db.storage.from('public
 $('#uploadOfficialSeasonPhoto').onclick=async()=>{if(!selectedSeasonAdmin)return;const file=$('#officialSeasonPhoto').files[0];if(!file){alert('Escolhe primeiro a foto oficial.');return}try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),path=`football/${selectedSeasonAdmin.id}/official.${ext}`,url=await uploadPublicFile(file,path);const r=await db.from('seasons').update({official_photo_url:url,updated_at:new Date().toISOString()}).eq('id',selectedSeasonAdmin.id);if(r.error)throw r.error;await db.from('season_photos').delete().eq('season_id',selectedSeasonAdmin.id).eq('photo_type','official');await db.from('season_photos').insert({season_id:selectedSeasonAdmin.id,title:'Foto oficial '+selectedSeasonAdmin.label,image_url:url,photo_type:'official',visible:true});alert('Foto oficial guardada.');await loadAdmin()}catch(e){alert(e.message||'Erro ao guardar foto.')}}
 $('#uploadSeasonGalleryPhoto').onclick=async()=>{if(!selectedSeasonAdmin)return;const file=$('#seasonGalleryPhoto').files[0];if(!file){alert('Escolhe primeiro uma fotografia.');return}try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),path=`football/${selectedSeasonAdmin.id}/gallery/${Date.now()}.${ext}`,url=await uploadPublicFile(file,path);const r=await db.from('season_photos').insert({season_id:selectedSeasonAdmin.id,title:'Época '+selectedSeasonAdmin.label,image_url:url,photo_type:'gallery',visible:true});if(r.error)throw r.error;alert('Foto adicionada à época.')}catch(e){alert(e.message||'Erro ao guardar foto.')}}
 $('#addSeasonPlayer').addEventListener('submit',async e=>{e.preventDefault();if(!selectedSeasonAdmin)return;const f=new FormData(e.target);try{let photo_url=null;const file=f.get('player_photo');if(file&&file.size){const ext=(file.name.split('.').pop()||'jpg').toLowerCase();photo_url=await uploadPublicFile(file,`football/${selectedSeasonAdmin.id}/players/${Date.now()}.${ext}`)}const r=await db.from('players').insert({team_id:masterTeamId,season_id:selectedSeasonAdmin.id,full_name:String(f.get('full_name')).trim(),position:f.get('position')||null,shirt_number:Number(f.get('shirt_number'))||null,photo_url,active:true,sort_order:0});msg($('#playerCreateMsg'),r.error?r.error.message:'Jogador adicionado.',r.error?'error':'success');if(!r.error){e.target.reset();await loadAdmin()}}catch(err){msg($('#playerCreateMsg'),err.message||'Erro ao guardar jogador.','error')}});
+
+$('#newGameForm').addEventListener('submit',async e=>{
+ e.preventDefault(); const f=new FormData(e.target);
+ const patch={opponent:String(f.get('opponent')).trim(),game_date:new Date(String(f.get('game_date'))).toISOString(),venue:String(f.get('venue')||'').trim()||null,home_game:!!f.get('home_game')};
+ try{const r=await db.from('games').insert(patch).select('id').single();if(r.error)throw r.error;msg($('#gameCreateMsg'),'Jogo adicionado.','success');e.target.reset();f.get('home_game')&&($('#newGameForm [name=home_game]').checked=true);await loadPublic()}catch(err){msg($('#gameCreateMsg'),err.message||'Erro ao adicionar jogo.','error')}
+});
 
 $('#saveNextGamePoster').onclick=async()=>{
  const file=$('#nextGamePosterInput').files[0];

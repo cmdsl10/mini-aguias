@@ -7,3 +7,8 @@
 .hero:before,.hero:after{display:none!important}
 .home-hero-image{display:block;width:100%;height:auto;object-fit:contain}
 @media(max-width:700px){.hero{min-height:0!important}.home-hero-image{width:100%;height:auto}}
+
+/* Hero em retângulo, como no layout inicial, sem alterar a imagem aprovada. */
+.hero-grid{max-width:1200px;padding:0 18px}
+.home-hero-image{width:100%;height:clamp(280px,38vw,500px);object-fit:cover;object-position:center center}
+@media(max-width:700px){.hero-grid{padding:0}.home-hero-image{height:260px;object-position:center center}}

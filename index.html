@@ -43,6 +43,8 @@ footer{background:linear-gradient(100deg,#071f34,#082b46 65%,#10466b);color:#fff
 .masters-spotlight-card{display:flex;flex-direction:column}
 .masters-spotlight-card img{display:block;width:100%;height:230px;object-fit:cover;border-radius:14px;margin:10px 0;background:#e7edf6}
 .masters-spotlight-card .btn{margin-top:auto}
+.masters-photo-admin{margin-top:10px;padding-top:10px;border-top:1px solid #cfdbea}
+.masters-photo-admin input{font-size:12px;margin:0 0 7px}
 .event-poster-card h3,.next-game-card h3{margin:8px 0;color:var(--blue)}
 .event-poster{display:block;width:100%;max-height:640px;object-fit:contain;border-radius:14px;background:#fff;border:1px solid var(--line)}
 .next-game-poster{display:block;width:100%;max-height:520px;object-fit:contain;border-radius:12px;background:#fff;margin-top:10px}
@@ -325,7 +327,18 @@ async function loadAdmin(keepSelectedId=null){
  $('#stActive').textContent=st.active_members??0;$('#stPaid').textContent=`${st.dues_paid??0} (${st.paid_percentage_known??0}%)`;$('#stUnknown').textContent=st.dues_unknown??0;$('#stAge').textContent=st.average_age?st.average_age+' anos':'—';$('#stEmail').textContent=st.members_with_email??0;$('#stPhoto').textContent=st.members_with_photo??0;$('#stLinked').textContent=st.linked_accounts??0;
  $('#coverageText').textContent=`Cobertura das quotas de ${year}: ${st.records_coverage_percentage??0}% dos sócios ativos têm estado registado.`;
  renderMemberTable(adminMembers);renderBirthdays(b.data||[]);renderAdminSeasons();
+ renderMastersHomeAdmin();
  if(keepSelectedId && adminMembers.some(x=>x.id===keepSelectedId)) await selectMember(keepSelectedId);
+}
+
+function renderMastersHomeAdmin(){
+ const card=$('#mastersSpotlight'); if(!card||card.querySelector('.masters-photo-admin'))return;
+ card.insertAdjacentHTML('beforeend','<div class="masters-photo-admin"><label>Foto da equipa<input id="mastersHomePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"></label><button id="saveMastersHomePhoto" class="btn secondary sm">Carregar/substituir foto</button><div id="mastersHomePhotoMsg"></div></div>');
+ $('#saveMastersHomePhoto').onclick=async()=>{
+  const file=$('#mastersHomePhotoInput').files[0];if(!file){msg($('#mastersHomePhotoMsg'),'Escolhe primeiro uma foto.','error');return}
+  const season=adminSeasons.find(x=>x.current_season)||adminSeasons.find(x=>x.visible)||adminSeasons[0];if(!season){msg($('#mastersHomePhotoMsg'),'Cria primeiro uma época visível.','error');return}
+  try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`football/${season.id}/official.${ext}`);const r=await db.from('seasons').update({official_photo_url:url,updated_at:new Date().toISOString()}).eq('id',season.id);if(r.error)throw r.error;await db.from('season_photos').delete().eq('season_id',season.id).eq('photo_type','official');const p=await db.from('season_photos').insert({season_id:season.id,title:'Foto oficial '+season.label,image_url:url,photo_type:'official',visible:true});if(p.error)throw p.error;msg($('#mastersHomePhotoMsg'),'Foto substituída.','success');await loadPublic()}catch(e){msg($('#mastersHomePhotoMsg'),e.message||'Erro ao guardar foto.','error')}
+ };
 }
 
 function renderAdminSeasons(){

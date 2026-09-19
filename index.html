@@ -441,6 +441,15 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 
 /* V19 — cartões públicos: sem controlos de upload */
 .masters-photo-admin,.next-game-photo-admin{display:none!important}
+
+/* Home cards V20 — fotos 1 e 2 até às margens internas */
+.home-feature-grid .event-poster-card .event-poster,
+.home-feature-grid .next-game-card .next-game-main-image{
+  width:calc(100% + 16px)!important;
+  max-width:none!important;
+  margin-left:-8px!important;
+  margin-right:-8px!important;
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

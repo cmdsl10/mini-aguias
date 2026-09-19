@@ -430,6 +430,14 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 
 /* V17 */
 .home-feature-grid>article:nth-child(3) input[type="file"],.home-feature-grid>article:nth-child(3) button[id*="upload"],.home-feature-grid>article:nth-child(3) .masters-home-photo-admin{display:none!important}
+
+/* V18 — esconder definitivamente os controlos de edição dos 3 destaques na homepage */
+.home-feature-grid input[type="file"],
+.home-feature-grid input[type="file"]~button,
+.home-feature-grid label:has(input[type="file"]),
+.home-feature-grid .next-game-photo-admin,
+.home-feature-grid .masters-home-photo-admin{display:none!important}
+.home-feature-grid>article{height:auto!important;min-height:0!important;align-self:start!important}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

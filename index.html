@@ -273,6 +273,30 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .home-feature-grid .masters-home-photo-admin .btn{font-size:12px!important;padding:8px 10px!important}
  .home-feature-grid .masters-spotlight-card>a.btn{margin-top:8px!important}
 }
+
+/* Home cards V11 — modelo compacto aprovado */
+@media(min-width:801px){
+ .home-feature-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:18px!important;align-items:stretch!important}
+ .home-feature-grid>article{height:500px!important;min-height:500px!important;max-height:500px!important;padding:14px!important;overflow:hidden!important}
+ .home-feature-grid>article .pill{height:24px!important;min-height:24px!important;margin:0!important}
+ .home-feature-grid>article>h3{height:44px!important;min-height:44px!important;margin:6px 0 0!important}
+ .home-feature-grid .event-poster-card>p{height:48px!important;min-height:48px!important;margin:0!important}
+ .home-feature-grid .next-game-card>p{height:24px!important;min-height:24px!important;margin:0!important}
+ .home-feature-grid .event-poster,
+ .home-feature-grid .next-game-main-image,
+ .home-feature-grid .masters-main-image{
+   width:100%!important;height:245px!important;min-height:245px!important;max-height:245px!important;
+   object-fit:contain!important;object-position:center!important;background:#fff!important;margin:0!important;border-radius:10px!important
+ }
+ .home-feature-grid .next-game-photo-admin,
+ .home-feature-grid .masters-home-photo-admin{display:none!important}
+ .home-feature-grid .event-poster-card .btn,
+ .home-feature-grid .next-game-card .btn,
+ .home-feature-grid .masters-spotlight-card>a.btn{
+   display:flex!important;align-items:center!important;justify-content:center!important;
+   height:42px!important;min-height:42px!important;margin-top:auto!important;width:100%!important
+ }
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

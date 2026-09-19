@@ -104,6 +104,16 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 
 .password-field{display:flex;align-items:stretch;position:relative}.password-field input{padding-right:52px!important;width:100%}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:auto;height:38px;padding:0 8px;border:0;background:transparent;color:#082b46;font-size:14px;font-weight:800;cursor:pointer}.error{color:#b42318!important;font-weight:700}.admin-login-status{min-height:22px}
 @media(max-width:800px){header .wrap.header{padding-left:14px!important;padding-right:14px!important}header nav{width:100%;max-width:100%;padding-right:0!important;scrollbar-width:none;gap:5px!important}header nav::-webkit-scrollbar{display:none}header nav a{font-size:14px!important}.nav-cta{padding:10px 11px!important;margin-left:0!important}.admin-nav{width:32px!important;min-width:32px!important;height:36px!important;margin-right:0!important;font-size:15px!important}}
+
+/* Mobile nav V3: sem corte lateral */
+@media(max-width:800px){
+ header .wrap.header{display:block!important;padding:12px 14px 10px!important}
+ header .brand{margin-bottom:10px!important}
+ header nav{display:grid!important;grid-template-columns:repeat(6,max-content)!important;justify-content:space-between!important;align-items:center!important;gap:4px!important;width:100%!important;overflow:visible!important}
+ header nav a{font-size:13px!important;padding:6px 2px!important;white-space:nowrap!important}
+ header nav .nav-cta{grid-column:1 / 6!important;justify-self:stretch!important;text-align:center!important;margin:4px 0 0!important;padding:10px 12px!important}
+ header nav .admin-nav{grid-column:6!important;grid-row:2!important;justify-self:end!important;width:38px!important;min-width:38px!important;height:38px!important;margin:4px 0 0!important;padding:0!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

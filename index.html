@@ -353,7 +353,7 @@ async function loadMemberPortal(user){
 }
 $('#printCard').onclick=()=>window.print();
 
-$('#adminLogin').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const r=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(r.error){msg($('#adminLoginMsg'),'Não foi possível iniciar sessão.','error');return}await routeSession()});
+$('#adminLogin').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const btn=e.target.querySelector('button[type="submit"]');if(btn){btn.disabled=true;btn.textContent='A entrar…'}msg($('#adminLoginMsg'),'');try{const r=await db.auth.signInWithPassword({email:String(f.get('email')||'').trim(),password:f.get('password')});if(r.error){msg($('#adminLoginMsg'),r.error.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':'Não foi possível iniciar sessão: '+r.error.message,'error');return}const user=r.data?.user;if(!user){msg($('#adminLoginMsg'),'Sessão não iniciada. Tenta novamente.','error');return}if(user.app_metadata?.role!=='admin'){await db.auth.signOut();msg($('#adminLoginMsg'),'Esta conta não tem permissões de administração.','error');return}await loadAdmin();if(window.loadContentAdmin)await window.loadContentAdmin();location.hash='admin'}catch(err){msg($('#adminLoginMsg'),'Erro ao iniciar sessão. Verifica a ligação e tenta novamente.','error')}finally{if(btn){btn.disabled=false;btn.textContent='Entrar na administração'}}});
 
 async function loadAdmin(keepSelectedId=null){
  $('#adminAuth').classList.add('hidden');$('#adminPanel').classList.remove('hidden');$('#memberAuth').classList.add('hidden');

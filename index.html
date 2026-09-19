@@ -172,7 +172,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 </div></section>
 
 <section id="admin" class="alt"><div class="wrap"><div class="ey">Gestão interna</div><h2>Administração</h2>
-<div id="adminAuth" class="panel" style="max-width:560px"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full">Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
+<div id="adminAuth" class="panel" style="max-width:560px"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full" onclick="adminDirectLogin()">Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
 <div id="adminPanel" class="hidden">
 <div class="toolbar"><div><h3>Painel de Sócios</h3><p class="muted">Dados reais importados do ficheiro de 2026.</p></div><button id="adminLogout" class="btn ghost">Terminar sessão</button></div>
 <div class="stats">
@@ -354,7 +354,7 @@ async function loadMemberPortal(user){
 }
 $('#printCard').onclick=()=>window.print();
 
-$('#adminLoginButton').addEventListener('click',async e=>{const form=$('#adminLogin');const f=new FormData(form);const btn=$('#adminLoginButton');if(btn){btn.disabled=true;btn.textContent='A entrar…'}msg($('#adminLoginMsg'),'');try{const r=await db.auth.signInWithPassword({email:String(f.get('email')||'').trim(),password:f.get('password')});if(r.error){msg($('#adminLoginMsg'),r.error.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':'Não foi possível iniciar sessão: '+r.error.message,'error');return}const user=r.data?.user;if(!user){msg($('#adminLoginMsg'),'Sessão não iniciada. Tenta novamente.','error');return}if(user.app_metadata?.role!=='admin'){await db.auth.signOut();msg($('#adminLoginMsg'),'Esta conta não tem permissões de administração.','error');return}await loadAdmin();if(window.loadContentAdmin)await window.loadContentAdmin();location.hash='admin'}catch(err){msg($('#adminLoginMsg'),'Erro ao iniciar sessão. Verifica a ligação e tenta novamente.','error')}finally{if(btn){btn.disabled=false;btn.textContent='Entrar na administração'}}});
+window.adminDirectLogin=async function(){const form=$('#adminLogin');const f=new FormData(form);const btn=$('#adminLoginButton');if(btn){btn.disabled=true;btn.textContent='A entrar…'}msg($('#adminLoginMsg'),'');try{const r=await db.auth.signInWithPassword({email:String(f.get('email')||'').trim(),password:f.get('password')});if(r.error){msg($('#adminLoginMsg'),r.error.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':'Não foi possível iniciar sessão: '+r.error.message,'error');return}const user=r.data?.user;if(!user){msg($('#adminLoginMsg'),'Sessão não iniciada. Tenta novamente.','error');return}if(user.app_metadata?.role!=='admin'){await db.auth.signOut();msg($('#adminLoginMsg'),'Esta conta não tem permissões de administração.','error');return}await loadAdmin();if(window.loadContentAdmin)await window.loadContentAdmin();location.hash='admin'}catch(err){msg($('#adminLoginMsg'),'Erro ao iniciar sessão. Verifica a ligação e tenta novamente.','error')}finally{if(btn){btn.disabled=false;btn.textContent='Entrar na administração'}}};
 
 async function loadAdmin(keepSelectedId=null){
  $('#adminAuth').classList.add('hidden');$('#adminPanel').classList.remove('hidden');$('#memberAuth').classList.add('hidden');
@@ -460,30 +460,7 @@ async function routeSession(){
 }
 db.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY'){$('#recoveryBox').classList.remove('hidden');location.hash='area-socio'}});
 </script>
-<script>
-(function(){
- const form=document.getElementById('adminLogin');
- if(!form)return;
- form.addEventListener('submit',async function(e){
-  e.preventDefault();e.stopImmediatePropagation();
-  const out=document.getElementById('adminLoginMsg');
-  const btn=form.querySelector('button[type="submit"]');
-  const email=form.querySelector('[name="email"]').value.trim();
-  const password=form.querySelector('[name="password"]').value;
-  if(btn){btn.disabled=true;btn.textContent='A entrar…'}
-  try{
-   const client=supabase.createClient('https://dchthzmnldvvwnmhhlvf.supabase.co','sb_publishable_JBr7nkBvCX_t3d3NTUtZuA_lTM4XLT4');
-   const {data,error}=await client.auth.signInWithPassword({email,password});
-   if(error)throw error;
-   if(data.user?.app_metadata?.role!=='admin'){await client.auth.signOut();throw new Error('Esta conta não tem permissões de administração.')}
-   location.reload();
-  }catch(err){
-   if(out)out.innerHTML='<div class="error">'+(err.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':String(err.message||'Erro ao iniciar sessão.'))+'</div>';
-   if(btn){btn.disabled=false;btn.textContent='Entrar na administração'}
-  }
- },true);
-})();
-</script>
+
 <script src="content.js"></script>
 <script>(async()=>{await loadPublic();await routeSession()})();</script>
 </body></html>

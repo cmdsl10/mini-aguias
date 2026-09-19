@@ -438,6 +438,9 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 .home-feature-grid .next-game-photo-admin,
 .home-feature-grid .masters-home-photo-admin{display:none!important}
 .home-feature-grid>article{height:auto!important;min-height:0!important;align-self:start!important}
+
+/* V19 — cartões públicos: sem controlos de upload */
+.masters-photo-admin,.next-game-photo-admin{display:none!important}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>
@@ -716,12 +719,6 @@ async function loadAdmin(keepSelectedId=null){
 
 function renderMastersHomeAdmin(){
  const card=$('#mastersSpotlight'); if(!card||card.querySelector('.masters-photo-admin'))return;
- card.insertAdjacentHTML('beforeend','<div class="masters-photo-admin"><label>Foto da equipa<input id="mastersHomePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"></label><button id="saveMastersHomePhoto" class="btn secondary sm">Carregar/substituir foto</button><div id="mastersHomePhotoMsg"></div></div>');
- $('#saveMastersHomePhoto').onclick=async()=>{
-  const file=$('#mastersHomePhotoInput').files[0];if(!file||!file.size){msg($('#mastersHomePhotoMsg'),'O ficheiro não foi reconhecido. Escolhe uma imagem JPG, PNG ou WebP.','error');return}if(!['image/jpeg','image/png','image/webp'].includes(file.type)){msg($('#mastersHomePhotoMsg'),'Formato não aceite. Usa JPG, PNG ou WebP.','error');return}
-  const season=adminSeasons.find(x=>x.current_season)||adminSeasons.find(x=>x.visible)||adminSeasons[0];if(!season){msg($('#mastersHomePhotoMsg'),'Cria primeiro uma época visível.','error');return}
-  try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`football/${season.id}/official.${ext}`);const r=await db.from('seasons').update({official_photo_url:url,updated_at:new Date().toISOString()}).eq('id',season.id);if(r.error)throw r.error;await db.from('season_photos').delete().eq('season_id',season.id).eq('photo_type','official');const p=await db.from('season_photos').insert({season_id:season.id,title:'Foto oficial '+season.label,image_url:url,photo_type:'official',visible:true});if(p.error)throw p.error;msg($('#mastersHomePhotoMsg'),'Foto substituída.','success');await loadPublic()}catch(e){msg($('#mastersHomePhotoMsg'),e.message||'Erro ao guardar foto.','error')}
- };
 }
 
 function renderNextGameAdmin(){

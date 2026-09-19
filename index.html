@@ -93,6 +93,14 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 }
 
 .admin-nav{display:inline-grid;place-items:center;width:38px;height:38px;border:1px solid var(--gold-light);border-radius:9px;color:#fff!important;text-decoration:none;font-size:18px;background:#082b46}.admin-nav:hover{background:var(--yellow);color:#082b46!important}@media(max-width:800px){.admin-nav{width:34px;height:34px;font-size:16px}}
+@media(max-width:800px){
+ header .wrap.header{display:grid!important;grid-template-columns:1fr auto!important;align-items:center!important;gap:8px!important}
+ header .brand{grid-column:1 / -1}
+ header nav{grid-column:1 / -1;display:flex!important;align-items:center!important;flex-wrap:nowrap!important;gap:7px!important;overflow-x:auto!important;padding-bottom:2px}
+ header nav a{flex:0 0 auto!important}
+ header nav .nav-cta{margin-left:auto!important}
+ header nav .admin-nav{flex:0 0 34px!important;margin-left:0!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

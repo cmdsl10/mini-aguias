@@ -115,62 +115,46 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  header nav .admin-nav{grid-column:6!important;grid-row:2!important;justify-self:end!important;width:38px!important;min-width:38px!important;height:38px!important;margin:4px 0 0!important;padding:0!important}
 }
 
-/* Home destaques — layout definitivo e sem regras sobrepostas */
+/* Home destaques — dimensões finais */
 .home-feature-grid{
-  display:grid!important;
-  grid-template-columns:repeat(3,minmax(0,1fr))!important;
-  gap:18px!important;
-  align-items:start!important;
+ display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;
+ gap:18px!important;align-items:start!important
 }
 .home-feature-grid>article{
-  display:flex!important;
-  flex-direction:column!important;
-  box-sizing:border-box!important;
-  height:auto!important;
-  min-height:0!important;
-  max-height:none!important;
-  padding:14px!important;
-  overflow:hidden!important;
-  align-self:start!important;
+ display:flex!important;flex-direction:column!important;box-sizing:border-box!important;
+ height:auto!important;min-height:0!important;max-height:none!important;
+ padding:14px!important;overflow:hidden!important;align-self:start!important
 }
 .home-feature-grid>article .pill{align-self:flex-start!important;margin:0 0 6px!important}
 .home-feature-grid>article>h3{height:auto!important;min-height:0!important;margin:0 0 12px!important}
-.home-feature-grid .event-poster-card>p,
-.home-feature-grid .next-game-card>p{height:auto!important;min-height:0!important;margin:0 0 8px!important}
+.home-feature-grid .event-poster-card>p,.home-feature-grid .next-game-card>p{
+ height:auto!important;min-height:0!important;margin:0 0 8px!important
+}
+/* As fotos 1 e 2 enchem horizontalmente o cartão.
+   A altura é fixa e a imagem é recortada apenas quando necessário. */
 .home-feature-grid .event-poster,
-.home-feature-grid .next-game-main-image,
+.home-feature-grid .next-game-main-image{
+ display:block!important;box-sizing:border-box!important;
+ width:calc(100% + 28px)!important;max-width:none!important;
+ height:270px!important;min-height:270px!important;max-height:270px!important;
+ margin-left:-14px!important;margin-right:-14px!important;margin-bottom:-14px!important;
+ object-fit:cover!important;object-position:center!important;
+ border:0!important;border-radius:0 0 12px 12px!important;background:#fff!important
+}
+/* Foto 3 horizontal */
 .home-feature-grid .masters-main-image{
-  display:block!important;
-  box-sizing:border-box!important;
-  width:100%!important;
-  max-width:100%!important;
-  height:auto!important;
-  min-height:0!important;
-  max-height:none!important;
-  object-fit:contain!important;
-  object-position:center!important;
-  margin:0!important;
-  background:#fff!important;
-  border:1px solid #d9dee5!important;
-  border-radius:10px!important;
+ display:block!important;box-sizing:border-box!important;width:100%!important;max-width:100%!important;
+ aspect-ratio:16/9!important;height:auto!important;object-fit:cover!important;object-position:center!important;
+ margin:0!important;border:1px solid #d9dee5!important;border-radius:10px!important;background:#fff!important
 }
-.home-feature-grid .masters-main-image{aspect-ratio:16/9!important}
 .home-feature-grid .masters-spotlight-card>a.btn{
-  display:flex!important;
-  align-items:center!important;
-  justify-content:center!important;
-  width:100%!important;
-  min-height:38px!important;
-  margin-top:8px!important;
+ display:flex!important;align-items:center!important;justify-content:center!important;
+ width:100%!important;min-height:38px!important;margin-top:8px!important
 }
-.home-feature-grid .next-game-photo-admin,
-.home-feature-grid .masters-home-photo-admin,
-.home-feature-grid .masters-photo-admin,
-.home-feature-grid input[type="file"],
+.home-feature-grid .next-game-photo-admin,.home-feature-grid .masters-home-photo-admin,
+.home-feature-grid .masters-photo-admin,.home-feature-grid input[type="file"],
 .home-feature-grid label:has(input[type="file"]){display:none!important}
-@media(max-width:800px){
-  .home-feature-grid{grid-template-columns:1fr!important;gap:16px!important}
-}
+@media(max-width:800px){.home-feature-grid{grid-template-columns:1fr!important;gap:16px!important}}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

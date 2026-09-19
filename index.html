@@ -227,6 +227,29 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .home-feature-grid .masters-home-photo-admin,
  .home-feature-grid .masters-spotlight-card>a.btn{margin-top:auto!important}
 }
+
+/* Home cards V9 — cartões compactos como modelo aprovado */
+@media(min-width:801px){
+ .home-feature-grid{align-items:stretch!important}
+ .home-feature-grid>article{height:590px!important;min-height:590px!important;padding:16px!important}
+ .home-feature-grid .event-poster-card .event-poster,
+ .home-feature-grid .next-game-card .next-game-main-image,
+ .home-feature-grid .masters-spotlight-card .masters-main-image{
+   width:100%!important;height:300px!important;min-height:300px!important;max-height:300px!important;
+   object-fit:contain!important;object-position:center!important;background:#fff!important;margin:0!important;
+ }
+ .home-feature-grid .next-game-photo-admin,
+ .home-feature-grid .masters-home-photo-admin{margin-top:10px!important}
+ .home-feature-grid .masters-spotlight-card>a.btn{margin-top:10px!important}
+}
+@media(max-width:800px){
+ .home-feature-grid .event-poster,
+ .home-feature-grid .next-game-main-image,
+ .home-feature-grid .masters-main-image{
+   width:100%!important;height:300px!important;min-height:300px!important;max-height:300px!important;
+   object-fit:contain!important;object-position:center!important;background:#fff!important;
+ }
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

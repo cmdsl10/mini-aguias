@@ -191,6 +191,28 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .home-feature-grid>article h3,.home-feature-grid .event-poster-card>p,.home-feature-grid .next-game-card>p{height:auto!important;min-height:0!important}
  .home-feature-grid .event-poster,.home-feature-grid .next-game-main-image,.home-feature-grid .masters-main-image{height:360px!important;min-height:360px!important;max-height:360px!important}
 }
+
+/* Home cards V7 — reset definitivo das regras de grid antigas */
+@media(min-width:801px){
+ .home-feature-grid .event-poster-card,
+ .home-feature-grid .next-game-card,
+ .home-feature-grid .masters-spotlight-card{
+   display:flex!important;flex-direction:column!important;height:700px!important;min-height:700px!important;
+ }
+ .home-feature-grid .pill{flex:0 0 28px!important}
+ .home-feature-grid>article>h3{flex:0 0 58px!important;width:100%!important;min-width:0!important}
+ .home-feature-grid .event-poster-card>p{flex:0 0 58px!important;width:100%!important}
+ .home-feature-grid .next-game-card>p{flex:0 0 29px!important;width:100%!important}
+ .home-feature-grid .event-poster-card .event-poster,
+ .home-feature-grid .next-game-card .next-game-main-image,
+ .home-feature-grid .masters-spotlight-card .masters-main-image{
+   flex:0 0 390px!important;width:100%!important;height:390px!important;min-height:390px!important;max-height:390px!important;
+   grid-row:auto!important;align-self:auto!important;margin:0!important;
+ }
+ .home-feature-grid .next-game-photo-admin,
+ .home-feature-grid .masters-home-photo-admin{grid-row:auto!important;margin-top:auto!important;width:100%!important}
+ .home-feature-grid .masters-spotlight-card>a.btn{grid-row:auto!important;margin-top:auto!important;width:100%!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

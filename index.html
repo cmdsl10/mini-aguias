@@ -171,6 +171,26 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .home-feature-grid .masters-spotlight-card .masters-main-image,
  .home-feature-grid .event-poster-card .event-poster{height:360px!important;min-height:360px!important;max-height:360px!important}
 }
+
+/* Home cards V6 — layout simples e estável */
+.home-feature-grid>article{display:flex!important;flex-direction:column!important;min-width:0!important;height:680px!important;padding:16px!important}
+.home-feature-grid>article .pill{height:28px!important;min-height:28px!important}
+.home-feature-grid>article h3{height:58px!important;min-height:58px!important;margin:8px 0 0!important;overflow:hidden!important}
+.home-feature-grid .event-poster-card>p,
+.home-feature-grid .next-game-card>p{height:58px!important;min-height:58px!important;margin:0!important;overflow:hidden!important}
+.home-feature-grid .event-poster,
+.home-feature-grid .next-game-main-image,
+.home-feature-grid .masters-main-image{width:100%!important;height:390px!important;min-height:390px!important;max-height:390px!important;margin:0!important;border-radius:12px!important}
+.home-feature-grid .event-poster{object-fit:contain!important;background:#fff!important}
+.home-feature-grid .next-game-main-image,.home-feature-grid .masters-main-image{object-fit:cover!important}
+.home-feature-grid .next-game-photo-admin,
+.home-feature-grid .masters-home-photo-admin,
+.home-feature-grid .masters-spotlight-card>a.btn{margin-top:auto!important}
+@media(max-width:800px){
+ .home-feature-grid>article{height:auto!important}
+ .home-feature-grid>article h3,.home-feature-grid .event-poster-card>p,.home-feature-grid .next-game-card>p{height:auto!important;min-height:0!important}
+ .home-feature-grid .event-poster,.home-feature-grid .next-game-main-image,.home-feature-grid .masters-main-image{height:360px!important;min-height:360px!important;max-height:360px!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

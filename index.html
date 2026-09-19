@@ -155,6 +155,22 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .home-feature-grid .next-game-card,
  .home-feature-grid .masters-spotlight-card{display:flex!important}
 }
+
+/* Home cards V5 — imagem sempre na mesma linha */
+.home-feature-grid .event-poster-card,
+.home-feature-grid .next-game-card,
+.home-feature-grid .masters-spotlight-card{grid-template-rows:28px 58px 58px 390px minmax(70px,1fr)!important}
+.home-feature-grid .next-game-card>p:first-of-type{grid-row:3!important;align-self:start!important}
+.home-feature-grid .next-game-card>p.muted{grid-row:3!important;align-self:end!important;margin-bottom:4px!important}
+.home-feature-grid .next-game-card .next-game-main-image{grid-row:4!important;width:100%!important;height:390px!important;min-height:390px!important;max-height:390px!important;object-fit:cover!important;margin:0!important}
+.home-feature-grid .masters-spotlight-card .masters-main-image{grid-row:4!important;width:100%!important;height:390px!important;min-height:390px!important;max-height:390px!important;object-fit:cover!important;margin:0!important}
+.home-feature-grid .event-poster-card .event-poster{grid-row:4!important;width:100%!important;height:390px!important;min-height:390px!important;max-height:390px!important;object-fit:contain!important;margin:0!important;background:#fff!important}
+.home-feature-grid .masters-spotlight-card>a.btn{grid-row:5!important;align-self:end!important}
+@media(max-width:800px){
+ .home-feature-grid .next-game-card .next-game-main-image,
+ .home-feature-grid .masters-spotlight-card .masters-main-image,
+ .home-feature-grid .event-poster-card .event-poster{height:360px!important;min-height:360px!important;max-height:360px!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>
@@ -361,7 +377,7 @@ async function loadPublic(){
  const games=g.data||[];
  const featuredGame=games[0];
  if(featuredGame){
-   $('#nextGameSpotlight').innerHTML=`<span class="pill">Próximo jogo</span><h3>Mini-Águias ${featuredGame.home_game?'vs':'@'} ${esc(featuredGame.opponent||'Adversário a confirmar')}</h3><p><b>${new Date(featuredGame.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</b></p><p class="muted">${esc(featuredGame.venue||'Local a confirmar')}</p>${featuredGame.poster_url?`<img class="next-game-poster" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`:''}`;
+   $('#nextGameSpotlight').innerHTML=`<span class="pill">Próximo jogo</span><h3>Mini-Águias ${featuredGame.home_game?'vs':'@'} ${esc(featuredGame.opponent||'Adversário a confirmar')}</h3><p><b>${new Date(featuredGame.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</b></p><p class="muted">${esc(featuredGame.venue||'Local a confirmar')}</p>${featuredGame.poster_url?`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`:''}`;
  }else{
    $('#nextGameSpotlight').innerHTML='<span class="pill">Próximo jogo</span><h3>Campeonato Masters</h3><p class="muted">Calendário em atualização.</p>';
  }

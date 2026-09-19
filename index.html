@@ -213,7 +213,8 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <label>Data e hora<input name="game_date" type="datetime-local" required></label>
 <label>Local<input name="venue" placeholder="Ex.: Campo do Moinho da Fonte"></label>
 <label><input name="home_game" type="checkbox" checked style="width:auto"> Jogamos em casa</label>
-<button class="btn primary full">Adicionar jogo</button><div id="gameCreateMsg" class="full"></div>
+<label class="full">Cartaz / fotografia do jogo<input name="poster" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<button class="btn primary full">Guardar próximo jogo</button><div id="gameCreateMsg" class="full"></div>
 </form>
 </div>
 <div class="panel season-admin">
@@ -432,9 +433,20 @@ $('#uploadSeasonGalleryPhoto').onclick=async()=>{if(!selectedSeasonAdmin)return;
 $('#addSeasonPlayer').addEventListener('submit',async e=>{e.preventDefault();if(!selectedSeasonAdmin)return;const f=new FormData(e.target);try{let photo_url=null;const file=f.get('player_photo');if(file&&file.size){const ext=(file.name.split('.').pop()||'jpg').toLowerCase();photo_url=await uploadPublicFile(file,`football/${selectedSeasonAdmin.id}/players/${Date.now()}.${ext}`)}const r=await db.from('players').insert({team_id:masterTeamId,season_id:selectedSeasonAdmin.id,full_name:String(f.get('full_name')).trim(),position:f.get('position')||null,shirt_number:Number(f.get('shirt_number'))||null,photo_url,active:true,sort_order:0});msg($('#playerCreateMsg'),r.error?r.error.message:'Jogador adicionado.',r.error?'error':'success');if(!r.error){e.target.reset();await loadAdmin()}}catch(err){msg($('#playerCreateMsg'),err.message||'Erro ao guardar jogador.','error')}});
 
 $('#newGameForm').addEventListener('submit',async e=>{
- e.preventDefault(); const f=new FormData(e.target);
+ e.preventDefault(); const f=new FormData(e.target), file=f.get('poster');
  const patch={opponent:String(f.get('opponent')).trim(),game_date:new Date(String(f.get('game_date'))).toISOString(),venue:String(f.get('venue')||'').trim()||null,home_game:!!f.get('home_game')};
- try{const r=await db.from('games').insert(patch).select('id').single();if(r.error)throw r.error;msg($('#gameCreateMsg'),'Jogo adicionado.','success');e.target.reset();f.get('home_game')&&($('#newGameForm [name=home_game]').checked=true);await loadPublic()}catch(err){msg($('#gameCreateMsg'),err.message||'Erro ao adicionar jogo.','error')}
+ const btn=e.target.querySelector('button[type="submit"],button:not([type])'); if(btn){btn.disabled=true;btn.textContent='A guardar…'}
+ try{
+   const r=await db.from('games').insert(patch).select('id').single();if(r.error)throw r.error;
+   if(file&&file.size){
+     if(!['image/jpeg','image/png','image/webp'].includes(file.type))throw new Error('O jogo foi criado, mas o cartaz não foi carregado: usa JPG, PNG ou WebP.');
+     const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`football/next-game/${r.data.id}/${crypto.randomUUID()}.${ext}`);
+     const u=await db.from('games').update({poster_url:url}).eq('id',r.data.id);if(u.error)throw u.error;
+   }
+   msg($('#gameCreateMsg'),file&&file.size?'Jogo e cartaz guardados.':'Jogo guardado. Podes adicionar o cartaz depois.','success');
+   e.target.reset();$('#newGameForm [name=home_game]').checked=true;await loadPublic();await loadAdmin();
+ }catch(err){msg($('#gameCreateMsg'),err.message||'Erro ao guardar o próximo jogo.','error')}
+ finally{if(btn){btn.disabled=false;btn.textContent='Guardar próximo jogo'}}
 });
 
 $('#saveNextGamePoster').onclick=async()=>{

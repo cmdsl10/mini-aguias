@@ -250,6 +250,29 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
    object-fit:contain!important;object-position:center!important;background:#fff!important;
  }
 }
+
+/* Home cards V10 — três módulos visualmente idênticos */
+@media(min-width:801px){
+ .home-feature-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;align-items:start!important}
+ .home-feature-grid>article{box-sizing:border-box!important;height:560px!important;min-height:560px!important;max-height:560px!important;overflow:hidden!important}
+ .home-feature-grid>article .pill{height:24px!important;min-height:24px!important}
+ .home-feature-grid>article>h3{height:50px!important;min-height:50px!important;margin:6px 0 0!important}
+ .home-feature-grid .event-poster-card>p{height:54px!important;min-height:54px!important}
+ .home-feature-grid .next-game-card>p{height:27px!important;min-height:27px!important}
+ .home-feature-grid .event-poster-card .event-poster,
+ .home-feature-grid .next-game-card .next-game-main-image,
+ .home-feature-grid .masters-spotlight-card .masters-main-image{
+   box-sizing:border-box!important;width:100%!important;height:280px!important;min-height:280px!important;max-height:280px!important;
+   object-fit:contain!important;object-position:center center!important;background:#fff!important;
+ }
+ .home-feature-grid .next-game-photo-admin,
+ .home-feature-grid .masters-home-photo-admin{margin-top:8px!important;font-size:12px!important}
+ .home-feature-grid .next-game-photo-admin input,
+ .home-feature-grid .masters-home-photo-admin input{max-width:100%!important;box-sizing:border-box!important}
+ .home-feature-grid .next-game-photo-admin .btn,
+ .home-feature-grid .masters-home-photo-admin .btn{font-size:12px!important;padding:8px 10px!important}
+ .home-feature-grid .masters-spotlight-card>a.btn{margin-top:8px!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

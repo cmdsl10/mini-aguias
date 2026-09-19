@@ -454,8 +454,17 @@ async function queueBirthdayEmail(memberId,list){const x=list.find(v=>v.member_i
 $('#queueAllDues').onclick=async()=>{const pending=adminDues.filter(d=>d.year===year&&d.status==='pending');let ok=0;for(const d of pending){const m=adminMembers.find(x=>x.id===d.member_id);if(!m?.email||m.email_reminders_enabled===false)continue;const r=await db.from('email_queue').insert({member_id:m.id,recipient_email:m.email,email_type:'dues_reminder',subject:`Mini-Águias — Quota ${year}`,body:`Olá ${m.full_name}, segundo os nossos registos a quota de ${year} encontra-se pendente.`});if(!r.error)ok++}msg($('#queueAllMsg'),`${ok} aviso(s) preparado(s).`,'success')};
 
 async function routeSession(){
- const {data:{user}}=await db.auth.getUser();if(!user)return;
- if(user.app_metadata?.role==='admin'){await loadAdmin();if(window.loadContentAdmin) await window.loadContentAdmin();return}
+ const {data:{session}}=await db.auth.getSession();
+ const user=session?.user;
+ if(!user)return;
+ if(user.app_metadata?.role==='admin'){
+   location.hash='admin';
+   $('#adminAuth').classList.add('hidden');
+   $('#adminPanel').classList.remove('hidden');
+   try{await loadAdmin()}catch(err){console.error('Admin load error',err)}
+   try{if(window.loadContentAdmin)await window.loadContentAdmin()}catch(err){console.error('Content admin load error',err)}
+   return;
+ }
  await loadMemberPortal(user);
 }
 db.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY'){$('#recoveryBox').classList.remove('hidden');location.hash='area-socio'}});

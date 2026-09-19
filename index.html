@@ -92,6 +92,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .hero .actions{gap:8px}
 }
 
+.admin-nav{display:inline-grid;place-items:center;width:38px;height:38px;border:1px solid var(--gold-light);border-radius:9px;color:#fff!important;text-decoration:none;font-size:18px;background:#082b46}.admin-nav:hover{background:var(--yellow);color:#082b46!important}@media(max-width:800px){.admin-nav{width:34px;height:34px;font-size:16px}}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>
@@ -99,7 +100,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <header>
 <div class="wrap header">
 <a class="brand" href="#inicio"><img class="club-logo" src="assets/club-logo-approved.png" alt="Emblema G.D. Mini Águias"><div><b>MINI-ÁGUIAS</b><small>Grupo Desportivo</small></div></a>
-<nav><a href="#inicio">Início</a><a href="#clube">Clube</a><a href="#futebol">Futebol</a><a href="#pesca">Pesca</a><a href="#galeria">Galeria</a><a href="#socios">Sócios</a><a class="nav-cta" href="#area-socio">Área de Sócio</a></nav>
+<nav><a href="#inicio">Início</a><a href="#clube">Clube</a><a href="#futebol">Futebol</a><a href="#pesca">Pesca</a><a href="#galeria">Galeria</a><a href="#socios">Sócios</a><a class="nav-cta" href="#area-socio">Área de Sócio</a><a class="admin-nav" href="#admin" title="Administração" aria-label="Administração">🔐</a></nav>
 </div>
 </header>
 <main>
@@ -171,7 +172,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 </div></section>
 
 <section id="admin" class="alt"><div class="wrap"><div class="ey">Gestão interna</div><h2>Administração</h2>
-<div id="adminAuth" class="panel" style="max-width:560px"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid" onsubmit="return false"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button class="btn primary full">Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
+<div id="adminAuth" class="panel" style="max-width:560px"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full">Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
 <div id="adminPanel" class="hidden">
 <div class="toolbar"><div><h3>Painel de Sócios</h3><p class="muted">Dados reais importados do ficheiro de 2026.</p></div><button id="adminLogout" class="btn ghost">Terminar sessão</button></div>
 <div class="stats">
@@ -353,7 +354,7 @@ async function loadMemberPortal(user){
 }
 $('#printCard').onclick=()=>window.print();
 
-$('#adminLogin').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const btn=e.target.querySelector('button[type="submit"]');if(btn){btn.disabled=true;btn.textContent='A entrar…'}msg($('#adminLoginMsg'),'');try{const r=await db.auth.signInWithPassword({email:String(f.get('email')||'').trim(),password:f.get('password')});if(r.error){msg($('#adminLoginMsg'),r.error.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':'Não foi possível iniciar sessão: '+r.error.message,'error');return}const user=r.data?.user;if(!user){msg($('#adminLoginMsg'),'Sessão não iniciada. Tenta novamente.','error');return}if(user.app_metadata?.role!=='admin'){await db.auth.signOut();msg($('#adminLoginMsg'),'Esta conta não tem permissões de administração.','error');return}await loadAdmin();if(window.loadContentAdmin)await window.loadContentAdmin();location.hash='admin'}catch(err){msg($('#adminLoginMsg'),'Erro ao iniciar sessão. Verifica a ligação e tenta novamente.','error')}finally{if(btn){btn.disabled=false;btn.textContent='Entrar na administração'}}});
+$('#adminLoginButton').addEventListener('click',async e=>{const form=$('#adminLogin');const f=new FormData(form);const btn=$('#adminLoginButton');if(btn){btn.disabled=true;btn.textContent='A entrar…'}msg($('#adminLoginMsg'),'');try{const r=await db.auth.signInWithPassword({email:String(f.get('email')||'').trim(),password:f.get('password')});if(r.error){msg($('#adminLoginMsg'),r.error.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':'Não foi possível iniciar sessão: '+r.error.message,'error');return}const user=r.data?.user;if(!user){msg($('#adminLoginMsg'),'Sessão não iniciada. Tenta novamente.','error');return}if(user.app_metadata?.role!=='admin'){await db.auth.signOut();msg($('#adminLoginMsg'),'Esta conta não tem permissões de administração.','error');return}await loadAdmin();if(window.loadContentAdmin)await window.loadContentAdmin();location.hash='admin'}catch(err){msg($('#adminLoginMsg'),'Erro ao iniciar sessão. Verifica a ligação e tenta novamente.','error')}finally{if(btn){btn.disabled=false;btn.textContent='Entrar na administração'}}});
 
 async function loadAdmin(keepSelectedId=null){
  $('#adminAuth').classList.add('hidden');$('#adminPanel').classList.remove('hidden');$('#memberAuth').classList.add('hidden');

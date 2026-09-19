@@ -157,6 +157,14 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 @media(max-width:800px){.home-feature-grid{grid-template-columns:1fr!important;gap:16px!important}}
 </style>
 <link rel="stylesheet" href="content.css">
+
+<style id="home-cards-uniform-v12">
+/* Cartões de destaque: mesma altura visual sem deformar imagens */
+#homeHighlights .card, .home-highlights .card, .highlights-grid > .card { height:auto !important; min-height:0 !important; align-self:start !important; }
+#homeHighlights .card img, .home-highlights .card img, .highlights-grid > .card img { width:100% !important; max-width:none !important; margin-left:0 !important; margin-right:0 !important; }
+/* O terceiro cartão é horizontal: mantém proporção e não força a altura dos outros */
+#homeHighlights .card:nth-child(3), .home-highlights .card:nth-child(3), .highlights-grid > .card:nth-child(3) { height:auto !important; }
+</style>
 </head>
 <body>
 <header>

@@ -136,6 +136,25 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .home-feature-grid .masters-main-image,
  .home-feature-grid>article>img{height:360px!important;min-height:360px!important;max-height:360px!important}
 }
+
+/* Home cards V4 — grelha visual rigorosamente alinhada */
+.home-feature-grid>article{min-height:690px!important}
+.home-feature-grid .event-poster-card,
+.home-feature-grid .next-game-card,
+.home-feature-grid .masters-spotlight-card{display:grid!important;grid-template-rows:28px 58px 58px 390px 1fr!important;align-content:start!important}
+.home-feature-grid .pill{align-self:start!important}
+.home-feature-grid .event-poster-card .event-poster{grid-row:4!important;margin:0!important}
+.home-feature-grid .next-game-card .next-game-main-image,
+.home-feature-grid .masters-spotlight-card .masters-main-image{grid-row:4!important;margin:0!important}
+.home-feature-grid .next-game-photo-admin,
+.home-feature-grid .masters-home-photo-admin{grid-row:5!important;align-self:end!important;margin-top:10px!important}
+.home-feature-grid .masters-spotlight-card .btn{grid-row:5!important;align-self:end!important;margin-top:10px!important}
+@media(max-width:800px){
+ .home-feature-grid>article{min-height:0!important;display:flex!important}
+ .home-feature-grid .event-poster-card,
+ .home-feature-grid .next-game-card,
+ .home-feature-grid .masters-spotlight-card{display:flex!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

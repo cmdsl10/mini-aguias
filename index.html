@@ -101,6 +101,9 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  header nav .nav-cta{margin-left:auto!important}
  header nav .admin-nav{flex:0 0 34px!important;margin-left:0!important}
 }
+
+.password-field{display:flex;align-items:stretch;position:relative}.password-field input{padding-right:52px!important;width:100%}.password-toggle{position:absolute;right:4px;top:4px;bottom:4px;width:44px;border:0;background:transparent;font-size:20px;cursor:pointer}.error{color:#b42318!important;font-weight:700}.admin-login-status{min-height:22px}
+@media(max-width:800px){header nav{width:100%;max-width:100%;padding-right:10px!important;scrollbar-width:none}header nav::-webkit-scrollbar{display:none}header nav .nav-cta{margin-left:0!important}.admin-nav{margin-right:4px!important;min-width:34px!important}}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>
@@ -162,7 +165,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 
 <section id="area-socio"><div class="wrap"><div class="ey">Área privada</div><h2>Área de Sócio</h2>
 <div id="memberAuth" class="grid2">
-<div class="panel"><h3>Entrar</h3><form id="memberLogin"><label>Email<input name="email" type="email" required></label><label>Palavra-passe<input name="password" type="password" required></label><div class="actions"><button class="btn primary">Entrar</button><button type="button" id="forgotBtn" class="btn ghost">Recuperar palavra-passe</button></div><div id="memberLoginMsg"></div></form></div>
+<div class="panel"><h3>Entrar</h3><form id="memberLogin"><label>Email<input name="email" type="email" required></label><label>Palavra-passe<div class="password-field"><input id="adminPassword" name="password" type="password" required><button id="adminPasswordToggle" type="button" class="password-toggle" aria-label="Mostrar palavra-passe">👁️</button></div></label><div class="actions"><button class="btn primary">Entrar</button><button type="button" id="forgotBtn" class="btn ghost">Recuperar palavra-passe</button></div><div id="memberLoginMsg"></div></form></div>
 <div class="panel"><h3>Criar conta de sócio</h3><p class="muted">O email deve estar previamente registado pela direção na tua ficha de sócio. Depois da confirmação do email, a conta é ligada automaticamente à ficha correspondente.</p><form id="memberSignup"><label>Email<input name="email" type="email" required></label><label>Palavra-passe<input name="password" type="password" minlength="8" required></label><button class="btn secondary">Criar conta</button><div id="memberSignupMsg"></div></form></div>
 </div>
 
@@ -180,7 +183,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 </div></section>
 
 <section id="admin" class="alt"><div class="wrap"><div class="ey">Gestão interna</div><h2>Administração</h2>
-<div id="adminAuth" class="panel" style="max-width:560px"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full" onclick="adminDirectLogin()">Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
+<div id="adminAuth" class="panel" style="max-width:560px"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full" >Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
 <div id="adminPanel" class="hidden">
 <div class="toolbar"><div><h3>Painel de Sócios</h3><p class="muted">Dados reais importados do ficheiro de 2026.</p></div><button id="adminLogout" class="btn ghost">Terminar sessão</button></div>
 <div class="stats">
@@ -480,4 +483,23 @@ db.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY')
 
 <script src="content.js"></script>
 <script>(async()=>{await loadPublic();await routeSession()})();</script>
-</body></html>
+<script>
+// Login admin robusto: eventos ligados após o DOM estar pronto
+(function(){
+ function bindAdminLogin(){
+  const btn=document.getElementById('adminLoginButton'), form=document.getElementById('adminLogin'), toggle=document.getElementById('adminPasswordToggle'), pass=document.getElementById('adminPassword');
+  if(toggle&&pass)toggle.addEventListener('click',()=>{const show=pass.type==='password';pass.type=show?'text':'password';toggle.textContent=show?'🙈':'👁️';toggle.setAttribute('aria-label',show?'Ocultar palavra-passe':'Mostrar palavra-passe')});
+  if(!btn||!form)return;
+  const run=async()=>{const out=document.getElementById('adminLoginMsg');btn.disabled=true;btn.textContent='A entrar…';if(out){out.textContent='A verificar credenciais…';out.className='full muted'}
+   try{const fd=new FormData(form);const email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');const {data,error}=await db.auth.signInWithPassword({email,password});
+    if(error){if(out){out.textContent=error.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':'Erro no login: '+error.message;out.className='full error'}return}
+    if(!data?.user){if(out){out.textContent='Não foi possível iniciar a sessão.';out.className='full error'}return}
+    if(data.user.app_metadata?.role!=='admin'){await db.auth.signOut();if(out){out.textContent='Esta conta não tem permissões de administração.';out.className='full error'}return}
+    location.hash='admin';document.getElementById('adminAuth')?.classList.add('hidden');document.getElementById('adminPanel')?.classList.remove('hidden');
+    try{await loadAdmin()}catch(e){console.error(e)}
+   }catch(e){console.error(e);if(out){out.textContent='Erro ao iniciar sessão: '+(e?.message||e);out.className='full error'}}finally{btn.disabled=false;btn.textContent='Entrar na administração'} };
+  btn.addEventListener('click',run);form.addEventListener('submit',e=>{e.preventDefault();run()});
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindAdminLogin);else bindAdminLogin();
+})();
+</script></body></html>

@@ -397,6 +397,30 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
    margin-top:6px!important;height:34px!important;min-height:34px!important;
  }
 }
+
+/* Home cards V15 — fechar espaço vazio e preencher largura das imagens */
+@media(min-width:801px){
+ .home-feature-grid{align-items:start!important}
+ .home-feature-grid>article{
+   height:max-content!important;min-height:0!important;
+   padding-bottom:10px!important;
+ }
+ .home-feature-grid .event-poster,
+ .home-feature-grid .next-game-main-image{
+   width:100%!important;max-width:none!important;
+   margin-left:0!important;margin-right:0!important;
+ }
+ .home-feature-grid .event-poster{object-fit:contain!important}
+ .home-feature-grid .next-game-main-image{object-fit:contain!important}
+ .home-feature-grid .next-game-photo-admin,
+ .home-feature-grid .masters-home-photo-admin{
+   margin-bottom:0!important;padding-bottom:0!important;
+ }
+ .home-feature-grid .next-game-card,
+ .home-feature-grid .masters-spotlight-card{
+   padding-bottom:10px!important;
+ }
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

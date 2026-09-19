@@ -165,6 +165,18 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 /* O terceiro cartão é horizontal: mantém proporção e não força a altura dos outros */
 #homeHighlights .card:nth-child(3), .home-highlights .card:nth-child(3), .highlights-grid > .card:nth-child(3) { height:auto !important; }
 </style>
+
+<style id="home-highlights-clean-v1">
+#homeHighlights{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:18px!important;align-items:stretch!important}
+#homeHighlights>.home-highlight-card{position:relative!important;display:grid!important;grid-template-rows:52px 1fr!important;width:100%!important;height:360px!important;min-height:360px!important;max-height:360px!important;padding:0!important;margin:0!important;overflow:hidden!important;background:#fff!important;border:1px solid #d8dce2!important;border-radius:16px!important;box-shadow:0 8px 22px #082b4612!important}
+#homeHighlights .home-highlight-title{display:flex!important;align-items:center!important;justify-content:center!important;width:100%!important;height:52px!important;margin:0!important;padding:0 46px!important;background:#082b46!important;color:#e6c15a!important;font-size:18px!important;font-weight:850!important;line-height:1!important;text-align:center!important}
+#homeHighlights .home-highlight-media{width:100%!important;height:308px!important;min-height:0!important;margin:0!important;padding:0!important;overflow:hidden!important;background:#eef1f4!important}
+#homeHighlights .home-highlight-media img{display:block!important;width:100%!important;height:100%!important;max-width:none!important;max-height:none!important;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;object-fit:cover!important;object-position:center!important}
+#homeHighlights .home-highlight-placeholder{display:grid!important;place-items:center!important;width:100%!important;height:100%!important;color:#687585!important;font-size:13px!important}
+#homeHighlights .home-photo-edit{position:absolute!important;z-index:4!important;top:9px!important;right:10px!important;width:34px!important;height:34px!important;padding:0!important;margin:0!important;border:1px solid #e6c15a!important;border-radius:8px!important;background:#0b3657!important;color:#e6c15a!important;font-size:20px!important;line-height:1!important;cursor:pointer!important}
+#homeHighlights .home-photo-input{display:none!important}
+@media(max-width:800px){#homeHighlights{grid-template-columns:1fr!important}#homeHighlights>.home-highlight-card{height:360px!important;min-height:360px!important;max-height:360px!important}}
+</style>
 </head>
 <body>
 <header>
@@ -180,9 +192,24 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 
 <section id="novidades"><div class="wrap"><div class="ey">Atualizações</div><h2>Novidades e próximo destaque</h2>
 <div class="home-feature-grid" id="homeHighlights">
-  <article class="event-poster-card"></article>
-  <article id="nextGameSpotlight" class="next-game-card"></article>
-  <article id="mastersSpotlight" class="masters-spotlight-card"></article>
+  <article class="home-highlight-card event-poster-card">
+    <div class="home-highlight-title">Eventos</div>
+    <button class="home-photo-edit admin-only-photo hidden" type="button" data-photo-target="event" aria-label="Trocar fotografia de Eventos" title="Trocar fotografia">▣</button>
+    <input class="home-photo-input" id="eventHomePhotoInput" type="file" accept="image/jpeg,image/png,image/webp">
+    <div class="home-highlight-media"><img id="eventHomeImage" src="assets/aniversario-20-setembro.png" alt="Eventos do G.D. Mini-Águias"></div>
+  </article>
+  <article id="nextGameSpotlight" class="home-highlight-card next-game-card">
+    <div class="home-highlight-title">Próximo jogo</div>
+    <button class="home-photo-edit admin-only-photo hidden" type="button" data-photo-target="game" aria-label="Trocar fotografia do próximo jogo" title="Trocar fotografia">▣</button>
+    <input class="home-photo-input" id="gameHomePhotoInput" type="file" accept="image/jpeg,image/png,image/webp">
+    <div class="home-highlight-media"><div class="home-highlight-placeholder">Imagem em atualização</div></div>
+  </article>
+  <article id="mastersSpotlight" class="home-highlight-card masters-spotlight-card">
+    <div class="home-highlight-title">Equipa Masters</div>
+    <button class="home-photo-edit admin-only-photo hidden" type="button" data-photo-target="masters" aria-label="Trocar fotografia da equipa Masters" title="Trocar fotografia">▣</button>
+    <input class="home-photo-input" id="mastersHomePhotoInput" type="file" accept="image/jpeg,image/png,image/webp">
+    <div class="home-highlight-media"><div class="home-highlight-placeholder">Imagem em atualização</div></div>
+  </article>
 </div>
 </div></section>
 
@@ -350,15 +377,15 @@ async function loadPublic(){
  publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[];
  const firstSeason=publicSeasons[0];
  const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
- $('#mastersSpotlight').innerHTML=`<span class="pill">Equipa Masters</span><h3>Futebol Masters</h3>${mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<p class="muted">Fotografia da equipa em atualização.</p>'}<a class="btn primary" href="#futebol">Ver equipa →</a>`;
+ $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  const news=n.data||[]; $('#publicNews')&&($('#publicNews').innerHTML=news.length?news.map(x=>`<article class="card ${x.featured?'feature':''}"><span class="pill">${x.featured?'Destaque':'Notícia'}</span><h3>${esc(x.title)}</h3><p>${esc(x.summary||x.body||'')}</p></article>`).join(''):'<div class="card feature"><span class="pill">Próximo destaque</span><h3>Aniversário do Clube</h3><p>Domingo, 20 de setembro, a partir das 15h00.</p></div><div class="card"><h3>Novidades</h3><p class="muted">As próximas publicações aparecerão aqui.</p></div><div class="card"><h3>Próximo jogo</h3><p class="muted">Calendário em atualização.</p></div>');
  renderSeasonTabs();
  const games=g.data||[];
  const featuredGame=games[0];
- if(featuredGame){
-   $('#nextGameSpotlight').innerHTML=`<span class="pill">Próximo jogo</span><h3>Mini-Águias ${featuredGame.home_game?'vs':'@'} ${esc(featuredGame.opponent||'Adversário a confirmar')}</h3><p><b>${new Date(featuredGame.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</b></p><p class="muted">${esc(featuredGame.venue||'Local a confirmar')}</p>${featuredGame.poster_url?`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`:''}`;
+ if(featuredGame&&featuredGame.poster_url){
+   $('#nextGameSpotlight .home-highlight-media').innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
  }else{
-   $('#nextGameSpotlight').innerHTML='<span class="pill">Próximo jogo</span><h3>Campeonato Masters</h3><p class="muted">Calendário em atualização.</p>';
+   $('#nextGameSpotlight .home-highlight-media').innerHTML='<div class="home-highlight-placeholder">Imagem em atualização</div>';
  }
  $('#gamesGrid').innerHTML=games.length?games.map(x=>`<div class="card"><b>Mini-Águias ${x.home_game?'vs':'@'} ${esc(x.opponent)}</b><p>${new Date(x.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</p><p class="muted">${esc(x.venue||'Local a confirmar')}</p></div>`).join(''):'<div class="card muted">Calendário em atualização.</div>';
 }
@@ -521,6 +548,7 @@ async function routeSession(){
  const user=session?.user;
  if(!user)return;
  if(user.app_metadata?.role==='admin'){
+   $('.admin-only-photo').forEach(x=>x.classList.remove('hidden'));
    location.hash='admin';
    $('#adminAuth').classList.add('hidden');
    $('#adminPanel').classList.remove('hidden');
@@ -533,6 +561,29 @@ async function routeSession(){
 db.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY'){$('#recoveryBox').classList.remove('hidden');location.hash='area-socio'}});
 </script>
 
+
+<script id="home-photo-icons-v1">
+(function(){
+ const q=s=>document.querySelector(s);
+ document.querySelectorAll('.home-photo-edit').forEach(btn=>btn.addEventListener('click',()=>{
+   const map={event:'#eventHomePhotoInput',game:'#gameHomePhotoInput',masters:'#mastersHomePhotoInput'};
+   q(map[btn.dataset.photoTarget])?.click();
+ }));
+ async function valid(file){return file&&file.size&&['image/jpeg','image/png','image/webp'].includes(file.type)}
+ q('#eventHomePhotoInput')?.addEventListener('change',async e=>{
+   const file=e.target.files[0];if(!await valid(file))return;
+   try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`home/eventos/evento.${ext}`);q('#eventHomeImage').src=url+'?v='+Date.now()}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
+ });
+ q('#gameHomePhotoInput')?.addEventListener('change',async e=>{
+   const file=e.target.files[0];if(!await valid(file))return;
+   try{let r=await db.from('games').select('id').eq('home_feature',true).limit(1);if(r.error)throw r.error;let game=r.data?.[0];if(!game){const n=await db.from('games').insert({opponent:'Destaque livre',game_date:'2099-12-31T23:59:00.000Z',home_game:true,home_feature:true}).select('id').single();if(n.error)throw n.error;game=n.data}const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`home/highlight/${game.id}/${crypto.randomUUID()}.${ext}`);const u=await db.from('games').update({poster_url:url}).eq('id',game.id);if(u.error)throw u.error;await loadPublic()}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
+ });
+ q('#mastersHomePhotoInput')?.addEventListener('change',async e=>{
+   const file=e.target.files[0];if(!await valid(file))return;
+   try{const season=publicSeasons?.[0];if(!season)throw new Error('Não existe uma época ativa.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`football/${season.id}/official.${ext}`);const u=await db.from('seasons').update({official_photo_url:url,updated_at:new Date().toISOString()}).eq('id',season.id);if(u.error)throw u.error;await loadPublic()}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
+ });
+})();
+</script>
 <script src="content.js"></script>
 <script>(async()=>{await loadPublic();await routeSession()})();</script>
 <script>

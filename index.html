@@ -102,8 +102,8 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  header nav .admin-nav{flex:0 0 34px!important;margin-left:0!important}
 }
 
-.password-field{display:flex;align-items:stretch;position:relative}.password-field input{padding-right:52px!important;width:100%}.password-toggle{position:absolute;right:4px;top:4px;bottom:4px;width:44px;border:0;background:transparent;font-size:20px;cursor:pointer}.error{color:#b42318!important;font-weight:700}.admin-login-status{min-height:22px}
-@media(max-width:800px){header nav{width:100%;max-width:100%;padding-right:10px!important;scrollbar-width:none}header nav::-webkit-scrollbar{display:none}header nav .nav-cta{margin-left:0!important}.admin-nav{margin-right:4px!important;min-width:34px!important}}
+.password-field{display:flex;align-items:stretch;position:relative}.password-field input{padding-right:52px!important;width:100%}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);width:auto;height:38px;padding:0 8px;border:0;background:transparent;color:#082b46;font-size:14px;font-weight:800;cursor:pointer}.error{color:#b42318!important;font-weight:700}.admin-login-status{min-height:22px}
+@media(max-width:800px){header .wrap.header{padding-left:14px!important;padding-right:14px!important}header nav{width:100%;max-width:100%;padding-right:0!important;scrollbar-width:none;gap:5px!important}header nav::-webkit-scrollbar{display:none}header nav a{font-size:14px!important}.nav-cta{padding:10px 11px!important;margin-left:0!important}.admin-nav{width:32px!important;min-width:32px!important;height:36px!important;margin-right:0!important;font-size:15px!important}}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>
@@ -165,7 +165,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 
 <section id="area-socio"><div class="wrap"><div class="ey">Área privada</div><h2>Área de Sócio</h2>
 <div id="memberAuth" class="grid2">
-<div class="panel"><h3>Entrar</h3><form id="memberLogin"><label>Email<input name="email" type="email" required></label><label>Palavra-passe<div class="password-field"><input id="adminPassword" name="password" type="password" required><button id="adminPasswordToggle" type="button" class="password-toggle" aria-label="Mostrar palavra-passe">👁️</button></div></label><div class="actions"><button class="btn primary">Entrar</button><button type="button" id="forgotBtn" class="btn ghost">Recuperar palavra-passe</button></div><div id="memberLoginMsg"></div></form></div>
+<div class="panel"><h3>Entrar</h3><form id="memberLogin"><label>Email<input name="email" type="email" required></label><label>Palavra-passe<div class="password-field"><input id="adminPassword" name="password" type="password" required><button id="adminPasswordToggle" type="button" class="password-toggle" aria-label="Mostrar palavra-passe">Mostrar</button></div></label><div class="actions"><button class="btn primary">Entrar</button><button type="button" id="forgotBtn" class="btn ghost">Recuperar palavra-passe</button></div><div id="memberLoginMsg"></div></form></div>
 <div class="panel"><h3>Criar conta de sócio</h3><p class="muted">O email deve estar previamente registado pela direção na tua ficha de sócio. Depois da confirmação do email, a conta é ligada automaticamente à ficha correspondente.</p><form id="memberSignup"><label>Email<input name="email" type="email" required></label><label>Palavra-passe<input name="password" type="password" minlength="8" required></label><button class="btn secondary">Criar conta</button><div id="memberSignupMsg"></div></form></div>
 </div>
 
@@ -488,7 +488,7 @@ db.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY')
 (function(){
  function bindAdminLogin(){
   const btn=document.getElementById('adminLoginButton'), form=document.getElementById('adminLogin'), toggle=document.getElementById('adminPasswordToggle'), pass=document.getElementById('adminPassword');
-  if(toggle&&pass)toggle.addEventListener('click',()=>{const show=pass.type==='password';pass.type=show?'text':'password';toggle.textContent=show?'🙈':'👁️';toggle.setAttribute('aria-label',show?'Ocultar palavra-passe':'Mostrar palavra-passe')});
+  if(toggle&&pass)toggle.addEventListener('click',()=>{const show=pass.type==='password';pass.type=show?'text':'password';toggle.textContent=show?'Ocultar':'Mostrar';toggle.setAttribute('aria-label',show?'Ocultar palavra-passe':'Mostrar palavra-passe')});
   if(!btn||!form)return;
   const run=async()=>{const out=document.getElementById('adminLoginMsg');btn.disabled=true;btn.textContent='A entrar…';if(out){out.textContent='A verificar credenciais…';out.className='full muted'}
    try{const fd=new FormData(form);const email=String(fd.get('email')||'').trim(),password=String(fd.get('password')||'');const {data,error}=await db.auth.signInWithPassword({email,password});

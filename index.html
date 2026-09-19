@@ -213,6 +213,20 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  .home-feature-grid .masters-home-photo-admin{grid-row:auto!important;margin-top:auto!important;width:100%!important}
  .home-feature-grid .masters-spotlight-card>a.btn{grid-row:auto!important;margin-top:auto!important;width:100%!important}
 }
+
+/* Home cards V8 — media boxes idênticas, sem deformar imagens */
+@media(min-width:801px){
+ .home-feature-grid>article{height:720px!important}
+ .home-feature-grid .event-poster-card .event-poster,
+ .home-feature-grid .next-game-card .next-game-main-image,
+ .home-feature-grid .masters-spotlight-card .masters-main-image{
+   box-sizing:border-box!important;width:100%!important;height:390px!important;min-height:390px!important;max-height:390px!important;
+   object-fit:contain!important;object-position:center!important;background:#fff!important;border:1px solid #d9dee5!important;border-radius:12px!important;
+ }
+ .home-feature-grid .next-game-photo-admin,
+ .home-feature-grid .masters-home-photo-admin,
+ .home-feature-grid .masters-spotlight-card>a.btn{margin-top:auto!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>

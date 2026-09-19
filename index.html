@@ -114,6 +114,28 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
  header nav .nav-cta{grid-column:1 / 6!important;justify-self:stretch!important;text-align:center!important;margin:4px 0 0!important;padding:10px 12px!important}
  header nav .admin-nav{grid-column:6!important;grid-row:2!important;justify-self:end!important;width:38px!important;min-width:38px!important;height:38px!important;margin:4px 0 0!important;padding:0!important}
 }
+
+/* Home cards V3 — dimensões e imagens uniformes */
+.home-feature-grid{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:18px!important;align-items:stretch!important}
+.home-feature-grid>article{display:flex!important;flex-direction:column!important;height:100%!important;min-height:650px!important;padding:16px!important}
+.home-feature-grid>article>h3{min-height:54px!important;margin:8px 0!important}
+.home-feature-grid>article>p{min-height:48px!important;margin:4px 0 10px!important}
+.home-feature-grid .event-poster,
+.home-feature-grid .next-game-main-image,
+.home-feature-grid .masters-main-image,
+.home-feature-grid>article>img{display:block!important;width:100%!important;height:390px!important;min-height:390px!important;max-height:390px!important;object-fit:cover!important;object-position:center!important;border-radius:12px!important;margin:10px 0!important}
+.home-feature-grid .event-poster{object-fit:contain!important;background:#fff!important}
+.home-feature-grid .next-game-photo-admin,
+.home-feature-grid .masters-home-photo-admin{margin-top:auto!important}
+@media(max-width:800px){
+ .home-feature-grid{grid-template-columns:1fr!important;gap:16px!important}
+ .home-feature-grid>article{min-height:0!important}
+ .home-feature-grid>article>h3,.home-feature-grid>article>p{min-height:0!important}
+ .home-feature-grid .event-poster,
+ .home-feature-grid .next-game-main-image,
+ .home-feature-grid .masters-main-image,
+ .home-feature-grid>article>img{height:360px!important;min-height:360px!important;max-height:360px!important}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 </head>
@@ -314,7 +336,7 @@ async function loadPublic(){
  publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[];
  const firstSeason=publicSeasons[0];
  const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
- $('#mastersSpotlight').innerHTML=`<span class="pill">Equipa Masters</span><h3>Futebol Masters</h3>${mastersPhoto?`<img src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<p class="muted">Fotografia da equipa em atualização.</p>'}<a class="btn primary" href="#futebol">Ver equipa →</a>`;
+ $('#mastersSpotlight').innerHTML=`<span class="pill">Equipa Masters</span><h3>Futebol Masters</h3>${mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<p class="muted">Fotografia da equipa em atualização.</p>'}<a class="btn primary" href="#futebol">Ver equipa →</a>`;
  const news=n.data||[]; $('#publicNews')&&($('#publicNews').innerHTML=news.length?news.map(x=>`<article class="card ${x.featured?'feature':''}"><span class="pill">${x.featured?'Destaque':'Notícia'}</span><h3>${esc(x.title)}</h3><p>${esc(x.summary||x.body||'')}</p></article>`).join(''):'<div class="card feature"><span class="pill">Próximo destaque</span><h3>Aniversário do Clube</h3><p>Domingo, 20 de setembro, a partir das 15h00.</p></div><div class="card"><h3>Novidades</h3><p class="muted">As próximas publicações aparecerão aqui.</p></div><div class="card"><h3>Próximo jogo</h3><p class="muted">Calendário em atualização.</p></div>');
  renderSeasonTabs();
  const games=g.data||[];

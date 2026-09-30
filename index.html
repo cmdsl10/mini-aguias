@@ -176,6 +176,12 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 #homeHighlights .home-photo-edit{position:absolute!important;z-index:4!important;top:9px!important;right:10px!important;width:34px!important;height:34px!important;padding:0!important;margin:0!important;border:1px solid #e6c15a!important;border-radius:8px!important;background:#0b3657!important;color:#e6c15a!important;font-size:20px!important;line-height:1!important;cursor:pointer!important}
 #homeHighlights .home-photo-input{display:none!important}
 @media(max-width:800px){#homeHighlights{grid-template-columns:1fr!important}#homeHighlights>.home-highlight-card{height:360px!important;min-height:360px!important;max-height:360px!important}}
+/* Ajuste de enquadramento: cartaz Eventos tem proporção vertical e precisa de mais área visível */
+#homeHighlights .event-poster-card .home-highlight-media img{
+ object-fit:contain!important;
+ object-position:center center!important;
+ background:#fff!important;
+}
 </style>
 </head>
 <body>

@@ -404,22 +404,7 @@ async function loadAdmin(keepSelectedId=null){
  $('#stActive').textContent=st.active_members??0;$('#stPaid').textContent=`${st.dues_paid??0} (${st.paid_percentage_known??0}%)`;$('#stUnknown').textContent=st.dues_unknown??0;$('#stAge').textContent=st.average_age?st.average_age+' anos':'—';$('#stEmail').textContent=st.members_with_email??0;$('#stPhoto').textContent=st.members_with_photo??0;$('#stLinked').textContent=st.linked_accounts??0;
  $('#coverageText').textContent=`Cobertura das quotas de ${year}: ${st.records_coverage_percentage??0}% dos sócios ativos têm estado registado.`;
  renderMemberTable(adminMembers);renderBirthdays(b.data||[]);renderAdminSeasons();
- renderMastersHomeAdmin();
- renderNextGameAdmin();
  if(keepSelectedId && adminMembers.some(x=>x.id===keepSelectedId)) await selectMember(keepSelectedId);
-}
-
-function renderMastersHomeAdmin(){
- const card=$('#mastersSpotlight'); if(!card||card.querySelector('.masters-photo-admin'))return;
-}
-
-function renderNextGameAdmin(){
- const card=$('#nextGameSpotlight'); if(!card||card.querySelector('.next-game-photo-admin'))return;
- card.insertAdjacentHTML('beforeend','<div class="next-game-photo-admin"><label>Imagem em destaque<input id="nextGameHomePhotoInput" type="file" accept="image/jpeg,image/png,image/webp"></label><button id="saveNextGameHomePhoto" class="btn secondary sm">Carregar/substituir imagem</button><div id="nextGameHomePhotoMsg"></div></div>');
- $('#saveNextGameHomePhoto').onclick=async()=>{
-  const file=$('#nextGameHomePhotoInput').files[0];if(!file||!file.size){msg($('#nextGameHomePhotoMsg'),'O ficheiro não foi reconhecido. Escolhe uma imagem JPG, PNG ou WebP.','error');return}if(!['image/jpeg','image/png','image/webp'].includes(file.type)){msg($('#nextGameHomePhotoMsg'),'Formato não aceite. Usa JPG, PNG ou WebP.','error');return}
-  try{let q=await db.from('games').select('id').eq('home_feature',true).limit(1);if(q.error)throw q.error;let game=q.data?.[0];if(!game){const n=await db.from('games').insert({opponent:'Destaque livre',game_date:'2099-12-31T23:59:00.000Z',home_game:true,home_feature:true}).select('id').single();if(n.error)throw n.error;game=n.data}const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`home/highlight/${game.id}/${crypto.randomUUID()}.${ext}`);const r=await db.from('games').update({poster_url:url}).eq('id',game.id);if(r.error)throw r.error;msg($('#nextGameHomePhotoMsg'),'Imagem guardada. Podes usar qualquer fotografia, independentemente de existir um jogo.','success');await loadPublic()}catch(e){msg($('#nextGameHomePhotoMsg'),e.message||'Erro ao guardar imagem.','error')}
- };
 }
 
 function renderAdminSeasons(){
@@ -564,7 +549,7 @@ db.auth.onAuthStateChange(async(event,session)=>{
     if(error){if(out){out.textContent=error.message==='Invalid login credentials'?'Email ou palavra-passe incorretos.':'Erro no login: '+error.message;out.className='full error'}return}
     if(!data?.user){if(out){out.textContent='Não foi possível iniciar a sessão.';out.className='full error'}return}
     if(data.user.app_metadata?.role!=='admin'){await db.auth.signOut();if(out){out.textContent='Esta conta não tem permissões de administração.';out.className='full error'}return}
-    location.hash='admin';document.getElementById('adminAuth')?.classList.add('hidden');document.getElementById('adminPanel')?.classList.remove('hidden');
+    setAdminUi(true);location.hash='admin';
     try{await loadAdmin()}catch(e){console.error(e)}
    }catch(e){console.error(e);if(out){out.textContent='Erro ao iniciar sessão: '+(e?.message||e);out.className='full error'}}finally{btn.disabled=false;btn.textContent='Entrar na administração'} };
   btn.addEventListener('click',run);form.addEventListener('submit',e=>{e.preventDefault();run()});

@@ -190,6 +190,8 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 /* Eventos: enquadramento equilibrado para cartazes horizontais/verticais */
 #homeHighlights .event-poster-card .home-highlight-media{background:#fff!important}
 #homeHighlights .event-poster-card .home-highlight-media img{width:100%!important;height:100%!important;object-fit:contain!important;object-position:center center!important;background:#fff!important}
+
+#homeHighlights .auto-game-poster{width:100%;height:100%;padding:24px 14px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:linear-gradient(155deg,#061f34 0%,#0b3c62 62%,#082b46 100%);color:#fff;position:relative;overflow:hidden}#homeHighlights .auto-game-poster:after{content:"";position:absolute;width:150px;height:150px;border:18px solid #d5a62e;border-radius:50%;right:-90px;bottom:-90px;opacity:.22}#homeHighlights .auto-game-kicker{font-size:11px;letter-spacing:.16em;font-weight:900;color:#e6c15a;margin-bottom:20px}#homeHighlights .auto-game-vs{display:grid;gap:9px;position:relative;z-index:1;font-size:17px;font-weight:900;line-height:1.12;text-transform:uppercase}#homeHighlights .auto-game-vs b{font-size:28px;color:#e6c15a}#homeHighlights .auto-game-details{display:flex;gap:8px;align-items:center;justify-content:center;margin-top:22px;color:#e6c15a;font-size:13px;text-transform:uppercase}#homeHighlights .auto-game-venue{margin-top:8px;font-size:12px;font-weight:700}#homeHighlights .auto-game-note{margin-top:20px;font-size:10px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
 </style>
 </head>
 <body>
@@ -398,8 +400,11 @@ async function loadPublic(){
  const featuredGame=games[0];
  if(featuredGame&&featuredGame.poster_url){
    $('#nextGameSpotlight .home-highlight-media').innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
+ }else if(featuredGame){
+   const d=new Date(featuredGame.game_date), date=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long'}), time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+   $('#nextGameSpotlight .home-highlight-media').innerHTML=`<div class="auto-game-poster"><div class="auto-game-kicker">PRÓXIMO JOGO</div><div class="auto-game-vs"><span>G.D. MINI-ÁGUIAS</span><b>VS</b><span>${esc(featuredGame.opponent)}</span></div><div class="auto-game-details"><strong>${esc(date)}</strong><span>•</span><strong>${esc(time)}</strong></div><div class="auto-game-venue">${esc(featuredGame.venue||'Local a confirmar')}</div><div class="auto-game-note">Futebol Masters</div></div>`;
  }else{
-   $('#nextGameSpotlight .home-highlight-media').innerHTML='<div class="home-highlight-placeholder">Imagem em atualização</div>';
+   $('#nextGameSpotlight .home-highlight-media').innerHTML='<div class="home-highlight-placeholder">Próximo jogo ainda não definido</div>';
  }
  $('#gamesGrid').innerHTML=games.length?games.map(x=>`<div class="card"><b>Mini-Águias ${x.home_game?'vs':'@'} ${esc(x.opponent)}</b><p>${new Date(x.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</p><p class="muted">${esc(x.venue||'Local a confirmar')}</p></div>`).join(''):'<div class="card muted">Calendário em atualização.</div>';
 }

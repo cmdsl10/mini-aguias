@@ -188,7 +188,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <header>
 <div class="wrap header">
 <a class="brand" href="#inicio"><img class="club-logo" src="assets/club-logo-approved.png" alt="Emblema G.D. Mini Águias"><div><b>MINI-ÁGUIAS</b><small>Grupo Desportivo</small></div></a>
-<nav><a href="#inicio">Início</a><a href="#clube">Clube</a><a href="#futebol">Futebol</a><a href="#pesca">Pesca</a><a href="#galeria">Galeria</a><a href="#socios">Sócios</a><a class="nav-cta" href="#area-socio">Área de Sócio</a><a class="admin-nav" href="#admin" title="Administração" aria-label="Administração">🔐</a></nav>
+<nav><a href="#inicio">Início</a><a href="#clube">Clube</a><a href="#futebol">Futebol</a><a href="#pesca">Pesca</a><a href="#galeria">Galeria</a><a href="#socios">Sócios</a><a class="nav-cta" href="#area-socio">Área de Sócio</a><a class="admin-nav" href="#admin" title="Administração" aria-label="Administração">🔐</a><button id="headerAdminLogout" class="admin-nav hidden" type="button" title="Terminar sessão" aria-label="Terminar sessão">↪</button></nav>
 </div>
 </header>
 <main>
@@ -421,7 +421,7 @@ $('#memberSignup').addEventListener('submit',async e=>{e.preventDefault();const 
 $('#memberLogin').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const r=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(r.error){msg($('#memberLoginMsg'),'Email ou palavra-passe incorretos.','error');return} await routeSession()});
 $('#forgotBtn').onclick=async()=>{const email=$('#memberLogin [name=email]').value;if(!email){msg($('#memberLoginMsg'),'Introduz primeiro o teu email.','error');return}const r=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/#area-socio'});msg($('#memberLoginMsg'),r.error?r.error.message:'Foi enviado um email para recuperar a palavra-passe.',r.error?'error':'success')};
 $('#recoveryForm').addEventListener('submit',async e=>{e.preventDefault();const pw=new FormData(e.target).get('password');const r=await db.auth.updateUser({password:pw});msg($('#recoveryMsg'),r.error?r.error.message:'Palavra-passe atualizada.',r.error?'error':'success')});
-$('#memberLogout').onclick=async()=>{await db.auth.signOut();location.reload()}; $('#adminLogout').onclick=async()=>{await db.auth.signOut();location.reload()};
+$('#memberLogout').onclick=async()=>{await db.auth.signOut();location.reload()}; $('#adminLogout').onclick=async()=>{await db.auth.signOut();location.reload()}; const headerLogout=document.getElementById('headerAdminLogout');if(headerLogout)headerLogout.onclick=async()=>{await db.auth.signOut();location.hash='admin';location.reload()};
 
 async function loadMemberPortal(user){
  let q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();
@@ -554,7 +554,7 @@ async function routeSession(){
  const user=session?.user;
  if(!user)return;
  if(user.app_metadata?.role==='admin'){
-   document.querySelectorAll('.admin-only-photo').forEach(x=>x.classList.remove('hidden'));
+   document.querySelectorAll('.admin-only-photo').forEach(x=>x.classList.remove('hidden'));document.getElementById('headerAdminLogout')?.classList.remove('hidden');
    location.hash='admin';
    $('#adminAuth').classList.add('hidden');
    $('#adminPanel').classList.remove('hidden');
@@ -568,7 +568,7 @@ db.auth.onAuthStateChange(async(event,session)=>{
  if(event==='PASSWORD_RECOVERY'){$('#recoveryBox').classList.remove('hidden');location.hash='area-socio';return}
  if((event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')&&session?.user){
    if(session.user.app_metadata?.role==='admin'){
-     document.querySelectorAll('.admin-only-photo').forEach(x=>x.classList.remove('hidden'));
+     document.querySelectorAll('.admin-only-photo').forEach(x=>x.classList.remove('hidden'));document.getElementById('headerAdminLogout')?.classList.remove('hidden');
      $('#adminAuth')?.classList.add('hidden');
      $('#adminPanel')?.classList.remove('hidden');
    }

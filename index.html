@@ -365,7 +365,7 @@ function msg(el,text,type='notice'){el.innerHTML=text?`<div class="${type}">${es
 function dueLabel(status){return status==='paid'?'<span class="pill green">Paga</span>':status==='pending'?'<span class="pill red">Pendente</span>':status==='exempt'?'<span class="pill">Isento</span>':'<span class="pill gray">Por atualizar</span>'}
 async function signedPhoto(path){if(!path)return null;const r=await db.storage.from('member-photos').createSignedUrl(path,3600);return r.data?.signedUrl||null}
 async function loadPublic(){
- const eventImg=$('#eventHomeImage');if(eventImg){const eventUrl=db.storage.from('public-media').getPublicUrl('home/eventos/current').data.publicUrl;eventImg.onerror=()=>{eventImg.onerror=null;eventImg.removeAttribute('src');eventImg.alt='Evento em atualização'};eventImg.src=eventUrl+'?v='+Date.now();}
+ const eventImg=$('#eventHomeImage');if(eventImg){const er=await db.from('site_settings').select('value').eq('key','home_event_image').maybeSingle();if(er.data?.value){eventImg.src=er.data.value}else{eventImg.removeAttribute('src');eventImg.alt='Evento em atualização'}}
  const [n,t,p,g,se,sp]=await Promise.all([
   db.from('news').select('*').eq('published',true).order('published_at',{ascending:false}).limit(6),
   db.from('teams').select('id,slug'),
@@ -586,7 +586,7 @@ db.auth.onAuthStateChange(async(event,session)=>{
  async function valid(file){return file&&file.size&&['image/jpeg','image/png','image/webp'].includes(file.type)}
  q('#eventHomePhotoInput')?.addEventListener('change',async e=>{
    const file=e.target.files[0];if(!await valid(file))return;
-   try{const url=await uploadPublicFile(file,'home/eventos/current');q('#eventHomeImage').src=url+'?v='+Date.now()}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
+   try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`home/eventos/${crypto.randomUUID()}.${ext}`),fresh=url+'?v='+Date.now();const r=await db.from('site_settings').upsert({key:'home_event_image',value:fresh,updated_at:new Date().toISOString()},{onConflict:'key'});if(r.error)throw r.error;q('#eventHomeImage').src=fresh}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
  });
  q('#gameHomePhotoInput')?.addEventListener('change',async e=>{
    const file=e.target.files[0];if(!await valid(file))return;

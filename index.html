@@ -564,7 +564,16 @@ async function routeSession(){
  }
  await loadMemberPortal(user);
 }
-db.auth.onAuthStateChange(async(event,session)=>{if(event==='PASSWORD_RECOVERY'){$('#recoveryBox').classList.remove('hidden');location.hash='area-socio'}});
+db.auth.onAuthStateChange(async(event,session)=>{
+ if(event==='PASSWORD_RECOVERY'){$('#recoveryBox').classList.remove('hidden');location.hash='area-socio';return}
+ if((event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED')&&session?.user){
+   if(session.user.app_metadata?.role==='admin'){
+     $('.admin-only-photo').forEach(x=>x.classList.remove('hidden'));
+     $('#adminAuth')?.classList.add('hidden');
+     $('#adminPanel')?.classList.remove('hidden');
+   }
+ }
+});
 </script>
 
 

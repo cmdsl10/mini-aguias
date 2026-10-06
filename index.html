@@ -372,6 +372,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 const SUPA_URL='https://dchthzmnldvvwnmhhlvf.supabase.co';
 const SUPA_KEY='sb_publishable_JBr7nkBvCX_t3d3NTUtZuA_lTM4XLT4';
 const db=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}});
+const EVENT_PHOTO_KEY='miniaguias_event_photo_url';
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const year=new Date().getFullYear();
@@ -381,6 +382,7 @@ function msg(el,text,type='notice'){el.innerHTML=text?`<div class="${type}">${es
 function dueLabel(status){return status==='paid'?'<span class="pill green">Paga</span>':status==='pending'?'<span class="pill red">Pendente</span>':status==='exempt'?'<span class="pill">Isento</span>':'<span class="pill gray">Por atualizar</span>'}
 async function signedPhoto(path){if(!path)return null;const r=await db.storage.from('member-photos').createSignedUrl(path,3600);return r.data?.signedUrl||null}
 async function loadPublic(){
+ const savedEventPhoto=localStorage.getItem(EVENT_PHOTO_KEY);if(savedEventPhoto&&$('#eventHomeImage'))$('#eventHomeImage').src=savedEventPhoto;
  const [n,t,p,g,se,sp]=await Promise.all([
   db.from('news').select('*').eq('published',true).order('published_at',{ascending:false}).limit(6),
   db.from('teams').select('id,slug'),
@@ -600,7 +602,7 @@ db.auth.onAuthStateChange(async(event,session)=>{
  async function valid(file){return file&&file.size&&['image/jpeg','image/png','image/webp'].includes(file.type)}
  q('#eventHomePhotoInput')?.addEventListener('change',async e=>{
    const file=e.target.files[0];if(!await valid(file))return;
-   try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`home/eventos/evento.${ext}`);q('#eventHomeImage').src=url+'?v='+Date.now()}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
+   try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`home/eventos/evento.${ext}`),fresh=url+'?v='+Date.now();localStorage.setItem(EVENT_PHOTO_KEY,fresh);q('#eventHomeImage').src=fresh}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
  });
  q('#gameHomePhotoInput')?.addEventListener('change',async e=>{
    const file=e.target.files[0];if(!await valid(file))return;

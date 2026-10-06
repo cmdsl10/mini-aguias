@@ -100,6 +100,8 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 }
 
 
+
+.inline-check{width:auto}.mt-8{margin-top:8px}.mt-9{margin-top:9px}.mt-12{margin-top:12px}.mt-14{margin-top:14px}.mt-16{margin-top:16px}.mt-18{margin-top:18px}.mt-24{margin-top:24px}.mt-26{margin-top:26px}.admin-auth-panel{max-width:560px}
 </style>
 <link rel="stylesheet" href="content.css">
 
@@ -164,7 +166,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <p class="muted">Arquivo por épocas. Só são apresentadas as épocas publicadas pela direção.</p>
 <div id="seasonTabs" class="season-tabs"></div>
 <div id="seasonContent"><div class="panel muted">A carregar épocas…</div></div>
-<div style="margin-top:24px"><h3>Próximos jogos</h3><div id="gamesGrid" class="cards"></div></div>
+<div class="mt-24"><h3>Próximos jogos</h3><div id="gamesGrid" class="cards"></div></div>
 </div></section>
 
 <section id="pesca" class="alt"><div class="wrap"><div class="ey">Pesca</div><h2>Secção em preparação</h2><p>Atletas, provas, calendário e resultados serão adicionados progressivamente.</p><span class="pill">Em atualização</span></div></section>
@@ -177,7 +179,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <label>Nome completo<input name="full_name" required></label><label>Data de nascimento<input name="birth_date" type="date"></label>
 <label>Telefone<input name="phone"></label><label>Email<input name="email" type="email"></label>
 <label class="full">Morada<input name="address"></label><label>Código postal<input name="postal_code"></label><label>Localidade<input name="locality"></label>
-<label class="full"><input type="checkbox" name="consent" required style="width:auto"> Autorizo o tratamento destes dados para gestão do pedido de sócio.</label>
+<label class="full"><input type="checkbox" name="consent" required class="inline-check"> Autorizo o tratamento destes dados para gestão do pedido de sócio.</label>
 <button class="btn primary full">Enviar pedido</button><div id="applicationMsg" class="full"></div>
 </form></div></section>
 
@@ -187,7 +189,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <div class="panel"><h3>Criar conta de sócio</h3><p class="muted">O email deve estar previamente registado pela direção na tua ficha de sócio. Depois da confirmação do email, a conta é ligada automaticamente à ficha correspondente.</p><form id="memberSignup"><label>Email<input name="email" type="email" required></label><label>Palavra-passe<input name="password" type="password" minlength="8" required></label><button class="btn secondary">Criar conta</button><div id="memberSignupMsg"></div></form></div>
 </div>
 
-<div id="recoveryBox" class="panel hidden"><h3>Definir nova palavra-passe</h3><form id="recoveryForm" class="form-grid"><label>Nova palavra-passe<input name="password" type="password" minlength="8" required></label><div><button class="btn primary" style="margin-top:26px">Guardar</button></div></form><div id="recoveryMsg"></div></div>
+<div id="recoveryBox" class="panel hidden"><h3>Definir nova palavra-passe</h3><form id="recoveryForm" class="form-grid"><label>Nova palavra-passe<input name="password" type="password" minlength="8" required></label><div><button class="btn primary" class="mt-26">Guardar</button></div></form><div id="recoveryMsg"></div></div>
 
 <div id="memberPortal" class="hidden">
 <div class="toolbar"><div><h3 id="memberWelcome">Bem-vindo</h3><p class="muted">Consulta do cartão e das quotas do clube.</p></div><button id="memberLogout" class="btn ghost">Terminar sessão</button></div>
@@ -196,12 +198,12 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <div id="digitalCard" class="digital-card"><div class="card-top"><img class="club-logo" src="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2296%22%20height%3D%22126%22%20viewBox%3D%220%200%2096%20126%22%3E%3Crect%20width%3D%2296%22%20height%3D%22126%22%20fill%3D%22white%22%2F%3E%3Cimage%20href%3D%22data%3Aimage%2Fwebp%3Bbase64%2CUklGRioLAABXRUJQVlA4IB4LAACwKwCdASpgAH4APo04l0glI6IhNLa8OKARiWwA0TwrRFfAeaBWX7j%2BL%2BELNn3KZ7P9H6nPMA%2FWbpG%2BYD9bv2A93H%2FVeqj%2B8%2BoB%2FK%2F8L1lHoHfsl6an7j%2FCJ%2Fb%2F%2BP%2B0nwJfs%2F%2F%2F%2FYA%2F%2F%2BNj%2FqvD3yUfJJTZx31WxSci%2BAF7B3ScAG6f9ivYA%2FUnxhvCn869gX82ehhof%2BtPYVL0iU3qCe%2BYZU8x6R%2FnnHCopboPHOCLIfLwB%2F9UxnV2vn9sphtM1OwJuhfQSKYFSy21ushHMU7XBh%2F%2BOnidebB9tOEVzuw9ik4Ob3wL7%2FpyQ6P5nnB15Iu9ylfVkWD75DJmoLTePi5I%2FD%2FjSv3GdfrSEDTprRj70EYP8bRCp3ftlyHq3qYDXuLmg34uBdzhaSD13LEv5J6W0Hyn%2ByT3FL8YXPVtwevAycB9IiR8P0Loe3pa0GXIl37xOHDb1UFdYqg5qaZ9QsuQprKWjzIAAP7%2BLp7njfP56i7tSltNp2h8u3%2FAjJZXYUcGe%2FlwLZu%2FBMS02iRePFaHao7I307RbX3RXoXNU9aH4ncHztsiZ6awikea4MMjnFJztocfO%2FEtajYYoYnUf1lvJqmfOSWQjwfRJxA6q84QCfH3p6FWHSvgLcT50iY5blFB%2Bh47xIUc3nwzPYHz9sHjGq10wMAIdgslPlSLU%2FikWoSUnNs8WMb8R1VGWSzXrvhaau5Edfv%2F9JZHa85VueFuOIIvNz3h5%2BnV%2Bc%2FFAuEYkOvlpiWmQCPfySJbM32uPdc73PooiJQ5%2BRttDdKOj3mOxK03FNTuW0ZnFxYgEnRSs3TGUNQi34RKPi0JFJLwP%2BScnlXfK7kIUGu%2BfZxGHr%2Bd3oJHjFqdcvti69%2BNSPjbpCCFF7honm7lByhfvcCHvOBC%2FfjQzsrGmiBd05VzyQ88mv44OQZMbjp2iAQ34Vx%2BaIjqXyT5brJsTZ4RvCS3vH1muVdGn9G%2FlUruYv%2F4UcoACVyZ0fdfJ%2FfkALKRsxA7GVH%2B1kecX%2BB89uaL%2F8PsvJ7l80fZoaYnEE5%2BthKTTAeQT2i2HfhB%2FCwRG28gm%2FQV9BVMBDKh9J%2FnIniZDLWXQFzs7PLMZQHc7Ncu9XJg2gvFOmV3%2FfdWqt23pfb9AS7PcwM9Zpej%2FzyF1xQSyThF5WK6Lp4LpSC%2FbnnbmJoE0zNLXw%2FjVvmfm%2FjqOqzrPzcwVOIvZbQLfZdDYULFm5LvfBZB2854dxlme%2BiRbKz%2FOJi%2FZl3tabvNCDxjBkdJ6%2BsCL7axvMFGT0SbEq%2BSSnqkC%2BDMNMyjWWGiWh3X7CsgcXOSBBNBGPE5Q7FWMx9labz7eHOBEfTwskw2WGlphI%2BgQF2PcfMoGsC3sDDjCHFFvtqPg2SYa5k%2B53JCTRFv4bypqjsPrzXOqt1zTW2z8skKIFoJXrApPeOuvJndlxs5%2Fz5ZqmBeb2PbTymkSLb5B4Hj88Jjz6o%2FcjR6yAbYvSY2yS6w6o%2F4E56%2FfGwyjyOpowm4fxSd06iQlHfjRfJIilXQHtMKyye3VaiJsDcq0a5pU2t6n8adwqRUtXHX1XcKGD8dzsQ7j1W3J9VfY0I7PsEuvQqP9lTd0f4rTBnkhDrg6ieD2QpNUmUENZRqV8k3n3JKCxJ5%2FQ04%2BRFGdJuRUNefe9YxSUz7QvN67%2FMGwefC2fmrGh7QiPbsORIM0n5hFFWJbMK4ABN7YkREOlTtGwohJjnAdUTPDCusLaAD8ipbRhP33jNPvYNXtXr1ACus%2BE0ILuDgV90adtvgh87ogiFkmvDr96PBUZk74lC8mlGDvRC%2Bkt2mAHbwAFxpwrcUQpcp9lymNzmO%2Fgsxib5Y72sK6AEj0ieuOr0cxV88B4TQFMNSnBla470bpGLn57O5f%2FPNCMuXgiiW9%2FXxZ0LvKj46PY%2BaC2JT0AvbcT1wQ4ZUX%2F%2Fq8b%2BXcoAgt7LaDaNJ9Kw1pkyCOY2fk8D0g53ZlGI94DrObWktFGJLanGyRmw5zhDcm9oZ4MZ5OEASYF5pC9u6%2BfhQZ1TEfYihi8w5h3bv%2Bou95FmcqY%2BhJwfDxe2CAiz05uNjc5VvzTk%2F3znorBb%2FEMs8rxNvxetaTWES22uA2NYHG1EsCbs5aRos1Y0le2Mx7szS1FqBaRie%2FC2EXiFIgxrXhBbQZVLMyPtP1LPhTAy46fETpJnHpzbDRKXR6An4i6rwaZ%2FhpYtO5qVzcwhAyMGOMCC4QfGK%2FkFvYKxdfY70%2BBs4Z4ciDiyLtlHkNzCmno%2BFdvX0vsZJdZ8oFLPbRCxsoTdLM5QUMvdN1t9dhfacNQMtoabAf5ZXRzUilOgv2ZRtOQ3dtdX8Sre%2BmSzaFV%2Fasq9dKMiFsjhg3TGLjVdUbmggZ4BcrtQkvZ4y0yS6OqAQj9MtFinN5Z0YS1yFVAR5Jvj48yYFS03FLQ28rdjqTm%2F6hOrjcZLSg7xIi%2FnC84pykqIJ9X%2BRoyenKRXBe4zsvDFCurmWLc0UmWCc3Tqmu3nKeQhicY4RTd7WbFsP2ZUVPKu%2FcBC2oSTGltZ2qyB6n5vTfi026gUYBsX62FyCxyTBpNDJ0RJXNGJdOY5VHqfI%2Bv86E8bCpiRKuCJzwcQqlem9jgaZf4QHiCy805tNOXc32SzbohRMYhOysmo0gRWJVYMHa5%2FBDl1OTFGDKQSSeT9UCwYBWHNUgpV56cEZhL4419ZwmnYzFc87G11hbCqPjl6Hl7XAvJAfcn08Kn%2F5Cb%2FEE58mkgg%2F03jedDkfahx9pKPegxr5XcD8EWSOCy7gq%2BazZJidxYsrGPOvYS8O9pG7UCZxLhG4MsGz054aze7c7%2FUImSq%2FiY3KIi8Mcyu3SqHOQFYrjuTqAgIh333EsPIKCpWv%2FwtHL5V3ttudRKJ%2BZ2ypTN3wLx2y6gdlV9Kz6WS6Awx%2FkwKOSkNVrM5v%2F4MpVTLwxPDg2venf2rU97JSzws6X%2FiWhb0sTTMhTkn6Drb0zzXcbZBnXtr4aHzFFMJY%2FDw3WIDR17sS9DJvZihDRHmnP0FbFG9CDuW5OwHx7Xls7PDbdzOOVPSBfRjUrKW85U7Hbvxxfz7%2F1zuWKavgLfsAqyJjpw%2B81uz1wCNtlmUmAJzuJ0OW%2Fo6DT0cADDk82Esvy8eb1ZJAJg7AGCOUGh%2FKvQSOj40efYLmxiF7219xaRRJ4Dah72Qs6861ArUQt%2B3oX4Asy4vLv04lSXHaxlqzv1A26vWdiLG57JA63pGMAaw4xZxyTzsSCQ%2FgjM9ykXBWbVHRgC7SOwMg%2BpLhf6vdJAa%2F97qkUrImFvUr4lax5ZgdetZhb2Z7g1keFSNR3Zw%2B%2F4OzknGcYfSo1PlTZ74kVOHmP9irshIbP4Ra7KQ047ZY3Ag4TxUOY25sqHULsi98OoJ6dieB3aEPBUw4j7czF%2FnqvLJmmnGfc0frrng0wbODyGQxzwVpFaAGUa%2BFRS10eCXt58J9FY6X7pZ2%2FqkAJzdKpo815swy9UCWJ6HwieKPQPNBMNDwVT9i34N8xE%2FtVjwtISPgl2KmqeRYhn4pfuQO9KdPsUHDE08r42HpTGqHtI2C3dtp0dcJHFYy9pnXF8P3uQu838voPjoDEMOzeUesE8o6pfDvc2JDi96EYFAzs1eFZb8argias4d9N9KYgfbZmNuQEqp4xLCdoVtB9hJaTlZYEtt%2FfWlfaX4CuEJysytJHwtNbluokmvahRZpaY5SqHtgA3A6chDhKuspDolZT4mndHeKDCqVsK%2FkzB7FD5%2F5BVWjfTZpOkJKgCj%2Bd6wEsjHPk7fBxqy4Gj72UUymaqDSKxD20Mrv%2BpoSWL8yAAAAAA%3D%3D%22%20width%3D%2296%22%20height%3D%22126%22%20preserveAspectRatio%3D%22xMidYMid%20meet%22%2F%3E%3C%2Fsvg%3E"><div><b>G.D. MINI-ÁGUIAS</b><div style="font-size:11px;opacity:.8">CARTÃO DE SÓCIO</div></div></div><div class="card-body"><div id="cardPhotoSlot" class="photo-placeholder">👤</div><div><div id="cardName" class="card-name">—</div><div id="cardNumber" class="card-number">Sócio nº —</div><div id="cardStatus" style="margin-top:10px"></div></div></div><div class="card-foot">Cartão digital • Uso pessoal</div></div>
 <div class="actions"><button id="printCard" class="btn secondary">Imprimir / Guardar cartão</button></div>
 </div>
-<div class="panel"><h3>Quotas</h3><div id="memberDues" class="dues-list"></div><div class="notice" style="margin-top:16px"><b>Pagamento online:</b> infraestrutura preparada. MB WAY/Multibanco será ativado depois de selecionado o prestador de pagamentos.</div></div>
+<div class="panel"><h3>Quotas</h3><div id="memberDues" class="dues-list"></div><div class="notice" class="mt-16"><b>Pagamento online:</b> infraestrutura preparada. MB WAY/Multibanco será ativado depois de selecionado o prestador de pagamentos.</div></div>
 </div></div>
 </div></section>
 
 <section id="admin" class="alt"><div class="wrap"><div class="ey">Gestão interna</div><h2>Administração</h2>
-<div id="adminAuth" class="panel" style="max-width:560px"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full" >Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
+<div id="adminAuth" class="panel" class="admin-auth-panel"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full" >Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
 <div id="adminPanel" class="hidden">
 <div class="toolbar"><div><h3>Painel de Sócios</h3><p class="muted">Dados reais importados do ficheiro de 2026.</p></div><button id="adminLogout" class="btn ghost">Terminar sessão</button></div>
 <div class="stats">
@@ -210,7 +212,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <div class="panel season-admin admin-feature-card">
 <div class="toolbar"><div><h3>Próximo jogo · Cartaz</h3><p class="muted">Carrega um novo cartaz. O novo substitui automaticamente o anterior na página inicial.</p></div></div>
 <label>Foto/cartaz do próximo jogo<input id="nextGamePosterInput" type="file" accept="image/jpeg,image/png,image/webp"></label>
-<button id="saveNextGamePoster" class="btn secondary" style="margin-top:9px">Guardar novo cartaz</button>
+<button id="saveNextGamePoster" class="btn secondary" class="mt-9">Guardar novo cartaz</button>
 <div id="nextGamePosterMsg"></div>
 <div id="nextGamePosterPreview"></div>
 </div>
@@ -220,7 +222,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <label>Adversário<input name="opponent" required placeholder="Ex.: A.D. Oeiras"></label>
 <label>Data e hora<input name="game_date" type="datetime-local" required></label>
 <label>Local<input name="venue" placeholder="Ex.: Campo do Moinho da Fonte"></label>
-<label><input name="home_game" type="checkbox" checked style="width:auto"> Jogamos em casa</label>
+<label><input name="home_game" type="checkbox" checked class="inline-check"> Jogamos em casa</label>
 <label class="full">Cartaz / fotografia do jogo<input name="poster" type="file" accept="image/jpeg,image/png,image/webp"></label>
 <button class="btn primary full">Guardar próximo jogo</button><div id="gameCreateMsg" class="full"></div>
 </form>
@@ -234,7 +236,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <label>Época<input name="label" placeholder="Ex.: 27/28" required></label>
 <label>Ano inicial<input name="start_year" type="number" min="1900" max="2100" required></label>
 <label>Ano final<input name="end_year" type="number" min="1900" max="2100" required></label>
-<label><input name="visible" type="checkbox" style="width:auto"> Visível no site</label>
+<label><input name="visible" type="checkbox" class="inline-check"> Visível no site</label>
 <button class="btn secondary full">Criar época</button><div id="seasonCreateMsg" class="full"></div>
 </form>
 <div id="adminSeasonList" class="season-list"></div>
@@ -242,17 +244,17 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <form id="seasonEditForm" class="form-grid">
 <input type="hidden" name="id">
 <label>Nome da época<input name="label" required></label>
-<label><input name="visible" type="checkbox" style="width:auto"> Visível no site</label>
-<label><input name="current_season" type="checkbox" style="width:auto"> Época atual</label>
+<label><input name="visible" type="checkbox" class="inline-check"> Visível no site</label>
+<label><input name="current_season" type="checkbox" class="inline-check"> Época atual</label>
 <label>Ordem<input name="sort_order" type="number"></label>
 <label class="full">Descrição<textarea name="description"></textarea></label>
 <button class="btn primary full">Guardar época</button><div id="seasonEditMsg" class="full"></div>
 </form>
-<label style="margin-top:12px">Foto da equipa Masters<input id="officialSeasonPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
-<button id="uploadOfficialSeasonPhoto" class="btn secondary sm" style="margin-top:8px">Guardar foto da equipa</button>
+<label class="mt-12">Foto da equipa Masters<input id="officialSeasonPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<button id="uploadOfficialSeasonPhoto" class="btn secondary sm" class="mt-8">Guardar foto da equipa</button>
 <div id="officialSeasonPhotoPreview"></div>
-<label style="margin-top:12px">Adicionar foto à galeria<input id="seasonGalleryPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
-<button id="uploadSeasonGalleryPhoto" class="btn ghost sm" style="margin-top:8px">Adicionar à galeria</button>
+<label class="mt-12">Adicionar foto à galeria<input id="seasonGalleryPhoto" type="file" accept="image/jpeg,image/png,image/webp"></label>
+<button id="uploadSeasonGalleryPhoto" class="btn ghost sm" class="mt-8">Adicionar à galeria</button>
 </div>
 </div>
 <div>
@@ -274,21 +276,21 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 </div>
 <div id="memberEditor" class="panel"><h3>Ficha do sócio</h3><p class="muted" id="editorHint">Seleciona um sócio na lista.</p>
 <div id="editorContent" class="hidden">
-<div class="profile-head"><div id="adminPhotoSlot"><div class="photo-placeholder">👤</div></div><div class="photo-actions"><b id="editorTitle"></b><label style="margin-top:8px">Fotografia<input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="actions" style="margin-top:8px"><button id="uploadPhoto" class="btn secondary sm">Guardar fotografia</button><button id="previewCard" class="btn primary sm">🪪 Ver cartão</button></div></div></div>
+<div class="profile-head"><div id="adminPhotoSlot"><div class="photo-placeholder">👤</div></div><div class="photo-actions"><b id="editorTitle"></b><label class="mt-8">Fotografia<input id="photoInput" type="file" accept="image/jpeg,image/png,image/webp"></label><div class="actions" class="mt-8"><button id="uploadPhoto" class="btn secondary sm">Guardar fotografia</button><button id="previewCard" class="btn primary sm">🪪 Ver cartão</button></div></div></div>
 <form id="memberEditForm" class="form-grid">
 <input type="hidden" name="id"><label>Nº de sócio<input name="member_number" type="number"></label><label>Estado<select name="status"><option value="active">Ativo</option><option value="inactive">Inativo</option><option value="pending">Pendente</option></select></label>
 <label class="full">Nome<input name="full_name" required></label><label>Email<input name="email" type="email" placeholder="Necessário para criar conta"></label><label>Telefone<input name="phone"></label>
 <label>Data nascimento<input name="birth_date" type="date"></label><label>Localidade<input name="locality"></label><label class="full">Morada<input name="address"></label><label>Código postal<input name="postal_code"></label>
-<label><input type="checkbox" name="account_enabled" style="width:auto"> Permitir conta online</label><label><input type="checkbox" name="card_enabled" style="width:auto"> Cartão digital ativo</label><label><input type="checkbox" name="email_reminders_enabled" style="width:auto"> Avisos de quotas por email</label><label><input type="checkbox" name="birthday_email_enabled" style="width:auto"> Email de aniversário</label>
+<label><input type="checkbox" name="account_enabled" class="inline-check"> Permitir conta online</label><label><input type="checkbox" name="card_enabled" class="inline-check"> Cartão digital ativo</label><label><input type="checkbox" name="email_reminders_enabled" class="inline-check"> Avisos de quotas por email</label><label><input type="checkbox" name="birthday_email_enabled" class="inline-check"> Email de aniversário</label>
 <button class="btn primary full">Guardar ficha</button><div id="editorMsg" class="full"></div>
 </form>
 <hr style="border:0;border-top:1px solid var(--line);margin:18px 0">
 <h3>Quota <span id="quotaYearLabel"></span></h3><div class="actions"><button data-q="paid" class="btn sm primary qbtn">Marcar paga</button><button data-q="pending" class="btn sm secondary qbtn">Marcar pendente</button><button data-q="exempt" class="btn sm ghost qbtn">Isento</button><button data-q="unknown" class="btn sm ghost qbtn">Por atualizar</button></div><div id="quotaMsg"></div>
 <div class="actions"><button id="queueQuotaEmail" class="btn ghost sm">Preparar email de quota</button></div>
-<div id="adminCardPreview" class="hidden" style="margin-top:14px"></div>
+<div id="adminCardPreview" class="hidden" class="mt-14"></div>
 </div></div>
 </div>
-<div class="split" style="margin-top:18px">
+<div class="split" class="mt-18">
 <div class="panel"><h3>Aniversários próximos</h3><div id="birthdaysList" class="birthday-list"></div></div>
 <div class="panel"><h3>Comunicação</h3><p>Os emails ficam preparados numa fila de envio. O serviço de envio automático será ligado numa fase posterior.</p><button id="queueAllDues" class="btn secondary">Preparar avisos de quotas conhecidas em dívida</button><div id="queueAllMsg"></div></div>
 </div>

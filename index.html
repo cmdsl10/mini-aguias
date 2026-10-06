@@ -314,8 +314,7 @@ function dueLabel(status){return status==='paid'?'<span class="pill green">Paga<
 async function signedPhoto(path){if(!path)return null;const r=await db.storage.from('member-photos').createSignedUrl(path,3600);return r.data?.signedUrl||null}
 async function loadPublic(){
  const eventImg=$('#eventHomeImage');if(eventImg){const er=await db.from('site_settings').select('value').eq('key','home_event_image').maybeSingle();if(er.data?.value){eventImg.src=er.data.value}else{eventImg.removeAttribute('src');eventImg.alt='Evento em atualização'}}
- const [n,t,p,g,se,sp]=await Promise.all([
-  db.from('news').select('*').eq('published',true).order('published_at',{ascending:false}).limit(6),
+ const [t,p,g,se,sp]=await Promise.all([
   db.from('teams').select('id,slug'),
   db.from('players').select('*').eq('active',true).order('sort_order'),
   db.from('games').select('*').gte('game_date',new Date().toISOString()).order('game_date').limit(3),
@@ -327,7 +326,6 @@ async function loadPublic(){
  const firstSeason=publicSeasons[0];
  const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
  $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
- const news=n.data||[]; $('#publicNews')&&($('#publicNews').innerHTML=news.length?news.map(x=>`<article class="card ${x.featured?'feature':''}"><span class="pill">${x.featured?'Destaque':'Notícia'}</span><h3>${esc(x.title)}</h3><p>${esc(x.summary||x.body||'')}</p></article>`).join(''):'<div class="card feature"><span class="pill">Próximo destaque</span><h3>Aniversário do Clube</h3><p>Domingo, 20 de setembro, a partir das 15h00.</p></div><div class="card"><h3>Novidades</h3><p class="muted">As próximas publicações aparecerão aqui.</p></div><div class="card"><h3>Próximo jogo</h3><p class="muted">Calendário em atualização.</p></div>');
  renderSeasonTabs();
  const games=g.data||[];
  const featuredGame=games[0];

@@ -162,7 +162,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 
 <section id="pesca" class="alt"><div class="wrap"><div class="ey">Pesca</div><h2>Secção em preparação</h2><p>Atletas, provas, calendário e resultados serão adicionados progressivamente.</p><span class="pill">Em atualização</span></div></section>
 
-<section id="galeria"><div class="wrap"><div class="ey">Memórias</div><h2>Galeria</h2><div class="cards"><div class="card">Jogos</div><div class="card">Convívios</div><div class="card">Festas e arquivo</div></div></div></section>
+<section id="galeria"><div class="wrap"><div class="ey">Memórias</div><h2>Galeria</h2><div id="galleryGrid" class="season-gallery"><div class="panel muted">A carregar fotografias…</div></div></div></section>
 
 <section id="socios" class="alt"><div class="wrap grid2">
 <div><div class="ey">Sócios</div><h2>Faz parte do clube</h2><p>O pedido de novo sócio é enviado à direção para validação. Depois de aprovado e com um email associado à ficha, o sócio pode criar a sua conta privada.</p></div>
@@ -304,15 +304,17 @@ function dueLabel(status){return status==='paid'?'<span class="pill green">Paga<
 async function signedPhoto(path){if(!path)return null;const r=await db.storage.from('member-photos').createSignedUrl(path,3600);return r.data?.signedUrl||null}
 async function loadPublic(){
  const eventImg=$('#eventHomeImage');if(eventImg){const er=await db.from('site_settings').select('value').eq('key','home_event_image').maybeSingle();if(er.data?.value){eventImg.src=er.data.value}else{eventImg.removeAttribute('src');eventImg.alt='Evento em atualização'}}
- const [t,p,g,se,sp]=await Promise.all([
+ const [t,p,g,se,sp,ga]=await Promise.all([
   db.from('teams').select('id,slug'),
   db.from('players').select('*').eq('active',true).order('sort_order'),
   db.from('games').select('*').gte('game_date',new Date().toISOString()).order('game_date').limit(3),
   db.from('seasons').select('*').eq('visible',true).order('sort_order').order('start_year',{ascending:false}),
-  db.from('season_photos').select('*').eq('visible',true).order('sort_order')
+  db.from('season_photos').select('*').eq('visible',true).order('sort_order'),
+  db.from('gallery_items').select('*').eq('published',true).order('sort_order').order('event_date',{ascending:false})
  ]);
  masterTeamId=(t.data||[]).find(x=>x.slug==='masters')?.id;
  publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[];
+ const galleryItems=ga.data||[]; $('#galleryGrid').innerHTML=galleryItems.length?galleryItems.map(x=>`<article class="player-card"><img class="season-official" src="${esc(x.image_url)}" alt="${esc(x.title||'Fotografia do clube')}"><div><h4>${esc(x.title||'Mini-Águias')}</h4>${x.category?`<div class="muted">${esc(x.category)}</div>`:''}${x.description?`<p>${esc(x.description)}</p>`:''}</div></article>`).join(''):'<div class="panel muted">Ainda não existem fotografias publicadas.</div>';
  const firstSeason=publicSeasons[0];
  const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
  $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';

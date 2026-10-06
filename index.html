@@ -365,7 +365,7 @@ function msg(el,text,type='notice'){el.innerHTML=text?`<div class="${type}">${es
 function dueLabel(status){return status==='paid'?'<span class="pill green">Paga</span>':status==='pending'?'<span class="pill red">Pendente</span>':status==='exempt'?'<span class="pill">Isento</span>':'<span class="pill gray">Por atualizar</span>'}
 async function signedPhoto(path){if(!path)return null;const r=await db.storage.from('member-photos').createSignedUrl(path,3600);return r.data?.signedUrl||null}
 async function loadPublic(){
- const eventImg=$('#eventHomeImage');if(eventImg){const fallback='assets/aniversario-20-setembro.png',eventUrl=db.storage.from('public-media').getPublicUrl('home/eventos/current').data.publicUrl;eventImg.onerror=()=>{if(!eventImg.src.endsWith(fallback)){eventImg.onerror=null;eventImg.src=fallback}};eventImg.src=eventUrl+'?v='+Date.now();}
+ const eventImg=$('#eventHomeImage');if(eventImg){const eventUrl=db.storage.from('public-media').getPublicUrl('home/eventos/current').data.publicUrl;eventImg.onerror=()=>{eventImg.onerror=null;eventImg.removeAttribute('src');eventImg.alt='Evento em atualização'};eventImg.src=eventUrl+'?v='+Date.now();}
  const [n,t,p,g,se,sp]=await Promise.all([
   db.from('news').select('*').eq('published',true).order('published_at',{ascending:false}).limit(6),
   db.from('teams').select('id,slug'),

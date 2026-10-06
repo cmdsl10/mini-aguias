@@ -261,6 +261,17 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <div id="seasonRosterAdmin" class="roster-admin-list"></div>
 </div>
 </div></div><div class="panel season-admin admin-feature-card">
+<div class="toolbar"><div><h3>Pesca · Conteúdo do site</h3><p class="muted">Adiciona informações da secção de Pesca e escolhe quando ficam públicas.</p></div></div>
+<form id="fishingContentForm" class="form-grid">
+<label class="full">Título<input name="title" required placeholder="Ex.: Próxima prova"></label>
+<label class="full">Texto<textarea name="body" placeholder="Informação a apresentar no site"></textarea></label>
+<label>Ordem<input name="sort_order" type="number" value="0"></label>
+<label><input name="published" type="checkbox" checked class="inline-check"> Publicar no site</label>
+<button class="btn primary full">Guardar conteúdo</button><div id="fishingContentMsg" class="full"></div>
+</form>
+<div id="adminFishingList" class="mt-16"></div>
+</div>
+<div class="panel season-admin admin-feature-card">
 <div class="toolbar"><div><h3>Galeria do site</h3><p class="muted">Adiciona uma fotografia e publica-a diretamente na Galeria.</p></div></div>
 <form id="galleryUploadForm" class="form-grid">
 <label>Título<input name="title" placeholder="Ex.: Jogo dos Masters"></label>

@@ -371,7 +371,8 @@ $('#memberSignup').addEventListener('submit',async e=>{e.preventDefault();const 
 $('#memberLogin').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const r=await db.auth.signInWithPassword({email:f.get('email'),password:f.get('password')});if(r.error){msg($('#memberLoginMsg'),'Email ou palavra-passe incorretos.','error');return} await routeSession()});
 $('#forgotBtn').onclick=async()=>{const email=$('#memberLogin [name=email]').value;if(!email){msg($('#memberLoginMsg'),'Introduz primeiro o teu email.','error');return}const r=await db.auth.resetPasswordForEmail(email,{redirectTo:location.origin+'/#area-socio'});msg($('#memberLoginMsg'),r.error?r.error.message:'Foi enviado um email para recuperar a palavra-passe.',r.error?'error':'success')};
 $('#recoveryForm').addEventListener('submit',async e=>{e.preventDefault();const pw=new FormData(e.target).get('password');const r=await db.auth.updateUser({password:pw});msg($('#recoveryMsg'),r.error?r.error.message:'Palavra-passe atualizada.',r.error?'error':'success')});
-$('#memberLogout').onclick=async()=>{await db.auth.signOut();location.reload()}; $('#adminLogout').onclick=async()=>{await db.auth.signOut();location.reload()}; const headerLogout=document.getElementById('headerAdminLogout');if(headerLogout)headerLogout.onclick=async()=>{await db.auth.signOut();location.hash='admin';location.reload()};
+async function logout(){await db.auth.signOut();setAdminUi(false);location.reload()}
+$('#memberLogout').onclick=logout;$('#adminLogout').onclick=logout;const headerLogout=document.getElementById('headerAdminLogout');if(headerLogout)headerLogout.onclick=logout;
 
 async function loadMemberPortal(user){
  let q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();

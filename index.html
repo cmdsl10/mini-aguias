@@ -135,6 +135,7 @@ body.js-section-nav footer{margin-top:25px}
 #futebol .player-card .muted{font-size:12px}
 #futebol .roster-section-title{font-size:13px;text-transform:uppercase;letter-spacing:.05em}
 .games-section{margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
+.masters-calendar{margin-top:24px}.masters-calendar-head{display:flex;justify-content:space-between;gap:12px;align-items:end;flex-wrap:wrap;margin-bottom:12px}.masters-calendar-note{font-size:12px;color:var(--muted)}.masters-fixtures{display:grid;gap:8px}.masters-fixture{display:grid;grid-template-columns:72px 110px 1fr auto;gap:10px;align-items:center;background:#fff;border:1px solid var(--line);border-radius:11px;padding:10px 12px}.masters-fixture.is-next{border-left:5px solid var(--yellow);background:#fffdf6}.masters-fixture .jornada{font-weight:900;color:var(--blue);font-size:12px}.masters-fixture .date{font-size:12px;color:var(--muted)}.masters-fixture .match{font-weight:800}.masters-fixture .venue{font-size:11px;color:var(--muted);margin-top:2px}.time-provisional{font-size:11px;color:var(--orange);font-weight:800}.time-confirmed{font-size:11px;color:var(--green);font-weight:800}@media(max-width:700px){.masters-fixture{grid-template-columns:62px 1fr auto}.masters-fixture .date{grid-column:2}.masters-fixture .match{grid-column:1/-1}.masters-fixture .fixture-time{grid-column:3;grid-row:1/3;text-align:right}}
 .section-heading h3{font-size:24px;margin:3px 0 14px}
 #futebol #gamesGrid .card{border-radius:13px;box-shadow:none;border-left:4px solid var(--yellow)}
 @media(max-width:700px){
@@ -477,6 +478,35 @@ function playerCard(x){
  const age=x.birth_date?Math.max(0,new Date().getFullYear()-new Date(x.birth_date).getFullYear()-((new Date().getMonth()<new Date(x.birth_date).getMonth()||(new Date().getMonth()===new Date(x.birth_date).getMonth()&&new Date().getDate()<new Date(x.birth_date).getDate()))?1:0)):null;
  return `<div class="player-card">${x.photo_url?`<img class="player-photo" src="${esc(x.photo_url)}" alt="Foto de ${esc(x.full_name)}">`:'<div class="player-photo-placeholder">👤</div>'}<div><h4>${esc(x.full_name)}</h4><div class="muted">${esc(x.position||((x.member_type||'player')==='staff'?'Staff':'Jogador'))}${x.shirt_number?` · Nº ${x.shirt_number}`:''}${age!==null?` · ${age} anos`:''}</div></div></div>`;
 }
+const MASTERS_2627=[
+ {j:1,date:'2026-10-17',time:'19:15',home:false,opp:'U.D. Lavrense',venue:'Complexo Desportivo Lavra',confirmed:true},
+ {j:2,date:'2026-10-24',time:'19:15',home:true,opp:'A.D.U. Paiço',venue:'Campo do Gatões Futebol Clube',confirmed:true},
+ {j:3,date:'2026-10-31',time:'19:15',home:false,opp:'G.D.R. Juv. Ribeiras',venue:'Complexo Desportivo Municipal Leça da Palmeira'},
+ {j:4,date:'2026-11-14',time:'19:15',home:true,opp:'C.F. Oliveira Douro',venue:'Campo do Gatões Futebol Clube'},
+ {j:5,date:'2026-11-21',time:'19:15',home:false,opp:'C.D. Portugal',venue:'Parque da Cidade - Porto'},
+ {j:6,date:'2026-11-28',time:'19:15',home:true,opp:'Gatões F.C.',venue:'Campo do Gatões Futebol Clube'},
+ {j:7,date:'2026-12-05',time:'19:15',home:false,opp:'Wolves Paranhos F.C.',venue:'Complexo Desportivo Campanhã'},
+ {j:8,date:'2026-12-12',time:'19:15',home:true,opp:'Custóias F.C.',venue:'Campo do Gatões Futebol Clube'},
+ {j:9,date:'2026-12-19',time:'19:15',home:false,opp:'G.D.C.S. S. Eugénio',venue:'Complexo Sintético Viso'},
+ {j:10,date:'2027-01-16',time:'19:15',home:true,opp:'S.C. Vilar Pinheiro',venue:'Campo do Gatões Futebol Clube'},
+ {j:11,date:'2027-01-23',time:'19:15',home:false,opp:'U. Afurandense A.C.R.D.L.',venue:'Estádio C.D. Candal - Sintético'},
+ {j:12,date:'2027-01-30',time:'19:15',home:true,opp:'U.D. Lavrense',venue:'Campo do Gatões Futebol Clube'},
+ {j:13,date:'2027-02-06',time:'19:15',home:false,opp:'A.D.U. Paiço',venue:'Complexo Municipal de Aveleda'},
+ {j:14,date:'2027-02-20',time:'19:15',home:true,opp:'G.D.R. Juv. Ribeiras',venue:'Campo do Gatões Futebol Clube'},
+ {j:15,date:'2027-02-27',time:'19:15',home:false,opp:'C.F. Oliveira Douro',venue:'Estádio Clube Futebol Oliveira Douro'},
+ {j:16,date:'2027-03-06',time:'19:15',home:true,opp:'C.D. Portugal',venue:'Campo do Gatões Futebol Clube'},
+ {j:17,date:'2027-03-13',time:'19:15',home:false,opp:'Gatões F.C.',venue:'Campo do Gatões Futebol Clube'},
+ {j:18,date:'2027-03-20',time:'19:15',home:true,opp:'Wolves Paranhos F.C.',venue:'Campo do Gatões Futebol Clube'},
+ {j:19,date:'2027-04-03',time:'19:15',home:false,opp:'Custóias F.C.',venue:'Complexo Desportivo Custóias'},
+ {j:20,date:'2027-04-10',time:'19:15',home:true,opp:'G.D.C.S. S. Eugénio',venue:'Campo do Gatões Futebol Clube'},
+ {j:21,date:'2027-04-17',time:'19:15',home:false,opp:'S.C. Vilar Pinheiro',venue:'Complexo Desportivo S.C. Vilar Pinheiro'},
+ {j:22,date:'2027-05-01',time:'19:15',home:true,opp:'U. Afurandense A.C.R.D.L.',venue:'Campo do Gatões Futebol Clube'}
+];
+function mastersCalendarHtml(season){
+ if(String(season.label).replace(/\s/g,'')!=='26/27')return '';
+ const now=new Date(), next=MASTERS_2627.find(x=>new Date(x.date+'T'+x.time+':00')>=now);
+ return `<div class="masters-calendar"><div class="masters-calendar-head"><div><div class="ey">AF Porto · 2.ª Divisão · Série 2</div><h3>Calendário e resultados</h3></div><div class="masters-calendar-note">A partir da 3.ª jornada, 19:15 é horário provisório. Os horários são confirmados/ajustados cerca de duas semanas antes de cada jogo.</div></div><div class="masters-fixtures">${MASTERS_2627.map(x=>{const d=new Date(x.date+'T12:00:00');const label=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'});const teams=x.home?`G.D. Mini Águias × ${x.opp}`:`${x.opp} × G.D. Mini Águias`;return `<div class="masters-fixture ${next&&next.j===x.j?'is-next':''}"><div class="jornada">Jornada ${x.j}</div><div class="date">${label}</div><div><div class="match">${esc(teams)}</div><div class="venue">${esc(x.venue)}</div></div><div class="fixture-time"><strong>${x.time}</strong><div class="${x.confirmed?'time-confirmed':'time-provisional'}">${x.confirmed?'Confirmado':'Provisório'}</div></div></div>`}).join('')}</div></div>`;
+}
 function renderSeasonPublic(id){
  const season=publicSeasons.find(x=>x.id===id);if(!season)return;
  const roster=publicPlayers.filter(x=>x.season_id===id);
@@ -485,7 +515,7 @@ function renderSeasonPublic(id){
  const groups=['Guarda-redes','Defesas','Médios','Avançados','Outros'];
  const rosterHtml=`${staff.length?`<div class="roster-section"><h4 class="roster-section-title">Staff</h4><div class="roster-grid staff-grid">${staff.map(playerCard).join('')}</div></div>`:''}${groups.map(group=>{const list=players.filter(x=>rosterGroup(x)===group).sort((a,b)=>String(a.full_name).localeCompare(String(b.full_name),'pt'));return list.length?`<div class="roster-section"><h4 class="roster-section-title">${group}</h4><div class="roster-grid">${list.map(playerCard).join('')}</div></div>`:''}).join('')}`;
  const photos=publicSeasonPhotos.filter(x=>x.season_id===id),official=season.official_photo_url||photos.find(x=>x.photo_type==='official')?.image_url,gallery=photos.filter(x=>x.photo_type==='gallery');
- $('#seasonContent').innerHTML=`<div class="season-hero"><div>${official?`<img class="season-official" src="${esc(official)}" alt="Foto oficial época ${esc(season.label)}">`:'<div class="panel muted">Foto oficial ainda não publicada.</div>'}${gallery.length?`<div class="season-gallery">${gallery.map(x=>`<img src="${esc(x.image_url)}" alt="${esc(x.title||'Foto da época '+season.label)}">`).join('')}</div>`:''}</div><div class="panel"><span class="pill">${season.current_season?'Época atual':'Arquivo'}</span><h3 class="mt-10">Época ${esc(season.label)}</h3>${season.description?`<p>${esc(season.description)}</p>`:''}<h4>Equipa Masters</h4>${rosterHtml||'<div class="muted">Plantel em atualização.</div>'}</div></div>`;
+ $('#seasonContent').innerHTML=`<div class="season-hero"><div>${official?`<img class="season-official" src="${esc(official)}" alt="Foto oficial época ${esc(season.label)}">`:'<div class="panel muted">Foto oficial ainda não publicada.</div>'}${gallery.length?`<div class="season-gallery">${gallery.map(x=>`<img src="${esc(x.image_url)}" alt="${esc(x.title||'Foto da época '+season.label)}">`).join('')}</div>`:''}</div><div class="panel"><span class="pill">${season.current_season?'Época atual':'Arquivo'}</span><h3 class="mt-10">Época ${esc(season.label)}</h3>${season.description?`<p>${esc(season.description)}</p>`:''}<h4>Equipa Masters</h4>${rosterHtml||'<div class="muted">Plantel em atualização.</div>'}</div></div>${mastersCalendarHtml(season)}`;
 }
 
 $('#applicationForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const r=await db.from('membership_applications').insert({full_name:f.get('full_name'),birth_date:f.get('birth_date')||null,phone:f.get('phone')||null,email:f.get('email')||null,address:f.get('address')||null,postal_code:f.get('postal_code')||null,locality:f.get('locality')||null,consent_privacy:true,status:'pending'});msg($('#applicationMsg'),r.error?'Não foi possível enviar o pedido.':'Pedido enviado para validação. Obrigado.',r.error?'error':'success');if(!r.error)e.target.reset()});

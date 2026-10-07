@@ -370,9 +370,9 @@ async function loadPublic(){
 function renderSeasonTabs(){
  const tabs=$('#seasonTabs'), content=$('#seasonContent');
  if(!publicSeasons.length){tabs.innerHTML='';content.innerHTML='<div class="panel muted">Arquivo de épocas em preparação.</div>';return}
- tabs.innerHTML=publicSeasons.map((x,i)=>`<button class="season-tab ${i===0?'active':''}" data-id="${x.id}">${esc(x.label)}</button>`).join('');
- $$('.season-tab').forEach(b=>b.onclick=()=>{ $$('.season-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderSeasonPublic(b.dataset.id); });
- renderSeasonPublic(publicSeasons[0].id);
+ tabs.innerHTML=publicSeasons.map(x=>`<button class="season-tab" data-id="${x.id}">${esc(x.label)}</button>`).join('');
+ content.innerHTML='<div class="panel muted season-select-prompt">Escolhe uma época para ver a fotografia oficial e o respetivo plantel.</div>';
+ $('.season-tab').forEach(b=>b.onclick=()=>{ $('.season-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderSeasonPublic(b.dataset.id); });
 }
 function renderSeasonPublic(id){
  const season=publicSeasons.find(x=>x.id===id); if(!season)return;

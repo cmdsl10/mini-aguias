@@ -196,7 +196,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <section id="admin" class="alt"><div class="wrap"><div class="ey">Gestão interna</div><h2>Administração</h2>
 <div id="adminAuth" class="panel admin-auth-panel"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full" >Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
 <div id="adminPanel" class="hidden">
-<div class="toolbar admin-topbar"><div><h3>Painel de administração</h3><p class="muted">Gestão do clube, épocas, plantéis e sócios.</p></div><button id="adminLogout" class="btn ghost">Terminar sessão</button></div>
+<div class="toolbar admin-topbar"><div><h3>Painel de administração</h3><p class="muted">Gestão do clube, épocas, plantéis e sócios.</p></div><button id="adminLogout" class="btn ghost hidden">Terminar sessão</button></div>
 <div class="panel admin-members-overview"><div class="toolbar"><div><h3>Painel de Sócios</h3><p class="muted">Dados reais importados do ficheiro de 2026.</p></div><a class="btn primary sm" href="#adminMembersSection">Ver lista de sócios</a></div></div>
 <div class="stats">
 <div class="stat"><span>Sócios ativos</span><strong id="stActive">—</strong></div><div class="stat"><span>Quotas pagas conhecidas</span><strong id="stPaid">—</strong></div><div class="stat"><span>Por atualizar</span><strong id="stUnknown">—</strong></div><div class="stat"><span>Média idades</span><strong id="stAge">—</strong></div><div class="stat"><span>Com email</span><strong id="stEmail">—</strong></div><div class="stat"><span>Com foto</span><strong id="stPhoto">—</strong></div><div class="stat"><span>Contas ativas</span><strong id="stLinked">—</strong></div>
@@ -356,15 +356,16 @@ async function loadPublic(){
  const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
  $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  renderSeasonTabs();
- const games=g.data||[];
+ const games=(g.data||[]).filter(x=>x?.game_date);
  const featuredGame=games[0];
+ const gameMedia=$('#nextGameSpotlight .home-highlight-media');
  if(featuredGame&&featuredGame.poster_url){
-   $('#nextGameSpotlight .home-highlight-media').innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
+   gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
  }else if(featuredGame){
    const d=new Date(featuredGame.game_date), date=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long'}), time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-   $('#nextGameSpotlight .home-highlight-media').innerHTML=`<div class="auto-game-poster"><div class="auto-game-kicker">PRÓXIMO JOGO</div><div class="auto-game-vs"><span>G.D. MINI-ÁGUIAS</span><b>VS</b><span>${esc(featuredGame.opponent)}</span></div><div class="auto-game-details"><strong>${esc(date)}</strong><span>•</span><strong>${esc(time)}</strong></div><div class="auto-game-venue">${esc(featuredGame.venue||'Local a confirmar')}</div><div class="auto-game-note">Futebol Masters</div></div>`;
+   gameMedia.innerHTML=`<div class="auto-game-poster"><div class="auto-game-kicker">PRÓXIMO JOGO</div><div class="auto-game-vs"><span>G.D. MINI-ÁGUIAS</span><b>VS</b><span>${esc(featuredGame.opponent)}</span></div><div class="auto-game-details"><strong>${esc(date)}</strong><span>•</span><strong>${esc(time)}</strong></div><div class="auto-game-venue">${esc(featuredGame.venue||'Local a confirmar')}</div><div class="auto-game-note">Futebol Masters</div></div>`;
  }else{
-   $('#nextGameSpotlight .home-highlight-media').innerHTML='<div class="home-highlight-placeholder">Próximo jogo ainda não definido</div>';
+   gameMedia.innerHTML='<div class="home-highlight-placeholder">Próximo jogo ainda não definido</div>';
  }
  $('#gamesGrid').innerHTML=games.length?games.map(x=>`<div class="card"><b>Mini-Águias ${x.home_game?'vs':'@'} ${esc(x.opponent)}</b><p>${new Date(x.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</p><p class="muted">${esc(x.venue||'Local a confirmar')}</p></div>`).join(''):'<div class="card muted">Calendário em atualização.</div>';
 }
@@ -573,7 +574,7 @@ db.auth.onAuthStateChange(async(event,session)=>{
 })();
 </script>
 <script src="content.js"></script>
-<script>(async()=>{await loadPublic();await routeSession()})();</script>
+<script>(async()=>{try{await loadPublic()}catch(err){console.error('Public load error',err)}finally{try{await routeSession()}catch(err){console.error('Session route error',err)}}})();</script>
 <script>
 // Login admin robusto: eventos ligados após o DOM estar pronto
 (function(){

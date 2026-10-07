@@ -443,7 +443,7 @@ function renderSeasonTabs(){
  const tabs=$('#seasonTabs'), content=$('#seasonContent');
  if(!publicSeasons.length){tabs.innerHTML='';content.innerHTML='<div class="panel muted">Arquivo de épocas em preparação.</div>';return}
  tabs.innerHTML=publicSeasons.map(x=>`<button class="season-tab" data-id="${x.id}">${esc(x.label)}</button>`).join('');
- $('.season-tab').forEach(b=>b.onclick=()=>{ $('.season-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderSeasonPublic(b.dataset.id); });
+ document.querySelectorAll('.season-tab').forEach(b=>b.onclick=()=>{ document.querySelectorAll('.season-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderSeasonPublic(b.dataset.id); });
  const initial=publicSeasons.find(x=>x.current_season)||publicSeasons[0];
  const initialTab=tabs.querySelector(`[data-id="${initial.id}"]`);
  if(initialTab)initialTab.classList.add('active');

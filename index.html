@@ -388,10 +388,12 @@ function renderSeasonTabs(){
 function rosterGroup(x){
  const p=String(x.position||'').toLowerCase();
  if((x.member_type||'player')==='staff')return 'staff';
- if(p.includes('guarda'))return 'Guarda-redes';
- if(p.includes('defesa'))return 'Defesas';
- if(p.includes('médio')||p.includes('medio'))return 'Médios';
- if(p.includes('avançado')||p.includes('avancado')||p.includes('ponta'))return 'Avançados';
+ // Em posições mistas, usa-se a primeira posição indicada como posição principal.
+ const primary=p.split('/')[0].trim();
+ if(primary.includes('guarda'))return 'Guarda-redes';
+ if(primary.includes('defesa'))return 'Defesas';
+ if(primary.includes('médio')||primary.includes('medio'))return 'Médios';
+ if(primary.includes('avançado')||primary.includes('avancado')||primary.includes('ponta'))return 'Avançados';
  return 'Outros';
 }
 function playerCard(x){

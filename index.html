@@ -95,6 +95,12 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 .mt-10{margin-top:10px}.card-kicker{font-size:11px}.muted-80{opacity:.8}.muted-75{opacity:.75}.section-divider{border:0;border-top:1px solid var(--line);margin:18px 0}.card-disabled-notice{background:#fff;color:#073b7a}
 
 .roster-section{margin-top:18px}.roster-section:first-child{margin-top:8px}.roster-section-title{margin:0 0 10px;padding:8px 11px;border-left:4px solid var(--yellow);background:#f6f8fb;color:var(--blue);border-radius:7px;font-size:16px}.roster-section .roster-grid{margin-bottom:14px}.staff-grid .player-card{border-top:3px solid var(--yellow)}
+
+/* Navegacao por vistas: evita o scroll infinito entre areas do site */
+body.js-section-nav main > section{display:none}
+body.js-section-nav main > section.site-view-active{display:block}
+body.js-section-nav main > section#inicio.site-view-active + section#novidades{display:block}
+nav a.site-nav-active{color:var(--yellow)}
 </style>
 <link rel="stylesheet" href="content.css">
 
@@ -618,4 +624,46 @@ db.auth.onAuthStateChange(async(event,session)=>{
  }
  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',bindAdminLogin);else bindAdminLogin();
 })();
-</script></body></html>
+</script>
+<script>
+(function(){
+  const homeIds = new Set(['inicio','novidades']);
+  const publicViews = new Set(['inicio','clube','futebol','pesca','galeria','socios','area-socio','admin']);
+
+  function targetFromHash(){
+    const id=(location.hash||'#inicio').slice(1);
+    return publicViews.has(id) ? id : 'inicio';
+  }
+
+  function showView(id, scrollTop){
+    document.body.classList.add('js-section-nav');
+    document.querySelectorAll('main > section').forEach(function(section){
+      const active = id === 'inicio' ? homeIds.has(section.id) : section.id === id;
+      section.classList.toggle('site-view-active', active);
+    });
+    document.querySelectorAll('header nav a[href^="#"]').forEach(function(link){
+      const linkId=link.getAttribute('href').slice(1);
+      link.classList.toggle('site-nav-active', linkId === id || (id === 'inicio' && linkId === 'inicio'));
+    });
+    if(scrollTop) window.scrollTo({top:0,behavior:'auto'});
+  }
+
+  document.addEventListener('DOMContentLoaded',function(){
+    showView(targetFromHash(),false);
+    document.querySelectorAll('a[href^="#"]').forEach(function(link){
+      link.addEventListener('click',function(){
+        const id=this.getAttribute('href').slice(1);
+        if(!publicViews.has(id) && id !== 'novidades') return;
+        if(id === 'novidades'){
+          showView('inicio',true);
+          setTimeout(function(){ document.getElementById('novidades')?.scrollIntoView(); },0);
+          return;
+        }
+        showView(id,true);
+      });
+    });
+  });
+  window.addEventListener('hashchange',function(){ showView(targetFromHash(),true); });
+})();
+</script>
+</body></html>

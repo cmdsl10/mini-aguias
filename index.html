@@ -196,7 +196,8 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <section id="admin" class="alt"><div class="wrap"><div class="ey">Gestão interna</div><h2>Administração</h2>
 <div id="adminAuth" class="panel admin-auth-panel"><p>Área reservada à direção.</p><form id="adminLogin" class="form-grid"><label>Email<input name="email" type="email" value="gdminiaguias@hotmail.com" required></label><label>Palavra-passe<input name="password" type="password" required></label><button id="adminLoginButton" type="button" class="btn primary full" >Entrar na administração</button><div id="adminLoginMsg" class="full"></div></form></div>
 <div id="adminPanel" class="hidden">
-<div class="toolbar"><div><h3>Painel de Sócios</h3><p class="muted">Dados reais importados do ficheiro de 2026.</p></div><button id="adminLogout" class="btn ghost">Terminar sessão</button></div>
+<div class="toolbar admin-topbar"><div><h3>Painel de administração</h3><p class="muted">Gestão do clube, épocas, plantéis e sócios.</p></div><button id="adminLogout" class="btn ghost">Terminar sessão</button></div>
+<div class="panel admin-members-overview"><div class="toolbar"><div><h3>Painel de Sócios</h3><p class="muted">Dados reais importados do ficheiro de 2026.</p></div><a class="btn primary sm" href="#adminMembersSection">Ver lista de sócios</a></div></div>
 <div class="stats">
 <div class="stat"><span>Sócios ativos</span><strong id="stActive">—</strong></div><div class="stat"><span>Quotas pagas conhecidas</span><strong id="stPaid">—</strong></div><div class="stat"><span>Por atualizar</span><strong id="stUnknown">—</strong></div><div class="stat"><span>Média idades</span><strong id="stAge">—</strong></div><div class="stat"><span>Com email</span><strong id="stEmail">—</strong></div><div class="stat"><span>Com foto</span><strong id="stPhoto">—</strong></div><div class="stat"><span>Contas ativas</span><strong id="stLinked">—</strong></div>
 </div>
@@ -292,7 +293,7 @@ header{background:linear-gradient(100deg,#062842 0%,#073b61 55%,#082f4e 100%)}
 <button class="btn primary full">Guardar fotografia</button><div id="galleryUploadMsg" class="full"></div>
 </form><div id="adminGalleryList" class="season-gallery mt-16"></div>
 </div>
-<div class="admin-grid">
+<div class="admin-grid" id="adminMembersSection">
 <div class="panel">
 <div class="toolbar"><div><h3>Lista de sócios</h3><div id="coverageText" class="muted"></div></div><input id="memberSearch" class="search" placeholder="Pesquisar nome ou nº de sócio"></div>
 <div class="table-wrap"><table><thead><tr><th>Nº</th><th>Nome</th><th>Email</th><th>Quota 2026</th><th>Conta</th></tr></thead><tbody id="membersBody"></tbody></table></div>
@@ -421,6 +422,9 @@ $('#printCard').onclick=()=>window.print();
 async function loadAdmin(keepSelectedId=null){
  $('#adminAuth').classList.add('hidden');$('#adminPanel').classList.remove('hidden');$('#memberAuth').classList.add('hidden');
  const [m,d,s,b,se,pl,ga,fi,ch]=await Promise.all([db.from('members').select('*').order('member_number'),db.from('dues').select('*'),db.rpc('admin_member_stats',{target_year:year}),db.rpc('admin_upcoming_birthdays',{days_ahead:30}),db.from('seasons').select('*').order('sort_order').order('start_year',{ascending:false}),db.from('players').select('*').order('sort_order').order('full_name'),db.from('gallery_items').select('*').order('created_at',{ascending:false}),db.from('fishing_content').select('*').order('sort_order').order('created_at',{ascending:false}),db.from('club_history').select('*').eq('id','main').maybeSingle()]);
+ const critical=[['sócios',m],['quotas',d],['épocas',se],['plantel',pl]];
+ const failed=critical.filter(([,r])=>r.error);
+ if(failed.length){console.error('Admin load errors',failed.map(([name,r])=>({name,error:r.error})));const box=$('#membersBody');if(box)box.innerHTML=`<tr><td colspan="5"><div class="notice">Não foi possível carregar todos os dados administrativos. Atualiza a página; se continuar, termina a sessão e entra novamente.</div></td></tr>`;}
  adminMembers=m.data||[];adminDues=d.data||[];adminSeasons=se.data||[];adminPlayers=pl.data||[];const st=(s.data||[])[0]||{};
  $('#stActive').textContent=st.active_members??0;$('#stPaid').textContent=`${st.dues_paid??0} (${st.paid_percentage_known??0}%)`;$('#stUnknown').textContent=st.dues_unknown??0;$('#stAge').textContent=st.average_age?st.average_age+' anos':'—';$('#stEmail').textContent=st.members_with_email??0;$('#stPhoto').textContent=st.members_with_photo??0;$('#stLinked').textContent=st.linked_accounts??0;
  $('#coverageText').textContent=`Cobertura das quotas de ${year}: ${st.records_coverage_percentage??0}% dos sócios ativos têm estado registado.`;

@@ -101,6 +101,23 @@ body.js-section-nav main > section{display:none}
 body.js-section-nav main > section.site-view-active{display:block}
 body.js-section-nav main > section#inicio.site-view-active + section#novidades{display:block}
 nav a.site-nav-active{color:var(--yellow)}
+
+/* Mobile menu V4 */
+.mobile-menu-toggle{display:none}
+@media(max-width:800px){
+ header .wrap.header{display:flex!important;flex-direction:row!important;align-items:center!important;justify-content:space-between!important;padding:8px 14px!important;min-height:62px!important;position:relative}
+ header .brand{margin:0!important}
+ .mobile-menu-toggle{display:grid;place-items:center;width:42px;height:42px;border:1px solid var(--gold-light);border-radius:9px;background:#082b46;color:#fff;font-size:24px;line-height:1;cursor:pointer}
+ header nav#siteNav{display:none!important;position:absolute!important;top:100%!important;left:0!important;right:0!important;grid-template-columns:1fr!important;gap:0!important;width:100%!important;padding:8px 14px 14px!important;background:#082b46!important;border-bottom:2px solid var(--yellow)!important;box-shadow:0 10px 22px #071f3433!important}
+ header nav#siteNav.mobile-open{display:grid!important}
+ header nav#siteNav a{display:block!important;width:100%!important;padding:12px 10px!important;font-size:15px!important;border-bottom:1px solid #ffffff1f!important}
+ header nav#siteNav .nav-cta{grid-column:auto!important;grid-row:auto!important;margin:7px 0!important;text-align:left!important}
+ header nav#siteNav .admin-nav{grid-column:auto!important;grid-row:auto!important;justify-self:start!important;width:42px!important;height:42px!important;margin:6px 0 0!important;border-bottom:1px solid var(--gold-light)!important}
+ header nav#siteNav button.admin-nav{display:grid!important}
+}
+body.js-section-nav{min-height:100vh;display:flex;flex-direction:column}
+body.js-section-nav main{flex:0 0 auto}
+body.js-section-nav footer{margin-top:25px}
 </style>
 <link rel="stylesheet" href="content.css">
 
@@ -128,7 +145,7 @@ nav a.site-nav-active{color:var(--yellow)}
 <header>
 <div class="wrap header">
 <a class="brand" href="#inicio"><img class="club-logo" src="assets/club-logo-approved.png" alt="Emblema G.D. Mini Águias"><div><b>MINI-ÁGUIAS</b><small>Grupo Desportivo</small></div></a>
-<nav><a href="#inicio">Início</a><a href="#clube">Clube</a><a href="#futebol">Futebol</a><a href="#pesca">Pesca</a><a href="#galeria">Galeria</a><a href="#socios">Sócios</a><a class="nav-cta" href="#area-socio">Área de Sócio</a><a class="admin-nav" href="#admin" title="Administração" aria-label="Administração">🔐</a><button id="headerAdminLogout" class="admin-nav hidden" type="button" title="Terminar sessão" aria-label="Terminar sessão">↪</button></nav>
+<button id="mobileMenuToggle" class="mobile-menu-toggle" type="button" aria-label="Abrir menu" aria-expanded="false">☰</button><nav id="siteNav"><a href="#inicio">Início</a><a href="#clube">Clube</a><a href="#futebol">Futebol</a><a href="#pesca">Pesca</a><a href="#galeria">Galeria</a><a href="#socios">Sócios</a><a class="nav-cta" href="#area-socio">Área de Sócio</a><a class="admin-nav" href="#admin" title="Administração" aria-label="Administração">🔐</a><button id="headerAdminLogout" class="admin-nav hidden" type="button" title="Terminar sessão" aria-label="Terminar sessão">↪</button></nav>
 </div>
 </header>
 <main>
@@ -650,6 +667,22 @@ db.auth.onAuthStateChange(async(event,session)=>{
 
   document.addEventListener('DOMContentLoaded',function(){
     showView(targetFromHash(),false);
+    const menuToggle=document.getElementById('mobileMenuToggle');
+    const siteNav=document.getElementById('siteNav');
+    if(menuToggle && siteNav){
+      menuToggle.addEventListener('click',function(){
+        const open=siteNav.classList.toggle('mobile-open');
+        menuToggle.setAttribute('aria-expanded',String(open));
+        menuToggle.textContent=open?'×':'☰';
+      });
+      siteNav.querySelectorAll('a').forEach(function(link){
+        link.addEventListener('click',function(){
+          siteNav.classList.remove('mobile-open');
+          menuToggle.setAttribute('aria-expanded','false');
+          menuToggle.textContent='☰';
+        });
+      });
+    }
     document.querySelectorAll('a[href^="#"]').forEach(function(link){
       link.addEventListener('click',function(){
         const id=this.getAttribute('href').slice(1);

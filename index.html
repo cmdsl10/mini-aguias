@@ -580,7 +580,7 @@ async function routeSession(){
  const user=session?.user;
  if(!user)return;
  if(user.app_metadata?.role==='admin'){
-   setAdminUi(true);location.hash='admin';
+   setAdminUi(true);
    try{await loadAdmin()}catch(err){console.error('Admin load error',err)}
    try{if(window.loadContentAdmin)await window.loadContentAdmin()}catch(err){console.error('Content admin load error',err)}
    return;

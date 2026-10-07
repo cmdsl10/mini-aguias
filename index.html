@@ -362,15 +362,17 @@ async function loadPublic(){
  const games=(g.data||[]).filter(x=>x?.game_date&&x.opponent!=='Destaque livre');
  const featuredGame=games[0];
  const homeFeature=(g.data||[]).find(x=>x?.home_feature&&x?.poster_url);
+ // O destaque manual da Home nunca deve substituir o próximo jogo real.
+ // Só é usado quando não existe nenhum jogo futuro no calendário.
  const gameMedia=$('#nextGameSpotlight .home-highlight-media');
  if(!gameMedia){console.warn('Área do próximo jogo não encontrada.');}
  else if(featuredGame&&featuredGame.poster_url){
    gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
- }else if(homeFeature){
-   gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(homeFeature.poster_url)}" alt="Cartaz do próximo jogo">`;
  }else if(gameMedia&&featuredGame){
    const d=new Date(featuredGame.game_date), date=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long'}), time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
    gameMedia.innerHTML=`<div class="auto-game-poster"><div class="auto-game-kicker">PRÓXIMO JOGO</div><div class="auto-game-vs"><span>G.D. MINI-ÁGUIAS</span><b>VS</b><span>${esc(featuredGame.opponent)}</span></div><div class="auto-game-details"><strong>${esc(date)}</strong><span>•</span><strong>${esc(time)}</strong></div><div class="auto-game-venue">${esc(featuredGame.venue||'Local a confirmar')}</div><div class="auto-game-note">Futebol Masters</div></div>`;
+ }else if(gameMedia&&homeFeature){
+   gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(homeFeature.poster_url)}" alt="Destaque de futebol">`;
  }else if(gameMedia){
    gameMedia.innerHTML='<div class="home-highlight-placeholder">Próximo jogo ainda não definido</div>';
  }
@@ -509,7 +511,7 @@ $('#saveNextGamePoster').onclick=async()=>{
  const file=$('#nextGamePosterInput').files[0];
  if(!file){msg($('#nextGamePosterMsg'),'Escolhe primeiro uma imagem.','error');return}
  try{
-   const q=await db.from('games').select('*').gte('game_date',new Date().toISOString()).order('game_date').limit(1);
+   const q=await db.from('games').select('*').gte('game_date',new Date().toISOString()).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(1);
    if(q.error)throw q.error;
    const game=q.data?.[0];
    if(!game){msg($('#nextGamePosterMsg'),'Ainda não existe um próximo jogo no calendário.','error');return}

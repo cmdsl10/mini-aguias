@@ -22,6 +22,7 @@ section{padding:54px 0}.alt{background:#eaf0f7}h2{font-size:32px;margin:5px 0 20
 .portal-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}.portal-tabs button.active{background:var(--blue);color:#fff}
 .member-layout{display:grid;grid-template-columns:360px 1fr;gap:20px;align-items:start}
 .digital-card{position:relative;overflow:hidden;min-height:225px;border-radius:20px;background:linear-gradient(135deg,#073b7a 0 58%,#0b4e9e 58% 100%);color:#fff;padding:20px;box-shadow:0 18px 40px #073b7a33}.digital-card:after{content:"";position:absolute;width:210px;height:210px;border-radius:50%;background:var(--yellow);right:-115px;bottom:-120px;opacity:.95}.card-top{display:flex;align-items:center;gap:10px;position:relative;z-index:2}.card-top img{width:45px;height:58px;object-fit:contain;background:#fff;border-radius:7px;padding:2px}.card-body{display:flex;gap:16px;margin-top:18px;position:relative;z-index:2}.member-photo{width:92px;height:110px;border-radius:12px;object-fit:cover;background:#fff;border:3px solid #fff}.photo-placeholder{width:92px;height:110px;border-radius:12px;background:#dce6f4;color:#54708d;display:grid;place-items:center;font-size:33px;border:3px solid #fff}.card-name{font-size:20px;font-weight:900;margin:2px 0}.card-number{font-size:17px;font-weight:800;color:#ffe88e}.card-foot{position:absolute;left:132px;bottom:18px;font-size:12px;opacity:.85;z-index:2}
+.standings-us{background:#fff6c7}.standings-us td{font-weight:700}
 .dues-list{display:grid;gap:9px}.due-row{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:1px solid var(--line);padding:10px 0}.due-row:last-child{border-bottom:0}
 .stats{display:grid;grid-template-columns:repeat(7,1fr);gap:10px;margin:15px 0}.stat{background:#fff;border:1px solid var(--line);padding:13px;border-radius:13px}.stat span{display:block;color:var(--muted);font-size:12px}.stat strong{display:block;color:var(--blue);font-size:25px;margin-top:3px}
 .admin-grid{display:grid;grid-template-columns:1.15fr .85fr;gap:18px}.toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}.search{max-width:380px}
@@ -414,14 +415,14 @@ const db=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,auto
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const year=new Date().getFullYear();
-let adminMembers=[], adminDues=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], publicMasterGames=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
+let adminMembers=[], adminDues=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], publicMasterGames=[], publicMasterStandings=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
 
 function msg(el,text,type='notice'){el.innerHTML=text?`<div class="${type}">${esc(text)}</div>`:''}
 function dueLabel(status){return status==='paid'?'<span class="pill green">Paga</span>':status==='pending'?'<span class="pill red">Pendente</span>':status==='exempt'?'<span class="pill">Isento</span>':'<span class="pill gray">Por atualizar</span>'}
 async function signedPhoto(path){if(!path)return null;const r=await db.storage.from('member-photos').createSignedUrl(path,3600);return r.data?.signedUrl||null}
 async function loadPublic(){
  const eventImg=$('#eventHomeImage');if(eventImg){const er=await db.from('site_settings').select('value').eq('key','home_event_image').maybeSingle();if(er.data?.value){eventImg.src=er.data.value}else{eventImg.removeAttribute('src');eventImg.alt='Evento em atualização'}}
- const [t,p,g,se,sp,ga,fi,ch,mg]=await Promise.all([
+ const [t,p,g,se,sp,ga,fi,ch,mg,st]=await Promise.all([
   db.from('teams').select('id,slug'),
   db.from('players').select('*').eq('active',true).order('sort_order'),
   db.from('games').select('*').gte('game_date',new Date().toISOString()).order('game_date',{ascending:true}).limit(4),
@@ -430,10 +431,11 @@ async function loadPublic(){
   db.from('gallery_items').select('*').eq('published',true).order('sort_order').order('event_date',{ascending:false}),
   db.from('fishing_content').select('*').eq('published',true).order('sort_order').order('created_at',{ascending:false}),
   db.from('club_history').select('*').eq('id','main').maybeSingle(),
-  db.from('games').select('*').order('game_date',{ascending:true})
+  db.from('games').select('*').order('game_date',{ascending:true}),
+  db.from('masters_standings').select('*').eq('season','2026/2027').eq('series','2').order('position',{ascending:true})
  ]);
  masterTeamId=(t.data||[]).find(x=>x.slug==='masters')?.id;
- publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[]; publicMasterGames=(mg.data||[]).filter(x=>x.team_id===masterTeamId);
+ publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[]; publicMasterGames=(mg.data||[]).filter(x=>x.team_id===masterTeamId); publicMasterStandings=st.data||[];
  const galleryItems=ga.data||[]; $('#galleryGrid').innerHTML=galleryItems.length?galleryItems.map(x=>`<article class="player-card"><img class="season-official" src="${esc(x.image_url)}" alt="${esc(x.title||'Fotografia do clube')}"><div><h4>${esc(x.title||'Mini-Águias')}</h4>${x.category?`<div class="muted">${esc(x.category)}</div>`:''}${x.description?`<p>${esc(x.description)}</p>`:''}</div></article>`).join(''):'<div class="panel muted">Ainda não existem fotografias publicadas.</div>';
  const fishingItems=fi.data||[]; $('#fishingContent').innerHTML=fishingItems.length?fishingItems.map(x=>`<article class="card"><h3>${esc(x.title)}</h3>${x.body?`<p>${esc(x.body).replace(/\n/g,'<br>')}</p>`:''}</article>`).join(''):'<div class="card"><h3>Secção em preparação</h3><p class="muted">Atletas, provas, calendário e resultados serão adicionados progressivamente.</p></div>';
  if(ch.data?.published){$('#clubHistory').innerHTML=`<h2>${esc(ch.data.title)}</h2><p>${esc(ch.data.body).replace(/\n/g,'<br>')}</p>`}
@@ -494,6 +496,12 @@ function mastersCalendarHtml(season){
  const now=new Date(),next=games.find(x=>new Date(x.game_date)>=now);
  return `<div class="masters-calendar"><div class="masters-calendar-head"><div><div class="ey">AF Porto · 2.ª Divisão · Série 2</div><h3>Calendário e resultados</h3></div><div class="masters-calendar-note">Os horários assinalados como provisórios são atualizados quando a informação oficial é publicada.</div></div><div class="masters-fixtures">${games.map(x=>{const d=new Date(x.game_date),label=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'}),time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),teams=x.home_game?`G.D. Mini Águias × ${x.opponent}`:`${x.opponent} × G.D. Mini Águias`,played=x.goals_for!==null&&x.goals_against!==null,result=played?(x.home_game?`${x.goals_for} - ${x.goals_against}`:`${x.goals_against} - ${x.goals_for}`):time;return `<div class="masters-fixture ${next&&next.id===x.id?'is-next':''}"><div class="jornada">Jornada ${x.round_no}</div><div class="date">${label}</div><div><div class="match">${esc(teams)}</div><div class="venue">${esc(x.venue||'Local a confirmar')}</div></div><div class="fixture-time"><strong>${result}</strong><div class="${played?'time-confirmed':x.time_confirmed?'time-confirmed':'time-provisional'}">${played?'Resultado':x.time_confirmed?'Confirmado':'Provisório'}</div></div></div>`}).join('')}</div></div>`;
 }
+function mastersStandingsHtml(season){
+ if(String(season.label).replace(/\s/g,'')!=='26/27'||!publicMasterStandings.length)return '';
+ const rows=publicMasterStandings.slice().sort((a,b)=>(a.position||99)-(b.position||99));
+ const started=rows.some(x=>x.played>0);
+ return `<div class="masters-calendar"><div class="masters-calendar-head"><div><div class="ey">AF Porto · 2.ª Divisão · Série 2</div><h3>Classificação</h3></div><div class="masters-calendar-note">${started?'Atualizada a partir dos resultados oficiais.':'Campeonato ainda não iniciado.'}</div></div><div class="table-wrap"><table><thead><tr><th>Pos.</th><th>Equipa</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GM</th><th>GS</th><th>Pts</th></tr></thead><tbody>${rows.map(x=>`<tr${x.team_name==='G.D. Mini Águias'?' class="standings-us"':''}><td><b>${x.position||'-'}</b></td><td>${esc(x.team_name)}</td><td>${x.played}</td><td>${x.wins}</td><td>${x.draws}</td><td>${x.losses}</td><td>${x.goals_for}</td><td>${x.goals_against}</td><td><b>${x.points}</b></td></tr>`).join('')}</tbody></table></div></div>`;
+}
 function renderSeasonPublic(id){
  const season=publicSeasons.find(x=>x.id===id);if(!season)return;
  const roster=publicPlayers.filter(x=>x.season_id===id);
@@ -502,7 +510,7 @@ function renderSeasonPublic(id){
  const groups=['Guarda-redes','Defesas','Médios','Avançados','Outros'];
  const rosterHtml=`${staff.length?`<div class="roster-section"><h4 class="roster-section-title">Staff</h4><div class="roster-grid staff-grid">${staff.map(playerCard).join('')}</div></div>`:''}${groups.map(group=>{const list=players.filter(x=>rosterGroup(x)===group).sort((a,b)=>String(a.full_name).localeCompare(String(b.full_name),'pt'));return list.length?`<div class="roster-section"><h4 class="roster-section-title">${group}</h4><div class="roster-grid">${list.map(playerCard).join('')}</div></div>`:''}).join('')}`;
  const photos=publicSeasonPhotos.filter(x=>x.season_id===id),official=season.official_photo_url||photos.find(x=>x.photo_type==='official')?.image_url,gallery=photos.filter(x=>x.photo_type==='gallery');
- $('#seasonContent').innerHTML=`<div class="season-hero"><div>${official?`<img class="season-official" src="${esc(official)}" alt="Foto oficial época ${esc(season.label)}">`:'<div class="panel muted">Foto oficial ainda não publicada.</div>'}${gallery.length?`<div class="season-gallery">${gallery.map(x=>`<img src="${esc(x.image_url)}" alt="${esc(x.title||'Foto da época '+season.label)}">`).join('')}</div>`:''}</div><div class="panel"><span class="pill">${season.current_season?'Época atual':'Arquivo'}</span><h3 class="mt-10">Época ${esc(season.label)}</h3>${season.description?`<p>${esc(season.description)}</p>`:''}<h4>Equipa Masters</h4>${rosterHtml||'<div class="muted">Plantel em atualização.</div>'}</div></div>${mastersCalendarHtml(season)}`;
+ $('#seasonContent').innerHTML=`<div class="season-hero"><div>${official?`<img class="season-official" src="${esc(official)}" alt="Foto oficial época ${esc(season.label)}">`:'<div class="panel muted">Foto oficial ainda não publicada.</div>'}${gallery.length?`<div class="season-gallery">${gallery.map(x=>`<img src="${esc(x.image_url)}" alt="${esc(x.title||'Foto da época '+season.label)}">`).join('')}</div>`:''}</div><div class="panel"><span class="pill">${season.current_season?'Época atual':'Arquivo'}</span><h3 class="mt-10">Época ${esc(season.label)}</h3>${season.description?`<p>${esc(season.description)}</p>`:''}<h4>Equipa Masters</h4>${rosterHtml||'<div class="muted">Plantel em atualização.</div>'}</div></div>${mastersCalendarHtml(season)}${mastersStandingsHtml(season)}`;
 }
 
 $('#applicationForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target);const r=await db.from('membership_applications').insert({full_name:f.get('full_name'),birth_date:f.get('birth_date')||null,phone:f.get('phone')||null,email:f.get('email')||null,address:f.get('address')||null,postal_code:f.get('postal_code')||null,locality:f.get('locality')||null,consent_privacy:true,status:'pending'});msg($('#applicationMsg'),r.error?'Não foi possível enviar o pedido.':'Pedido enviado para validação. Obrigado.',r.error?'error':'success');if(!r.error)e.target.reset()});

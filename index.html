@@ -414,14 +414,14 @@ const db=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,auto
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const year=new Date().getFullYear();
-let adminMembers=[], adminDues=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
+let adminMembers=[], adminDues=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], publicMasterGames=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
 
 function msg(el,text,type='notice'){el.innerHTML=text?`<div class="${type}">${esc(text)}</div>`:''}
 function dueLabel(status){return status==='paid'?'<span class="pill green">Paga</span>':status==='pending'?'<span class="pill red">Pendente</span>':status==='exempt'?'<span class="pill">Isento</span>':'<span class="pill gray">Por atualizar</span>'}
 async function signedPhoto(path){if(!path)return null;const r=await db.storage.from('member-photos').createSignedUrl(path,3600);return r.data?.signedUrl||null}
 async function loadPublic(){
  const eventImg=$('#eventHomeImage');if(eventImg){const er=await db.from('site_settings').select('value').eq('key','home_event_image').maybeSingle();if(er.data?.value){eventImg.src=er.data.value}else{eventImg.removeAttribute('src');eventImg.alt='Evento em atualização'}}
- const [t,p,g,se,sp,ga,fi,ch]=await Promise.all([
+ const [t,p,g,se,sp,ga,fi,ch,mg]=await Promise.all([
   db.from('teams').select('id,slug'),
   db.from('players').select('*').eq('active',true).order('sort_order'),
   db.from('games').select('*').gte('game_date',new Date().toISOString()).order('game_date',{ascending:true}).limit(4),
@@ -486,34 +486,12 @@ function playerCard(x){
  const age=x.birth_date?Math.max(0,new Date().getFullYear()-new Date(x.birth_date).getFullYear()-((new Date().getMonth()<new Date(x.birth_date).getMonth()||(new Date().getMonth()===new Date(x.birth_date).getMonth()&&new Date().getDate()<new Date(x.birth_date).getDate()))?1:0)):null;
  return `<div class="player-card">${x.photo_url?`<img class="player-photo" src="${esc(x.photo_url)}" alt="Foto de ${esc(x.full_name)}">`:'<div class="player-photo-placeholder">👤</div>'}<div><h4>${esc(x.full_name)}</h4><div class="muted">${esc(x.position||((x.member_type||'player')==='staff'?'Staff':'Jogador'))}${x.shirt_number?` · Nº ${x.shirt_number}`:''}${age!==null?` · ${age} anos`:''}</div></div></div>`;
 }
-const MASTERS_2627=[
- {j:1,date:'2026-10-17',time:'17:15',home:false,opp:'U.D. Lavrense',venue:'Complexo Desportivo Lavra',confirmed:true},
- {j:2,date:'2026-10-24',time:'19:15',home:true,opp:'A.D.U. Paiço',venue:'Campo do Gatões Futebol Clube',confirmed:true},
- {j:3,date:'2026-10-31',time:'19:15',home:false,opp:'G.D.R. Juv. Ribeiras',venue:'Complexo Desportivo Municipal Leça da Palmeira'},
- {j:4,date:'2026-11-14',time:'19:15',home:true,opp:'C.F. Oliveira Douro',venue:'Campo do Gatões Futebol Clube'},
- {j:5,date:'2026-11-21',time:'19:15',home:false,opp:'C.D. Portugal',venue:'Parque da Cidade - Porto'},
- {j:6,date:'2026-11-28',time:'19:15',home:true,opp:'Gatões F.C.',venue:'Campo do Gatões Futebol Clube'},
- {j:7,date:'2026-12-05',time:'19:15',home:false,opp:'Wolves Paranhos F.C.',venue:'Complexo Desportivo Campanhã'},
- {j:8,date:'2026-12-12',time:'19:15',home:true,opp:'Custóias F.C.',venue:'Campo do Gatões Futebol Clube'},
- {j:9,date:'2026-12-19',time:'19:15',home:false,opp:'G.D.C.S. S. Eugénio',venue:'Complexo Sintético Viso'},
- {j:10,date:'2027-01-16',time:'19:15',home:true,opp:'S.C. Vilar Pinheiro',venue:'Campo do Gatões Futebol Clube'},
- {j:11,date:'2027-01-23',time:'19:15',home:false,opp:'U. Afurandense A.C.R.D.L.',venue:'Estádio C.D. Candal - Sintético'},
- {j:12,date:'2027-01-30',time:'19:15',home:true,opp:'U.D. Lavrense',venue:'Campo do Gatões Futebol Clube'},
- {j:13,date:'2027-02-06',time:'19:15',home:false,opp:'A.D.U. Paiço',venue:'Complexo Municipal de Aveleda'},
- {j:14,date:'2027-02-20',time:'19:15',home:true,opp:'G.D.R. Juv. Ribeiras',venue:'Campo do Gatões Futebol Clube'},
- {j:15,date:'2027-02-27',time:'19:15',home:false,opp:'C.F. Oliveira Douro',venue:'Estádio Clube Futebol Oliveira Douro'},
- {j:16,date:'2027-03-06',time:'19:15',home:true,opp:'C.D. Portugal',venue:'Campo do Gatões Futebol Clube'},
- {j:17,date:'2027-03-13',time:'19:15',home:false,opp:'Gatões F.C.',venue:'Campo do Gatões Futebol Clube'},
- {j:18,date:'2027-03-20',time:'19:15',home:true,opp:'Wolves Paranhos F.C.',venue:'Campo do Gatões Futebol Clube'},
- {j:19,date:'2027-04-03',time:'19:15',home:false,opp:'Custóias F.C.',venue:'Complexo Desportivo Custóias'},
- {j:20,date:'2027-04-10',time:'19:15',home:true,opp:'G.D.C.S. S. Eugénio',venue:'Campo do Gatões Futebol Clube'},
- {j:21,date:'2027-04-17',time:'19:15',home:false,opp:'S.C. Vilar Pinheiro',venue:'Complexo Desportivo S.C. Vilar Pinheiro'},
- {j:22,date:'2027-05-01',time:'19:15',home:true,opp:'U. Afurandense A.C.R.D.L.',venue:'Campo do Gatões Futebol Clube'}
-];
 function mastersCalendarHtml(season){
  if(String(season.label).replace(/\s/g,'')!=='26/27')return '';
- const now=new Date(), next=MASTERS_2627.find(x=>new Date(x.date+'T'+x.time+':00')>=now);
- return `<div class="masters-calendar"><div class="masters-calendar-head"><div><div class="ey">AF Porto · 2.ª Divisão · Série 2</div><h3>Calendário e resultados</h3></div><div class="masters-calendar-note">A partir da 3.ª jornada, 19:15 é horário provisório. Os horários são confirmados/ajustados cerca de duas semanas antes de cada jogo.</div></div><div class="masters-fixtures">${MASTERS_2627.map(x=>{const d=new Date(x.date+'T12:00:00');const label=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'});const teams=x.home?`G.D. Mini Águias × ${x.opp}`:`${x.opp} × G.D. Mini Águias`;return `<div class="masters-fixture ${next&&next.j===x.j?'is-next':''}"><div class="jornada">Jornada ${x.j}</div><div class="date">${label}</div><div><div class="match">${esc(teams)}</div><div class="venue">${esc(x.venue)}</div></div><div class="fixture-time"><strong>${x.time}</strong><div class="${x.confirmed?'time-confirmed':'time-provisional'}">${x.confirmed?'Confirmado':'Provisório'}</div></div></div>`}).join('')}</div></div>`;
+ const games=publicMasterGames.filter(x=>x.round_no).sort((a,b)=>a.round_no-b.round_no);
+ if(!games.length)return '<div class="panel muted">Calendário em atualização.</div>';
+ const now=new Date(),next=games.find(x=>new Date(x.game_date)>=now);
+ return `<div class="masters-calendar"><div class="masters-calendar-head"><div><div class="ey">AF Porto · 2.ª Divisão · Série 2</div><h3>Calendário e resultados</h3></div><div class="masters-calendar-note">Os horários assinalados como provisórios são atualizados quando a informação oficial é publicada.</div></div><div class="masters-fixtures">${games.map(x=>{const d=new Date(x.game_date),label=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short',year:'numeric'}),time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}),teams=x.home_game?`G.D. Mini Águias × ${x.opponent}`:`${x.opponent} × G.D. Mini Águias`,played=x.goals_for!==null&&x.goals_against!==null,result=played?(x.home_game?`${x.goals_for} - ${x.goals_against}`:`${x.goals_against} - ${x.goals_for}`):time;return `<div class="masters-fixture ${next&&next.id===x.id?'is-next':''}"><div class="jornada">Jornada ${x.round_no}</div><div class="date">${label}</div><div><div class="match">${esc(teams)}</div><div class="venue">${esc(x.venue||'Local a confirmar')}</div></div><div class="fixture-time"><strong>${result}</strong><div class="${played?'time-confirmed':x.time_confirmed?'time-confirmed':'time-provisional'}">${played?'Resultado':x.time_confirmed?'Confirmado':'Provisório'}</div></div></div>`}).join('')}</div></div>`;
 }
 function renderSeasonPublic(id){
  const season=publicSeasons.find(x=>x.id===id);if(!season)return;

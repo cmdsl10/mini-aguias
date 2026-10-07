@@ -356,15 +356,16 @@ async function loadPublic(){
  const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
  $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  renderSeasonTabs();
- const games=(g.data||[]).filter(x=>x?.game_date);
+ const games=(g.data||[]).filter(x=>x?.game_date&&x.opponent!=='Destaque livre');
  const featuredGame=games[0];
  const gameMedia=$('#nextGameSpotlight .home-highlight-media');
- if(featuredGame&&featuredGame.poster_url){
+ if(!gameMedia){console.warn('Área do próximo jogo não encontrada.');}
+ else if(featuredGame&&featuredGame.poster_url){
    gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
- }else if(featuredGame){
+ }else if(gameMedia&&featuredGame){
    const d=new Date(featuredGame.game_date), date=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long'}), time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
    gameMedia.innerHTML=`<div class="auto-game-poster"><div class="auto-game-kicker">PRÓXIMO JOGO</div><div class="auto-game-vs"><span>G.D. MINI-ÁGUIAS</span><b>VS</b><span>${esc(featuredGame.opponent)}</span></div><div class="auto-game-details"><strong>${esc(date)}</strong><span>•</span><strong>${esc(time)}</strong></div><div class="auto-game-venue">${esc(featuredGame.venue||'Local a confirmar')}</div><div class="auto-game-note">Futebol Masters</div></div>`;
- }else{
+ }else if(gameMedia){
    gameMedia.innerHTML='<div class="home-highlight-placeholder">Próximo jogo ainda não definido</div>';
  }
  $('#gamesGrid').innerHTML=games.length?games.map(x=>`<div class="card"><b>Mini-Águias ${x.home_game?'vs':'@'} ${esc(x.opponent)}</b><p>${new Date(x.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</p><p class="muted">${esc(x.venue||'Local a confirmar')}</p></div>`).join(''):'<div class="card muted">Calendário em atualização.</div>';

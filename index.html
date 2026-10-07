@@ -118,6 +118,44 @@ nav a.site-nav-active{color:var(--yellow)}
 body.js-section-nav{min-height:100vh;display:flex;flex-direction:column}
 body.js-section-nav main{flex:0 0 auto}
 body.js-section-nav footer{margin-top:25px}
+
+/* Futebol / Masters V2 */
+#futebol{background:linear-gradient(180deg,#f7f5ef 0%,#eef2f5 100%)}
+.futebol-head{display:flex;justify-content:space-between;align-items:end;gap:18px;margin-bottom:18px}
+.futebol-head h2{margin-bottom:8px}.futebol-head p{margin:0}
+.season-nav-block{display:flex;align-items:center;gap:12px;padding:10px 14px;margin:0 0 18px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.season-nav-label{font-size:12px;text-transform:uppercase;letter-spacing:.12em;font-weight:900;color:var(--blue);white-space:nowrap}
+.season-nav-block .season-tabs{margin:0;flex:1}
+#futebol .season-hero{gap:18px}
+#futebol .season-official{box-shadow:0 10px 30px #082b4612}
+#futebol .season-hero>.panel{border-top:4px solid var(--yellow)}
+#futebol .player-card{padding:10px;border-radius:12px;box-shadow:none}
+#futebol .player-photo,#futebol .player-photo-placeholder{width:68px;height:80px}
+#futebol .player-card h4{font-size:15px;margin-bottom:2px}
+#futebol .player-card .muted{font-size:12px}
+#futebol .roster-section-title{font-size:13px;text-transform:uppercase;letter-spacing:.05em}
+.games-section{margin-top:30px;padding-top:24px;border-top:1px solid var(--line)}
+.section-heading h3{font-size:24px;margin:3px 0 14px}
+#futebol #gamesGrid .card{border-radius:13px;box-shadow:none;border-left:4px solid var(--yellow)}
+@media(max-width:700px){
+ #futebol{padding:28px 0 34px}
+ .futebol-head{margin-bottom:14px}
+ .futebol-head h2{font-size:28px}
+ .season-nav-block{display:block;padding:10px 12px}
+ .season-nav-label{display:block;margin-bottom:7px}
+ #futebol .season-tabs{flex-wrap:nowrap;margin:0}
+ #futebol .season-tab{padding:7px 12px}
+ #futebol .season-hero{gap:12px}
+ #futebol .season-hero>.panel{padding:14px}
+ #futebol .roster-grid{grid-template-columns:1fr 1fr;gap:8px}
+ #futebol .player-card{display:block;padding:8px;text-align:center}
+ #futebol .player-photo,#futebol .player-photo-placeholder{width:100%;height:118px;margin:0 auto 7px}
+ #futebol .player-photo-placeholder{display:grid}
+ #futebol .player-card h4{font-size:14px;line-height:1.2}
+ #futebol .player-card .muted{font-size:11px;line-height:1.25}
+ #futebol .roster-section-title{margin-bottom:8px}
+ .games-section{margin-top:22px;padding-top:18px}
+}
 </style>
 <link rel="stylesheet" href="content.css">
 
@@ -178,11 +216,11 @@ body.js-section-nav footer{margin-top:25px}
 
 <section id="clube" class="alt"><div class="wrap grid2"><div><div class="ey">O Clube</div><div id="clubHistory"><h2>História dos Mini-Águias</h2><p>Espaço preparado para a história, fundação, evolução, direção e momentos marcantes do Grupo Desportivo Mini-Águias.</p></div></div><div class="panel"><h3>Identidade</h3><p><b>Cores:</b> Azul e Amarelo</p><p><b>Modalidades:</b> Futebol Masters e Pesca</p><p><b>Comunidade:</b> Sócios, atletas, famílias e amigos do clube</p></div></div></section>
 
-<section id="futebol"><div class="wrap"><div class="ey">Futebol</div><h2>Masters</h2>
-<p class="muted">Arquivo por épocas. Só são apresentadas as épocas publicadas pela direção.</p>
-<div id="seasonTabs" class="season-tabs"></div>
+<section id="futebol"><div class="wrap futebol-wrap">
+<div class="futebol-head"><div><div class="ey">Futebol</div><h2>Equipa Masters</h2><p class="muted">Plantel, épocas e próximos jogos do G.D. Mini-Águias.</p></div></div>
+<div class="season-nav-block"><span class="season-nav-label">Época</span><div id="seasonTabs" class="season-tabs"></div></div>
 <div id="seasonContent"><div class="panel muted">A carregar épocas…</div></div>
-<div class="mt-24"><h3>Próximos jogos</h3><div id="gamesGrid" class="cards"></div></div>
+<div class="games-section"><div class="section-heading"><div class="ey">Calendário</div><h3>Próximos jogos</h3></div><div id="gamesGrid" class="cards"></div></div>
 </div></section>
 
 <section id="pesca" class="alt"><div class="wrap"><div class="ey">Pesca</div><h2>Secção de Pesca</h2><div id="fishingContent" class="cards"><div class="panel muted">A carregar informação…</div></div></div></section>
@@ -405,8 +443,11 @@ function renderSeasonTabs(){
  const tabs=$('#seasonTabs'), content=$('#seasonContent');
  if(!publicSeasons.length){tabs.innerHTML='';content.innerHTML='<div class="panel muted">Arquivo de épocas em preparação.</div>';return}
  tabs.innerHTML=publicSeasons.map(x=>`<button class="season-tab" data-id="${x.id}">${esc(x.label)}</button>`).join('');
- content.innerHTML='<div class="panel muted season-select-prompt">Escolhe uma época para ver a fotografia oficial e o respetivo plantel.</div>';
- $$('.season-tab').forEach(b=>b.onclick=()=>{ $$('.season-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderSeasonPublic(b.dataset.id); });
+ $('.season-tab').forEach(b=>b.onclick=()=>{ $('.season-tab').forEach(x=>x.classList.remove('active')); b.classList.add('active'); renderSeasonPublic(b.dataset.id); });
+ const initial=publicSeasons.find(x=>x.current_season)||publicSeasons[0];
+ const initialTab=tabs.querySelector(`[data-id="${initial.id}"]`);
+ if(initialTab)initialTab.classList.add('active');
+ renderSeasonPublic(initial.id);
 }
 function rosterGroup(x){
  const p=String(x.position||'').toLowerCase();

@@ -26,10 +26,9 @@
       checked(h); checked(g);
       const version = JSON.stringify([h.data, g.data]);
       if (!force && version === publicVersion) return;
-      const history = $('#historyContent'); history.replaceChildren();
-      history.append(textBlock('div', 'O Clube', 'ey'));
-      if (h.data) history.append(textBlock('h2', h.data.title), textBlock('div', h.data.body, 'content-text'));
-      else history.append(textBlock('h2', 'História do Clube'), textBlock('p', 'História em preparação.'));
+      const history = $('#clubHistory'); if (history) history.replaceChildren();
+      if (history) history.append(textBlock('div', 'O Clube', 'ey'));
+      if (history) { if (h.data) history.append(textBlock('h2', h.data.title), textBlock('div', h.data.body, 'content-text')); else history.append(textBlock('h2', 'História do Clube'), textBlock('p', 'História em preparação.')); }
       revoke(publicUrls);
       const grid = $('#galleryGrid'); grid.replaceChildren();
       if (!g.data.length) grid.append(textBlock('p', 'Novas memórias serão publicadas em breve.', 'muted'));

@@ -429,10 +429,11 @@ async function loadPublic(){
   db.from('season_photos').select('*').eq('visible',true).order('sort_order'),
   db.from('gallery_items').select('*').eq('published',true).order('sort_order').order('event_date',{ascending:false}),
   db.from('fishing_content').select('*').eq('published',true).order('sort_order').order('created_at',{ascending:false}),
-  db.from('club_history').select('*').eq('id','main').maybeSingle()
+  db.from('club_history').select('*').eq('id','main').maybeSingle(),
+  db.from('games').select('*').order('game_date',{ascending:true})
  ]);
  masterTeamId=(t.data||[]).find(x=>x.slug==='masters')?.id;
- publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[];
+ publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[]; publicMasterGames=(mg.data||[]).filter(x=>x.team_id===masterTeamId);
  const galleryItems=ga.data||[]; $('#galleryGrid').innerHTML=galleryItems.length?galleryItems.map(x=>`<article class="player-card"><img class="season-official" src="${esc(x.image_url)}" alt="${esc(x.title||'Fotografia do clube')}"><div><h4>${esc(x.title||'Mini-Águias')}</h4>${x.category?`<div class="muted">${esc(x.category)}</div>`:''}${x.description?`<p>${esc(x.description)}</p>`:''}</div></article>`).join(''):'<div class="panel muted">Ainda não existem fotografias publicadas.</div>';
  const fishingItems=fi.data||[]; $('#fishingContent').innerHTML=fishingItems.length?fishingItems.map(x=>`<article class="card"><h3>${esc(x.title)}</h3>${x.body?`<p>${esc(x.body).replace(/\n/g,'<br>')}</p>`:''}</article>`).join(''):'<div class="card"><h3>Secção em preparação</h3><p class="muted">Atletas, provas, calendário e resultados serão adicionados progressivamente.</p></div>';
  if(ch.data?.published){$('#clubHistory').innerHTML=`<h2>${esc(ch.data.title)}</h2><p>${esc(ch.data.body).replace(/\n/g,'<br>')}</p>`}

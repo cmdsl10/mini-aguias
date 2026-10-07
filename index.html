@@ -445,7 +445,9 @@ async function loadPublic(){
    gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
  }else if(gameMedia&&featuredGame){
    const d=new Date(featuredGame.game_date), date=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long'}), time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-   gameMedia.innerHTML=`<div class="auto-game-poster"><div class="auto-game-kicker">PRÓXIMO JOGO</div><div class="auto-game-vs"><span>G.D. MINI-ÁGUIAS</span><b>VS</b><span>${esc(featuredGame.opponent)}</span></div><div class="auto-game-details"><strong>${esc(date)}</strong><span>•</span><strong>${esc(time)}</strong></div><div class="auto-game-venue">${esc(featuredGame.venue||'Local a confirmar')}</div><div class="auto-game-note">Futebol Masters</div></div>`;
+   const homeTeam=featuredGame.home_game?'G.D. MINI-ÁGUIAS':featuredGame.opponent;
+   const awayTeam=featuredGame.home_game?featuredGame.opponent:'G.D. MINI-ÁGUIAS';
+   gameMedia.innerHTML=`<div class="auto-game-poster"><div class="auto-game-kicker">PRÓXIMO JOGO</div><div class="auto-game-vs"><span>${esc(homeTeam)}</span><b>VS</b><span>${esc(awayTeam)}</span></div><div class="auto-game-details"><strong>${esc(date)}</strong><span>•</span><strong>${esc(time)}</strong></div><div class="auto-game-venue">${esc(featuredGame.venue||'Local a confirmar')}</div><div class="auto-game-note">Futebol Masters</div></div>`;
  }else if(gameMedia&&homeFeature){
    gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(homeFeature.poster_url)}" alt="Destaque de futebol">`;
  }else if(gameMedia){

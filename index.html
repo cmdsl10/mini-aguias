@@ -440,7 +440,10 @@ async function loadPublic(){
  const fishingItems=fi.data||[]; $('#fishingContent').innerHTML=fishingItems.length?fishingItems.map(x=>`<article class="card"><h3>${esc(x.title)}</h3>${x.body?`<p>${esc(x.body).replace(/\n/g,'<br>')}</p>`:''}</article>`).join(''):'<div class="card"><h3>Secção em preparação</h3><p class="muted">Atletas, provas, calendário e resultados serão adicionados progressivamente.</p></div>';
  if(ch.data?.published){$('#clubHistory').innerHTML=`<h2>${esc(ch.data.title)}</h2><p>${esc(ch.data.body).replace(/\n/g,'<br>')}</p>`}
  const firstSeason=publicSeasons[0];
- const mastersPhoto=firstSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===firstSeason?.id&&x.photo_type==='official')?.image_url;
+ // O destaque da Home é independente da foto oficial da época atual.
+ // Se a época atual ainda não tiver foto, usa a foto oficial mais recente disponível.
+ const homeMastersSeason=publicSeasons.find(s=>s.official_photo_url)||publicSeasons.find(s=>publicSeasonPhotos.some(p=>p.season_id===s.id&&p.photo_type==='official'));
+ const mastersPhoto=homeMastersSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===homeMastersSeason?.id&&x.photo_type==='official')?.image_url;
  $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  renderSeasonTabs();
  const games=(g.data||[]).filter(x=>x?.game_date&&x.opponent!=='Destaque livre');

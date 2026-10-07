@@ -11,60 +11,50 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Corrigir interface e plantel
-        shell: python
         run: |
+          python3 <<'PY'
           from pathlib import Path
           import re
           p=Path('index.html')
           s=p.read_text(encoding='utf-8')
-
-          # querySelector devolve um único elemento; os listeners em listas precisam de querySelectorAll.
           s=re.sub(r"(?<!\$)\$\(([^\n]*?)\)\.forEach", r"$$(\1).forEach", s)
-
-          # Estilos para separar staff e jogadores por posição.
           css='''\n.roster-section{margin-top:18px}.roster-section:first-child{margin-top:8px}.roster-section-title{margin:0 0 10px;padding:8px 11px;border-left:4px solid var(--yellow);background:#f6f8fb;color:var(--blue);border-radius:7px;font-size:16px}.roster-section .roster-grid{margin-bottom:14px}.staff-grid .player-card{border-top:3px solid var(--yellow)}\n'''
-          if '.roster-section-title{' not in s:
-              s=s.replace('</style>',css+'</style>',1)
-
+          if '.roster-section-title{' not in s:s=s.replace('</style>',css+'</style>',1)
           start=s.index('function renderSeasonPublic(id){')
           end=s.index("$('#applicationForm').addEventListener", start)
           new_func=r'''function rosterGroup(x){
- const p=String(x.position||'').toLowerCase();
- if((x.member_type||'player')==='staff')return 'staff';
- if(p.includes('guarda'))return 'Guarda-redes';
- if(p.includes('defesa'))return 'Defesas';
- if(p.includes('médio')||p.includes('medio'))return 'Médios';
- if(p.includes('avançado')||p.includes('avancado')||p.includes('ponta'))return 'Avançados';
- return 'Outros';
-}
-function playerCard(x){
- const age=x.birth_date?Math.max(0,new Date().getFullYear()-new Date(x.birth_date).getFullYear()-((new Date().getMonth()<new Date(x.birth_date).getMonth()||(new Date().getMonth()===new Date(x.birth_date).getMonth()&&new Date().getDate()<new Date(x.birth_date).getDate()))?1:0)):null;
- return `<div class="player-card">${x.photo_url?`<img class="player-photo" src="${esc(x.photo_url)}" alt="Foto de ${esc(x.full_name)}">`:'<div class="player-photo-placeholder">👤</div>'}<div><h4>${esc(x.full_name)}</h4><div class="muted">${esc(x.position||((x.member_type||'player')==='staff'?'Staff':'Jogador'))}${x.shirt_number?` · Nº ${x.shirt_number}`:''}${age!==null?` · ${age} anos`:''}</div></div></div>`;
-}
-function renderSeasonPublic(id){
- const season=publicSeasons.find(x=>x.id===id); if(!season)return;
- const roster=publicPlayers.filter(x=>x.season_id===id);
- const staff=roster.filter(x=>(x.member_type||'player')==='staff').sort((a,b)=>{const rank=x=>{const p=String(x.position||'').toLowerCase();return p.includes('presidente')?1:p.includes('treinador')?2:(p.includes('delegado')||p.includes('massagista'))?3:9};return rank(a)-rank(b)||String(a.full_name).localeCompare(String(b.full_name),'pt')});
- const players=roster.filter(x=>(x.member_type||'player')!=='staff');
- const groups=['Guarda-redes','Defesas','Médios','Avançados','Outros'];
- const rosterHtml=`${staff.length?`<div class="roster-section"><h4 class="roster-section-title">Staff</h4><div class="roster-grid staff-grid">${staff.map(playerCard).join('')}</div></div>`:''}${groups.map(group=>{const list=players.filter(x=>rosterGroup(x)===group).sort((a,b)=>String(a.full_name).localeCompare(String(b.full_name),'pt'));return list.length?`<div class="roster-section"><h4 class="roster-section-title">${group}</h4><div class="roster-grid">${list.map(playerCard).join('')}</div></div>`:''}).join('')}`;
- const photos=publicSeasonPhotos.filter(x=>x.season_id===id);
- const official=season.official_photo_url||photos.find(x=>x.photo_type==='official')?.image_url;
- const gallery=photos.filter(x=>x.photo_type==='gallery');
- $('#seasonContent').innerHTML=`<div class="season-hero"><div>${official?`<img class="season-official" src="${esc(official)}" alt="Foto oficial época ${esc(season.label)}">`:'<div class="panel muted">Foto oficial ainda não publicada.</div>'}${gallery.length?`<div class="season-gallery">${gallery.map(x=>`<img src="${esc(x.image_url)}" alt="${esc(x.title||'Foto da época '+season.label)}">`).join('')}</div>`:''}</div><div class="panel"><span class="pill">${season.current_season?'Época atual':'Arquivo'}</span><h3 class="mt-10">Época ${esc(season.label)}</h3>${season.description?`<p>${esc(season.description)}</p>`:''}<h4>Equipa Masters</h4>${rosterHtml||'<div class="muted">Plantel em atualização.</div>'}</div></div>`;
-}
+           const p=String(x.position||'').toLowerCase();
+           if((x.member_type||'player')==='staff')return 'staff';
+           if(p.includes('guarda'))return 'Guarda-redes';
+           if(p.includes('defesa'))return 'Defesas';
+           if(p.includes('médio')||p.includes('medio'))return 'Médios';
+           if(p.includes('avançado')||p.includes('avancado')||p.includes('ponta'))return 'Avançados';
+           return 'Outros';
+          }
+          function playerCard(x){
+           const age=x.birth_date?Math.max(0,new Date().getFullYear()-new Date(x.birth_date).getFullYear()-((new Date().getMonth()<new Date(x.birth_date).getMonth()||(new Date().getMonth()===new Date(x.birth_date).getMonth()&&new Date().getDate()<new Date(x.birth_date).getDate()))?1:0)):null;
+           return `<div class="player-card">${x.photo_url?`<img class="player-photo" src="${esc(x.photo_url)}" alt="Foto de ${esc(x.full_name)}">`:'<div class="player-photo-placeholder">👤</div>'}<div><h4>${esc(x.full_name)}</h4><div class="muted">${esc(x.position||((x.member_type||'player')==='staff'?'Staff':'Jogador'))}${x.shirt_number?` · Nº ${x.shirt_number}`:''}${age!==null?` · ${age} anos`:''}</div></div></div>`;
+          }
+          function renderSeasonPublic(id){
+           const season=publicSeasons.find(x=>x.id===id);if(!season)return;
+           const roster=publicPlayers.filter(x=>x.season_id===id);
+           const staff=roster.filter(x=>(x.member_type||'player')==='staff').sort((a,b)=>{const rank=x=>{const p=String(x.position||'').toLowerCase();return p.includes('presidente')?1:p.includes('treinador')?2:(p.includes('delegado')||p.includes('massagista'))?3:9};return rank(a)-rank(b)||String(a.full_name).localeCompare(String(b.full_name),'pt')});
+           const players=roster.filter(x=>(x.member_type||'player')!=='staff');
+           const groups=['Guarda-redes','Defesas','Médios','Avançados','Outros'];
+           const rosterHtml=`${staff.length?`<div class="roster-section"><h4 class="roster-section-title">Staff</h4><div class="roster-grid staff-grid">${staff.map(playerCard).join('')}</div></div>`:''}${groups.map(group=>{const list=players.filter(x=>rosterGroup(x)===group).sort((a,b)=>String(a.full_name).localeCompare(String(b.full_name),'pt'));return list.length?`<div class="roster-section"><h4 class="roster-section-title">${group}</h4><div class="roster-grid">${list.map(playerCard).join('')}</div></div>`:''}).join('')}`;
+           const photos=publicSeasonPhotos.filter(x=>x.season_id===id),official=season.official_photo_url||photos.find(x=>x.photo_type==='official')?.image_url,gallery=photos.filter(x=>x.photo_type==='gallery');
+           $('#seasonContent').innerHTML=`<div class="season-hero"><div>${official?`<img class="season-official" src="${esc(official)}" alt="Foto oficial época ${esc(season.label)}">`:'<div class="panel muted">Foto oficial ainda não publicada.</div>'}${gallery.length?`<div class="season-gallery">${gallery.map(x=>`<img src="${esc(x.image_url)}" alt="${esc(x.title||'Foto da época '+season.label)}">`).join('')}</div>`:''}</div><div class="panel"><span class="pill">${season.current_season?'Época atual':'Arquivo'}</span><h3 class="mt-10">Época ${esc(season.label)}</h3>${season.description?`<p>${esc(season.description)}</p>`:''}<h4>Equipa Masters</h4>${rosterHtml||'<div class="muted">Plantel em atualização.</div>'}</div></div>`;
+          }
 
-'''
+          '''
           s=s[:start]+new_func+s[end:]
-
-          # Admin: distinguir jogador de staff ao adicionar novos elementos.
           old='<label class="full">Nome<input name="full_name" required></label>\n<label>Posição<input name="position" placeholder="Ex.: Guarda-redes"></label>'
           new='<label class="full">Nome<input name="full_name" required></label>\n<label>Tipo<select name="member_type"><option value="player">Jogador</option><option value="staff">Staff</option></select></label>\n<label>Posição / Função<input name="position" placeholder="Ex.: Guarda-redes ou Treinador"></label>'
           s=s.replace(old,new,1)
-          s=s.replace("position:f.get('position')||null,shirt_number:Number(f.get('shirt_number'))||null,photo_url,active:true,sort_order:0", "position:f.get('position')||null,member_type:f.get('member_type')||'player',shirt_number:Number(f.get('shirt_number'))||null,photo_url,active:true,sort_order:0",1)
-          s=s.replace('>Adicionar jogador</button><div id="playerCreateMsg"', '>Adicionar elemento</button><div id="playerCreateMsg"',1)
-
+          s=s.replace("position:f.get('position')||null,shirt_number:Number(f.get('shirt_number'))||null,photo_url,active:true,sort_order:0","position:f.get('position')||null,member_type:f.get('member_type')||'player',shirt_number:Number(f.get('shirt_number'))||null,photo_url,active:true,sort_order:0",1)
+          s=s.replace('>Adicionar jogador</button><div id="playerCreateMsg"','>Adicionar elemento</button><div id="playerCreateMsg"',1)
           p.write_text(s,encoding='utf-8')
+          PY
       - name: Commit
         run: |
           git config user.name "Mini Aguias Bot"

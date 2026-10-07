@@ -432,7 +432,7 @@ async function loadPublic(){
   db.from('fishing_content').select('*').eq('published',true).order('sort_order').order('created_at',{ascending:false}),
   db.from('club_history').select('*').eq('id','main').maybeSingle(),
   db.from('games').select('*').order('game_date',{ascending:true}),
-  db.from('masters_standings').select('*').eq('season','2026/2027').eq('series','2').order('position',{ascending:true})
+  db.from('masters_standings').select('*').eq('season','2026/2027').order('position',{ascending:true})
  ]);
  masterTeamId=(t.data||[]).find(x=>x.slug==='masters')?.id;
  publicSeasons=se.data||[]; publicPlayers=(p.data||[]).filter(x=>x.team_id===masterTeamId); publicSeasonPhotos=sp.data||[]; publicMasterGames=(mg.data||[]).filter(x=>x.team_id===masterTeamId); publicMasterStandings=st.data||[];

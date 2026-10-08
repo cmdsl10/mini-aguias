@@ -413,7 +413,7 @@ body.js-section-nav footer{margin-top:25px}
 <div id="quotaHelp" class="full muted">No pagamento anual, seleciona o ano da quota.</div>
 <button id="saveQuotaPayment" type="button" class="btn primary full">Registar pagamento</button>
 </div>
-<div id="quotaCoverageStatus" class="mt-8"></div>
+<div id="quotaCoverageStatus" class="mt-8"></div><div id="quotaYearHistory" class="dues-list mt-8"></div>
 <div class="actions"><button data-q="pending" class="btn sm secondary qbtn">Marcar pendente</button><button data-q="exempt" class="btn sm ghost qbtn">Isento</button><button data-q="unknown" class="btn sm ghost qbtn">Por atualizar</button></div><div id="quotaMsg"></div>
 <div class="actions"><button id="queueQuotaEmail" class="btn ghost sm">Preparar email de quota</button></div>
 <div id="adminCardPreview" class="hidden mt-14"></div><hr class="section-divider"><details id="memberHistoryDetails"><summary><b>Histórico de alterações</b></summary><div id="memberHistory" class="mt-14"><p class="muted">Seleciona um sócio para consultar o histórico.</p></div></details>
@@ -728,7 +728,7 @@ async function selectMember(id){
  $('#adminPhotoSlot').innerHTML='<div class="photo-placeholder">👤</div>';if(selectedMember.photo_url){const u=await signedPhoto(selectedMember.photo_url);if(u)$('#adminPhotoSlot').innerHTML=`<img class="profile-photo" src="${u}" alt="">`}
  $('#adminCardPreview').classList.add('hidden');msg($('#editorMsg'),'');msg($('#quotaMsg'),'');$('#quotaCoverageStart').value=new Date().toISOString().slice(0,10);$('#quotaCoverageYear').value=String(year);$('#quotaPaymentType').value='annual';quotaPaymentUi();
  const pr=await db.from('membership_payments').select('coverage_start,coverage_end,months_count,payment_type').eq('member_id',selectedMember.id).order('coverage_end',{ascending:false}).limit(1);
- const p=pr.data?.[0];$('#quotaCoverageStatus').innerHTML=p?`<span class="pill green">Pago até ${new Date(p.coverage_end+'T12:00:00').toLocaleDateString('pt-PT')}</span> <span class="muted">(${p.months_count} ${p.months_count===1?'mês':'meses'})</span>`:'<span class="muted">Sem período de pagamento registado neste novo sistema.</span>';
+ const p=pr.data?.[0];$('#quotaCoverageStatus').innerHTML=p?`<span class="pill green">Pago até ${new Date(p.coverage_end+'T12:00:00').toLocaleDateString('pt-PT')}</span> <span class="muted">(${p.months_count} ${p.months_count===1?'mês':'meses'})</span>`:'<span class="muted">Sem período de pagamento registado neste novo sistema.</span>';const yr=$('#quotaYearHistory');const duesYears=[2025,2026].map(y=>{const d=adminDues.find(x=>x.member_id===selectedMember.id&&x.year===y);return `<div class="due-row"><b>Quota ${y}</b><div>${dueLabel(d?.status||'unknown')}</div></div>`}).join('');yr.innerHTML=`<div class="muted"><b>Histórico por ano</b></div>${duesYears}`;
  await loadMemberHistory(selectedMember.id);
 }
 async function loadMemberHistory(memberId){

@@ -575,9 +575,31 @@ async function loadAdmin(keepSelectedId=null){
 function renderEmailRequests(items){
  const box=$('#adminEmailRequests'),count=$('#emailRequestCount');if(!box)return;
  if(count)count.textContent=`${items.length} pendente${items.length===1?'':'s'}`;
- box.innerHTML=items.length?items.map(x=>{const member=adminMembers.find(m=>m.member_number===x.member_number);const match=member&&String(member.full_name).trim().toLowerCase()===String(x.full_name).trim().toLowerCase();return `<div class="due-row"><div><b>Sócio nº ${x.member_number} · ${esc(x.full_name)}</b><div class="muted">Nascimento: ${esc(x.birth_date)} · Email pedido: ${esc(x.requested_email)}${x.phone?' · Tel.: '+esc(x.phone):''}</div><div class="mt-8">${member?`<span class="pill ${match?'green':'orange'}">${match?'Nº e nome coincidem':'Verificar nome na ficha'}</span> <span class="muted">Email atual: ${esc(member.email||'não registado')}</span>`:'<span class="pill red">Nº de sócio não encontrado</span>'}</div></div><div class="actions"><button class="btn sm primary email-approve" data-id="${x.id}">Aprovar</button><button class="btn sm ghost email-reject" data-id="${x.id}">Rejeitar</button></div></div>`}).join(''):'<p class="muted">Sem pedidos pendentes.</p>';
- $('.email-approve').forEach(b=>b.onclick=async()=>{const x=items.find(v=>v.id===b.dataset.id),member=adminMembers.find(m=>m.member_number===x?.member_number);if(!x||!member){alert('Não foi encontrada uma ficha com este número de sócio.');return}if(!confirm(`Atualizar o email do sócio nº ${member.member_number} — ${member.full_name} para ${x.requested_email}?`))return;const u=await db.from('members').update({email:x.requested_email,updated_at:new Date().toISOString()}).eq('id',member.id);if(u.error){alert(u.error.code==='23505'?'Este email já está associado a outra ficha.':u.error.message);return}const r=await db.from('member_email_update_requests').update({status:'approved',reviewed_at:new Date().toISOString()}).eq('id',x.id);if(r.error){alert(r.error.message);return}await loadAdmin(member.id)});
- $('.email-reject').forEach(b=>b.onclick=async()=>{if(!confirm('Rejeitar este pedido de atualização de email?'))return;const r=await db.from('member_email_update_requests').update({status:'rejected',reviewed_at:new Date().toISOString()}).eq('id',b.dataset.id);if(r.error){alert(r.error.message);return}await loadAdmin()});
+ const norm=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim().toLowerCase();
+ box.innerHTML=items.length?items.map(x=>{
+   const byNumber=x.member_number!=null?adminMembers.find(m=>m.member_number===x.member_number):null;
+   const byName=adminMembers.filter(m=>norm(m.full_name)===norm(x.full_name));
+   const suggested=byNumber||(byName.length===1?byName[0]:null);
+   const birthMatch=suggested&&String(suggested.birth_date||'')===String(x.birth_date||'');
+   const opts=adminMembers.slice().sort((a,b)=>(a.member_number||9999)-(b.member_number||9999)).map(m=>`<option value="${m.id}" ${suggested?.id===m.id?'selected':''}>Nº ${m.member_number??'-'} — ${esc(m.full_name)}</option>`).join('');
+   return `<div class="due-row"><div style="flex:1"><b>${x.member_number!=null?'Sócio nº '+x.member_number+' · ':''}${esc(x.full_name)}</b><div class="muted">Nascimento indicado: ${esc(x.birth_date)} · Email pedido: ${esc(x.requested_email)}${x.phone?' · Tel.: '+esc(x.phone):''}</div><div class="mt-8"><label>Associar à ficha<select class="email-member-select" data-id="${x.id}"><option value="">Selecionar sócio...</option>${opts}</select></label></div>${suggested&&!birthMatch?'<div class="pill orange mt-8">Atenção: a data de nascimento indicada não coincide com a ficha.</div>':''}</div><div class="actions"><button type="button" class="btn sm primary email-approve" data-id="${x.id}">Aprovar</button><button type="button" class="btn sm ghost email-reject" data-id="${x.id}">Rejeitar</button></div></div>`;
+ }).join(''):'<p class="muted">Sem pedidos pendentes.</p>';
+ document.querySelectorAll('.email-approve').forEach(b=>b.onclick=async()=>{
+   const x=items.find(v=>v.id===b.dataset.id),sel=document.querySelector(`.email-member-select[data-id="${b.dataset.id}"]`),member=adminMembers.find(m=>m.id===sel?.value);
+   if(!x||!member){alert('Seleciona primeiro a ficha de sócio correta.');return}
+   if(!confirm(`Associar o email ${x.requested_email} ao sócio nº ${member.member_number} — ${member.full_name}?`))return;
+   const u=await db.from('members').update({email:x.requested_email,updated_at:new Date().toISOString()}).eq('id',member.id);
+   if(u.error){alert(u.error.code==='23505'?'Este email já está associado a outra ficha.':u.error.message);return}
+   const r=await db.from('member_email_update_requests').update({status:'approved',reviewed_at:new Date().toISOString()}).eq('id',x.id);
+   if(r.error){alert(r.error.message);return}
+   await loadAdmin(member.id)
+ });
+ document.querySelectorAll('.email-reject').forEach(b=>b.onclick=async()=>{
+   if(!confirm('Rejeitar este pedido de atualização de email?'))return;
+   const r=await db.from('member_email_update_requests').update({status:'rejected',reviewed_at:new Date().toISOString()}).eq('id',b.dataset.id);
+   if(r.error){alert(r.error.message);return}
+   await loadAdmin()
+ });
 }
 
 function renderAdminClubHistory(item){const f=$('#clubHistoryForm');if(!f)return;f.elements.title.value=item?.title||'História dos Mini-Águias';f.elements.body.value=item?.body||'';f.elements.published.checked=!!item?.published}

@@ -381,6 +381,12 @@ body.js-section-nav footer{margin-top:25px}
 <div class="admin-grid" id="adminMembersSection">
 <div class="panel">
 <div class="toolbar"><div><h3>Lista de sócios</h3><div id="coverageText" class="muted"></div></div><input id="memberSearch" class="search" placeholder="Pesquisar nome ou nº de sócio"></div>
+<form id="insertMemberForm" class="form-grid mt-14">
+<label>Novo sócio · posição/nº<input name="member_number" type="number" min="1" required placeholder="Ex.: 37"></label>
+<label>Nome completo<input name="full_name" required></label>
+<div class="full muted">Se o número já estiver ocupado, esse sócio e todos os seguintes avançam uma posição. Quotas e restantes dados mantêm-se associados às respetivas fichas.</div>
+<button class="btn secondary full">Adicionar sócio nesta posição</button><div id="insertMemberMsg" class="full"></div>
+</form>
 <div class="table-wrap"><table><thead><tr><th>Nº</th><th>Nome</th><th>Email</th><th>Quota 2026</th><th>Conta</th></tr></thead><tbody id="membersBody"></tbody></table></div>
 </div>
 <div class="panel"><h3>Ficha do sócio</h3><p class="muted" id="editorHint">Seleciona um sócio na lista.</p>
@@ -650,6 +656,8 @@ $('#saveNextGamePoster').onclick=async()=>{
 function currentDue(memberId){return adminDues.find(x=>x.member_id===memberId&&x.year===year)}
 function renderMemberTable(list){$('#membersBody').innerHTML=list.map(m=>{const d=currentDue(m.id);return `<tr class="member-row" data-id="${m.id}"><td>${m.member_number??'—'}</td><td>${esc(m.full_name)}</td><td>${m.email?esc(m.email):'<span class="pill orange">Em falta</span>'}</td><td>${dueLabel(d?.status||'unknown')}</td><td>${m.user_id?'<span class="pill green">Ativa</span>':'<span class="pill gray">Sem conta</span>'}</td></tr>`}).join('');$$('.member-row').forEach(r=>r.onclick=()=>selectMember(r.dataset.id))}
 $('#memberSearch').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();renderMemberTable(adminMembers.filter(m=>!q||String(m.member_number||'').includes(q)||m.full_name.toLowerCase().includes(q)))});
+$('#insertMemberForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),n=Number(f.get('member_number')),name=String(f.get('full_name')||'').trim();if(!n||!name)return;const occupied=adminMembers.find(x=>x.member_number===n);const question=occupied?`O nº ${n} pertence atualmente a ${occupied.full_name}. Ao inserir o novo sócio, este e todos os seguintes avançam um número. Continuar?`:`Adicionar ${name} como sócio nº ${n}?`;if(!confirm(question))return;msg($('#insertMemberMsg'),'A guardar...');const r=await db.rpc('admin_insert_member_at_number',{p_member_number:n,p_full_name:name});if(r.error){msg($('#insertMemberMsg'),r.error.message,'error');return}e.target.reset();msg($('#insertMemberMsg'),`Sócio adicionado no nº ${n}. Numeração seguinte reajustada.`,'success');await loadAdmin(r.data)});
+
 
 async function selectMember(id){
  selectedMember=adminMembers.find(x=>x.id===id);if(!selectedMember)return;$('#editorHint').classList.add('hidden');$('#editorContent').classList.remove('hidden');$('#editorTitle').textContent=`${selectedMember.full_name} · Sócio nº ${selectedMember.member_number??'—'}`;

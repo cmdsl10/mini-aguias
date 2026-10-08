@@ -579,7 +579,7 @@ async function loadMemberPortal(user){
  let q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();
  if(!q.data){
    const c=await db.rpc('claim_my_member_account');
-   if(c.error){$('#memberAuth').classList.remove('hidden');msg($('#memberLoginMsg'),'A conta foi autenticada, mas não existe uma ficha de sócio ativa com este email. A direção precisa primeiro de adicionar este email à tua ficha.','error');return}
+   if(c.error){$('#memberAuth').classList.remove('hidden');msg($('#memberLoginMsg'),'A tua conta existe, mas este email ainda não está associado à tua ficha de sócio. Preenche o formulário “O teu email ainda não está registado?” abaixo e envia os teus dados para validação pela direção. Não precisas de criar outra conta.','error');setTimeout(()=>document.querySelector('#memberEmailRequest')?.scrollIntoView({behavior:'smooth',block:'start'}),150);return}
    q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();
  }
  const m=q.data;if(!m)return;

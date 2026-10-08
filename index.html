@@ -391,7 +391,7 @@ body.js-section-nav footer{margin-top:25px}
 <div class="full muted">Se o número já estiver ocupado, esse sócio e todos os seguintes avançam uma posição. Quotas e restantes dados mantêm-se associados às respetivas fichas.</div>
 <button class="btn secondary full">Adicionar sócio nesta posição</button><div id="insertMemberMsg" class="full"></div>
 </form>
-<div class="table-wrap"><table><thead><tr><th>Nº</th><th>Nome</th><th>Email</th><th>Quota 2026</th><th>Conta</th></tr></thead><tbody id="membersBody"></tbody></table></div>
+<div class="table-wrap"><table><thead><tr><th>Nº</th><th>Nome</th><th>Email</th><th>Quota / pago até</th><th>Conta</th></tr></thead><tbody id="membersBody"></tbody></table></div>
 </div>
 <div class="panel"><h3>Ficha do sócio</h3><p class="muted" id="editorHint">Seleciona um sócio na lista.</p>
 <div id="editorContent" class="hidden">
@@ -434,7 +434,7 @@ const db=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,auto
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const year=new Date().getFullYear();
-let adminMembers=[], adminDues=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], publicMasterGames=[], publicMasterStandings=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
+let adminMembers=[], adminDues=[], adminPayments=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], publicMasterGames=[], publicMasterStandings=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
 
 function msg(el,text,type='notice'){el.innerHTML=text?`<div class="${type}">${esc(text)}</div>`:''}
 function dueLabel(status){return status==='paid'?'<span class="pill green">Paga</span>':status==='pending'?'<span class="pill red">Pendente</span>':status==='exempt'?'<span class="pill">Isento</span>':'<span class="pill gray">Por atualizar</span>'}
@@ -550,8 +550,8 @@ $('#exportMembersBackup').onclick=async()=>{
  const out=$('#backupMsg');msg(out,'A preparar o backup...','notice');
  try{
    if(typeof XLSX==='undefined')throw new Error('O módulo Excel não ficou disponível. Atualiza a página e tenta novamente.');
-   const [mr,dr]=await Promise.all([db.from('members').select('*').order('member_number'),db.from('dues').select('*').order('year',{ascending:false})]);
-   if(mr.error)throw mr.error;if(dr.error)throw dr.error;
+   const [mr,dr,pr]=await Promise.all([db.from('members').select('*').order('member_number'),db.from('dues').select('*').order('year',{ascending:false}),db.from('membership_payments').select('*').order('coverage_end',{ascending:false})]);
+   if(mr.error)throw mr.error;if(dr.error)throw dr.error;if(pr.error)throw pr.error;
    const members=mr.data||[],dues=dr.data||[],byId=Object.fromEntries(members.map(m=>[m.id,m]));
    const memberRows=members.map(m=>({
      'Nº Sócio':m.member_number??'','Nome':m.full_name||'','Data nascimento':m.birth_date||'','Email':m.email||'','Telefone':m.phone||'',
@@ -563,10 +563,10 @@ $('#exportMembersBackup').onclick=async()=>{
      'Nº Sócio':m.member_number??'','Nome':m.full_name||'','Ano':d.year??'','Valor':d.amount??'','Estado':d.status||'',
      'Data pagamento':d.paid_at||'','Notas':d.notes||''
    }});
-   const wb=XLSX.utils.book_new(),ws1=XLSX.utils.json_to_sheet(memberRows),ws2=XLSX.utils.json_to_sheet(dueRows);
+   const paymentRows=(pr.data||[]).map(p=>{const m=byId[p.member_id]||{};return {'Nº Sócio':m.member_number??'','Nome':m.full_name||'','Tipo':p.payment_type==='annual'?'Anual':'Por meses','Meses':p.months_count,'Início':p.coverage_start,'Pago até':p.coverage_end,'Data pagamento':p.paid_at,'Valor':p.amount??'','Notas':p.notes||''}});const wb=XLSX.utils.book_new(),ws1=XLSX.utils.json_to_sheet(memberRows),ws2=XLSX.utils.json_to_sheet(dueRows),ws3=XLSX.utils.json_to_sheet(paymentRows);
    ws1['!cols']=[{wch:10},{wch:32},{wch:16},{wch:32},{wch:16},{wch:36},{wch:14},{wch:22},{wch:12},{wch:14},{wch:16},{wch:13},{wch:16},{wch:17}];
    ws2['!cols']=[{wch:10},{wch:32},{wch:10},{wch:12},{wch:14},{wch:18},{wch:40}];
-   XLSX.utils.book_append_sheet(wb,ws1,'Sócios');XLSX.utils.book_append_sheet(wb,ws2,'Quotas');
+   XLSX.utils.book_append_sheet(wb,ws1,'Sócios');XLSX.utils.book_append_sheet(wb,ws2,'Quotas antigas');XLSX.utils.book_append_sheet(wb,ws3,'Pagamentos por período');
    const now=new Date(),date=now.toISOString().slice(0,10);
    XLSX.writeFile(wb,`Mini-Aguias_Backup_${date}.xlsx`);
    msg(out,`Backup criado: ${members.length} sócios e ${dues.length} registos de quotas.`,'success');
@@ -590,9 +590,10 @@ async function loadMemberPortal(user){
    $('#cardName').textContent=m.full_name;$('#cardNumber').textContent=`Sócio nº ${m.member_number??'—'}`;$('#cardStatus').innerHTML=m.status==='active'?'<span class="pill green">Sócio ativo</span>':'<span class="pill gray">Estado da ficha: '+esc(m.status)+'</span>';
    if(m.photo_url){const u=await signedPhoto(m.photo_url);if(u)$('#cardPhotoSlot').outerHTML=`<img id="cardPhotoSlot" class="member-photo" src="${u}" alt="Foto do sócio">`}
  }
- const d=await db.from('dues').select('*').eq('member_id',m.id).order('year',{ascending:false});
- let dues=d.data||[];const current=dues.find(x=>x.year===year);let rows=[{year,status:current?.status||'unknown',amount:current?.amount},...dues.filter(x=>x.year!==year)].slice(0,8);
- $('#memberDues').innerHTML=rows.map(x=>`<div class="due-row"><div><b>${x.year}</b>${x.amount>0?` · ${Number(x.amount).toFixed(2)} €`:''}</div><div>${dueLabel(x.status)}</div></div>`).join('');
+ const [d,pr]=await Promise.all([db.from('dues').select('*').eq('member_id',m.id).order('year',{ascending:false}),db.from('membership_payments').select('*').eq('member_id',m.id).order('coverage_end',{ascending:false})]);
+ let dues=d.data||[],payments=pr.data||[];const current=dues.find(x=>x.year===year);let rows=[{year,status:current?.status||'unknown',amount:current?.amount},...dues.filter(x=>x.year!==year)].slice(0,8);
+ const periods=payments.length?payments.map(x=>`<div class="due-row"><div><b>${x.months_count===12?'Anual':x.months_count+' '+(x.months_count===1?'mês':'meses')}</b><div class="muted">${new Date(x.coverage_start+'T12:00:00').toLocaleDateString('pt-PT')} — ${new Date(x.coverage_end+'T12:00:00').toLocaleDateString('pt-PT')}</div></div><div><span class="pill green">Pago</span></div></div>`).join(''):'';
+ $('#memberDues').innerHTML=periods||rows.map(x=>`<div class="due-row"><div><b>${x.year}</b>${x.amount>0?` · ${Number(x.amount).toFixed(2)} €`:''}</div><div>${dueLabel(x.status)}</div></div>`).join('');
 }
 $('#printCard').onclick=()=>window.print();
 $('#memberSelfEdit').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),id=e.target.dataset.memberId;if(!id)return;const patch={phone:String(f.get('phone')||'').trim()||null,locality:String(f.get('locality')||'').trim()||null,address:String(f.get('address')||'').trim()||null,postal_code:String(f.get('postal_code')||'').trim()||null,updated_at:new Date().toISOString()};const r=await db.from('members').update(patch).eq('id',id);msg($('#memberSelfEditMsg'),r.error?r.error.message:'Dados atualizados.',r.error?'error':'success')});
@@ -600,11 +601,11 @@ $('#memberSelfPhotoButton').onclick=async()=>{const form=$('#memberSelfEdit'),id
 
 async function loadAdmin(keepSelectedId=null){
  $('#adminAuth').classList.add('hidden');$('#adminPanel').classList.remove('hidden');$('#memberAuth').classList.add('hidden');
- const [m,d,s,b,se,pl,ga,fi,ch,er]=await Promise.all([db.from('members').select('*').order('member_number'),db.from('dues').select('*'),db.rpc('admin_member_stats',{target_year:year}),db.rpc('admin_upcoming_birthdays',{days_ahead:30}),db.from('seasons').select('*').order('sort_order').order('start_year',{ascending:false}),db.from('players').select('*').order('sort_order').order('full_name'),db.from('gallery_items').select('*').order('created_at',{ascending:false}),db.from('fishing_content').select('*').order('sort_order').order('created_at',{ascending:false}),db.from('club_history').select('*').eq('id','main').maybeSingle(),db.from('member_email_update_requests').select('*').eq('status','pending').order('created_at',{ascending:true})]);
- const critical=[['sócios',m],['quotas',d],['épocas',se],['plantel',pl]];
+ const [m,d,pay,s,b,se,pl,ga,fi,ch,er]=await Promise.all([db.from('members').select('*').order('member_number'),db.from('dues').select('*'),db.from('membership_payments').select('*').order('coverage_end',{ascending:false}),db.rpc('admin_member_stats',{target_year:year}),db.rpc('admin_upcoming_birthdays',{days_ahead:30}),db.from('seasons').select('*').order('sort_order').order('start_year',{ascending:false}),db.from('players').select('*').order('sort_order').order('full_name'),db.from('gallery_items').select('*').order('created_at',{ascending:false}),db.from('fishing_content').select('*').order('sort_order').order('created_at',{ascending:false}),db.from('club_history').select('*').eq('id','main').maybeSingle(),db.from('member_email_update_requests').select('*').eq('status','pending').order('created_at',{ascending:true})]);
+ const critical=[['sócios',m],['quotas',d],['pagamentos',pay],['épocas',se],['plantel',pl]];
  const failed=critical.filter(([,r])=>r.error);
  if(failed.length){console.error('Admin load errors',failed.map(([name,r])=>({name,error:r.error})));const box=$('#membersBody');if(box)box.innerHTML=`<tr><td colspan="5"><div class="notice">Não foi possível carregar todos os dados administrativos. Atualiza a página; se continuar, termina a sessão e entra novamente.</div></td></tr>`;}
- adminMembers=m.data||[];adminDues=d.data||[];adminSeasons=se.data||[];adminPlayers=pl.data||[];const st=(s.data||[])[0]||{};
+ adminMembers=m.data||[];adminDues=d.data||[];adminPayments=pay.data||[];adminSeasons=se.data||[];adminPlayers=pl.data||[];const st=(s.data||[])[0]||{};
  $('#stActive').textContent=st.active_members??0;$('#stPaid').textContent=`${st.dues_paid??0} (${st.paid_percentage_known??0}%)`;$('#stUnknown').textContent=st.dues_unknown??0;$('#stAge').textContent=st.average_age?st.average_age+' anos':'—';$('#stEmail').textContent=st.members_with_email??0;$('#stPhoto').textContent=st.members_with_photo??0;$('#stLinked').textContent=st.linked_accounts??0;
  $('#coverageText').textContent=`Cobertura das quotas de ${year}: ${st.records_coverage_percentage??0}% dos sócios ativos têm estado registado.`;
  renderMemberTable(adminMembers);renderBirthdays(b.data||[]);renderAdminSeasons();renderAdminGallery(ga.data||[]);renderAdminFishing(fi.data||[]);renderAdminClubHistory(ch.data);renderEmailRequests(er.data||[]);
@@ -715,7 +716,7 @@ $('#saveNextGamePoster').onclick=async()=>{
 };
 
 function currentDue(memberId){return adminDues.find(x=>x.member_id===memberId&&x.year===year)}
-function renderMemberTable(list){$('#membersBody').innerHTML=list.map(m=>{const d=currentDue(m.id);return `<tr class="member-row" data-id="${m.id}"><td>${m.member_number??'—'}</td><td>${esc(m.full_name)}</td><td>${m.email?esc(m.email):'<span class="pill orange">Em falta</span>'}</td><td>${dueLabel(d?.status||'unknown')}</td><td>${m.user_id?'<span class="pill green">Ativa</span>':'<span class="pill gray">Sem conta</span>'}</td></tr>`}).join('');$$('.member-row').forEach(r=>r.onclick=()=>selectMember(r.dataset.id))}
+function renderMemberTable(list){$('#membersBody').innerHTML=list.map(m=>{const d=currentDue(m.id),p=adminPayments.find(x=>x.member_id===m.id);const quota=p?`<span class="pill green">Pago até ${new Date(p.coverage_end+'T12:00:00').toLocaleDateString('pt-PT')}</span>`:dueLabel(d?.status||'unknown');return `<tr class="member-row" data-id="${m.id}"><td>${m.member_number??'—'}</td><td>${esc(m.full_name)}</td><td>${m.email?esc(m.email):'<span class="pill orange">Em falta</span>'}</td><td>${quota}</td><td>${m.user_id?'<span class="pill green">Ativa</span>':'<span class="pill gray">Sem conta</span>'}</td></tr>`}).join('');$$('.member-row').forEach(r=>r.onclick=()=>selectMember(r.dataset.id))}
 $('#memberSearch').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();renderMemberTable(adminMembers.filter(m=>!q||String(m.member_number||'').includes(q)||m.full_name.toLowerCase().includes(q)))});
 $('#insertMemberForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),n=Number(f.get('member_number')),name=String(f.get('full_name')||'').trim();if(!n||!name)return;const occupied=adminMembers.find(x=>x.member_number===n);const question=occupied?`O nº ${n} pertence atualmente a ${occupied.full_name}. Ao inserir o novo sócio, este e todos os seguintes avançam um número. Continuar?`:`Adicionar ${name} como sócio nº ${n}?`;if(!confirm(question))return;msg($('#insertMemberMsg'),'A guardar...');const r=await db.rpc('admin_insert_member_at_number',{p_member_number:n,p_full_name:name});if(r.error){msg($('#insertMemberMsg'),r.error.message,'error');return}e.target.reset();msg($('#insertMemberMsg'),`Sócio adicionado no nº ${n}. Numeração seguinte reajustada.`,'success');await loadAdmin(r.data)});
 

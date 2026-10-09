@@ -713,8 +713,8 @@ function renderEmailRequests(items){
  document.querySelectorAll('.email-approve').forEach(b=>b.onclick=async()=>{
    const x=items.find(v=>v.id===b.dataset.id),sel=document.querySelector(`.email-member-select[data-id="${b.dataset.id}"]`),member=adminMembers.find(m=>m.id===sel?.value);
    if(!x||!member){alert('Seleciona primeiro a ficha de sócio correta.');return}
-   if(!confirm(`Associar o email ${x.requested_email} ao sócio nº ${member.member_number} — ${member.full_name}?`))return;
-   const u=await db.from('members').update({email:x.requested_email,updated_at:new Date().toISOString()}).eq('id',member.id);
+   if(!confirm(`Associar o email ${x.requested_email} ao sócio nº ${member.member_number} — ${member.full_name}?\n\nO nome da ficha será atualizado para: ${x.full_name}`))return;
+   const u=await db.from('members').update({email:x.requested_email,full_name:String(x.full_name||'').trim()||member.full_name,updated_at:new Date().toISOString()}).eq('id',member.id);
    if(u.error){alert(u.error.code==='23505'?'Este email já está associado a outra ficha.':u.error.message);return}
    const r=await db.from('member_email_update_requests').update({status:'approved',reviewed_at:new Date().toISOString()}).eq('id',x.id);
    if(r.error){alert(r.error.message);return}

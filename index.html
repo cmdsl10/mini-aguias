@@ -289,6 +289,7 @@ body.js-section-nav footer{margin-top:25px}
 <div class="toolbar"><div><h3>Pedidos de atualização de email</h3><p class="muted">Confirma os dados com a ficha do sócio antes de aprovar. A aprovação atualiza automaticamente o email da ficha.</p></div><span id="emailRequestCount" class="pill orange">0 pendentes</span></div>
 <div id="adminEmailRequests" class="mt-12"><p class="muted">Sem pedidos pendentes.</p></div>
 </div>
+<div class="panel season-admin admin-feature-card"><div class="toolbar"><div><h3>Emails pendentes</h3><p class="muted">Reenvia avisos que tenham ficado na fila depois de uma aprovação.</p></div><button type="button" id="retryPendingEmails" class="btn sm secondary">Reenviar pendentes</button></div><div id="retryPendingEmailsMsg"></div></div>
 <div class="panel season-admin admin-feature-card">
 <div class="toolbar"><div><h3>Próximo jogo · Cartaz</h3><p class="muted">Carrega um novo cartaz. O novo substitui automaticamente o anterior na página inicial.</p></div></div>
 <label>Foto/cartaz do próximo jogo<input id="nextGamePosterInput" type="file" accept="image/jpeg,image/png,image/webp"></label>
@@ -594,6 +595,7 @@ $('#exportMembersBackup').onclick=async()=>{
    msg(out,`Backup criado: ${members.length} sócios e ${dues.length} registos de quotas.`,'success');
  }catch(e){console.error(e);msg(out,'Não foi possível criar o backup: '+(e.message||e),'error')}
 };
+$('#retryPendingEmails').onclick=async()=>{const b=$('#retryPendingEmails'),out=$('#retryPendingEmailsMsg');b.disabled=true;msg(out,'A verificar emails pendentes...');const {data:{session}}=await db.auth.getSession();const r=await db.functions.invoke('send-membership-email',{headers:{Authorization:'Bearer '+session.access_token}});b.disabled=false;if(r.error){msg(out,'Não foi possível processar os emails pendentes.','error');return}const sent=Number(r.data?.sent||0),failed=Number(r.data?.failed||0);msg(out,sent?sent+' email'+(sent===1?' enviado.':'s enviados.'):(failed?'O fornecedor recusou '+failed+' envio'+(failed===1?'.':'s.'):'Não existem emails pendentes para enviar.'),failed?'error':'success')};
 $('#memberLogout').onclick=logout;$('#adminLogout').onclick=logout;const headerLogout=document.getElementById('headerAdminLogout');if(headerLogout)headerLogout.onclick=logout;
 
 async function loadMemberPortal(user){

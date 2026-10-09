@@ -302,6 +302,8 @@ body.js-section-nav footer{margin-top:25px}
 <form id="newGameForm" class="form-grid">
 <label>Adversário<input name="opponent" required placeholder="Ex.: A.D. Oeiras"></label>
 <label>Data e hora<input name="game_date" type="datetime-local" required></label>
+<label>Competição<select name="competition"><option value="Campeonato">Campeonato</option><option value="Taça">Taça</option><option value="Particular">Particular</option><option value="Outra">Outra</option></select></label>
+<label>Jornada / fase<input name="competition_stage" placeholder="Ex.: Jornada 5 ou 1.ª Eliminatória"></label>
 <label>Local<input name="venue" placeholder="Ex.: Campo do Moinho da Fonte"></label>
 <label><input name="home_game" type="checkbox" checked class="inline-check"> Jogamos em casa</label>
 <label class="full">Cartaz / fotografia do jogo<input name="poster" type="file" accept="image/jpeg,image/png,image/webp"></label>
@@ -752,7 +754,7 @@ $('#galleryUploadForm').addEventListener('submit',async e=>{e.preventDefault();c
 
 $('#newGameForm').addEventListener('submit',async e=>{
  e.preventDefault(); const f=new FormData(e.target), file=f.get('poster');
- const patch={opponent:String(f.get('opponent')).trim(),game_date:new Date(String(f.get('game_date'))).toISOString(),venue:String(f.get('venue')||'').trim()||null,home_game:!!f.get('home_game')};
+ const patch={opponent:String(f.get('opponent')).trim(),game_date:new Date(String(f.get('game_date'))).toISOString(),competition:String(f.get('competition')||'Campeonato').trim(),competition_stage:String(f.get('competition_stage')||'').trim()||null,venue:String(f.get('venue')||'').trim()||null,home_game:!!f.get('home_game')};
  const btn=e.target.querySelector('button[type="submit"],button:not([type])'); if(btn){btn.disabled=true;btn.textContent='A guardar…'}
  try{
    const r=await db.from('games').insert(patch).select('id').single();if(r.error)throw r.error;

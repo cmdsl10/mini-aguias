@@ -774,7 +774,7 @@ $('#galleryUploadForm').addEventListener('submit',async e=>{e.preventDefault();c
 
 $('#newGameForm').addEventListener('submit',async e=>{
  e.preventDefault(); const f=new FormData(e.target), file=f.get('poster');
- const patch={opponent:String(f.get('opponent')).trim(),game_date:new Date(String(f.get('game_date'))).toISOString(),competition:String(f.get('competition')||'Campeonato').trim(),competition_stage:String(f.get('competition_stage')||'').trim()||null,venue:String(f.get('venue')||'').trim()||null,home_game:!!f.get('home_game')};
+ const patch={team_id:masterTeamId,opponent:String(f.get('opponent')).trim(),game_date:new Date(String(f.get('game_date'))).toISOString(),competition:String(f.get('competition')||'Campeonato').trim(),competition_stage:String(f.get('competition_stage')||'').trim()||null,venue:String(f.get('venue')||'').trim()||null,home_game:!!f.get('home_game')};
  const btn=e.target.querySelector('button[type="submit"],button:not([type])'); if(btn){btn.disabled=true;btn.textContent='A guardar…'}
  try{
    const r=await db.from('games').insert(patch).select('id').single();if(r.error)throw r.error;

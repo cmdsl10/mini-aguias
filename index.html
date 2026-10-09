@@ -382,6 +382,17 @@ body.js-section-nav footer{margin-top:25px}
 <div class="toolbar"><div><h3>Backup de sócios e quotas</h3><p class="muted">Cria um ficheiro Excel com a lista completa de sócios e o histórico de quotas. Guarda-o fora do site como cópia de segurança.</p></div><button id="exportMembersBackup" type="button" class="btn secondary">Exportar backup Excel</button></div>
 <div id="backupMsg"></div>
 </div>
+<div class="panel season-admin admin-feature-card" id="quotaReportPanel">
+<div class="toolbar"><div><h3>Relatório de quotas</h3><p class="muted">Resumo anual dos sócios pagantes e dos valores registados.</p></div><label>Ano<select id="quotaReportYear"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option><option value="2028">2028</option></select></label></div>
+<div class="stats">
+<div class="stat"><span>Sócios ativos</span><strong id="qrActive">—</strong></div>
+<div class="stat"><span>Pagantes</span><strong id="qrPaid">—</strong></div>
+<div class="stat"><span>Sem pagamento</span><strong id="qrUnpaid">—</strong></div>
+<div class="stat"><span>% pagantes</span><strong id="qrPct">—</strong></div>
+<div class="stat"><span>Total recebido</span><strong id="qrTotal">—</strong></div>
+</div>
+<div class="table-wrap mt-16"><table><thead><tr><th>Nº</th><th>Nome</th><th>Estado</th><th>Valor registado</th></tr></thead><tbody id="quotaReportBody"></tbody></table></div>
+</div>
 <div class="admin-grid" id="adminMembersSection">
 <div class="panel">
 <div class="toolbar"><div><h3>Lista de sócios</h3><div id="coverageText" class="muted"></div></div><input id="memberSearch" class="search" placeholder="Pesquisar nome ou nº de sócio"></div>
@@ -615,10 +626,22 @@ async function loadAdmin(keepSelectedId=null){
  adminMembers=m.data||[];adminDues=d.data||[];adminPayments=pay.data||[];adminSeasons=se.data||[];adminPlayers=pl.data||[];const st=(s.data||[])[0]||{};
  $('#stActive').textContent=st.active_members??0;$('#stPaid').textContent=`${st.dues_paid??0} (${st.paid_percentage_known??0}%)`;$('#stUnknown').textContent=st.dues_unknown??0;$('#stAge').textContent=st.average_age?st.average_age+' anos':'—';$('#stEmail').textContent=st.members_with_email??0;$('#stPhoto').textContent=st.members_with_photo??0;$('#stLinked').textContent=st.linked_accounts??0;
  $('#coverageText').textContent=`Cobertura das quotas de ${year}: ${st.records_coverage_percentage??0}% dos sócios ativos têm estado registado.`;
- renderMemberTable(adminMembers);renderBirthdays(b.data||[]);renderAdminSeasons();renderAdminGallery(ga.data||[]);renderAdminFishing(fi.data||[]);renderAdminClubHistory(ch.data);renderEmailRequests(er.data||[]);
+ renderMemberTable(adminMembers);renderQuotaReport($('#quotaReportYear')?.value||year);renderBirthdays(b.data||[]);renderAdminSeasons();renderAdminGallery(ga.data||[]);renderAdminFishing(fi.data||[]);renderAdminClubHistory(ch.data);renderEmailRequests(er.data||[]);
  if(keepSelectedId && adminMembers.some(x=>x.id===keepSelectedId)) await selectMember(keepSelectedId);
 }
 
+function renderQuotaReport(reportYear){
+ const y=Number(reportYear||year),active=adminMembers.filter(m=>m.status==='active'),rows=active.map(m=>{
+   const legacy=adminDues.find(d=>d.member_id===m.id&&Number(d.year)===y&&d.status==='paid');
+   const pays=adminPayments.filter(p=>p.member_id===m.id&&p.paid_at&&new Date(p.paid_at+'T12:00:00').getFullYear()===y);
+   const paid=!!legacy||pays.length>0,amount=pays.reduce((s,p)=>s+Number(p.amount||0),0)+(legacy&&!pays.length?Number(legacy.amount||0):0);
+   return {m,paid,amount};
+ });
+ const paid=rows.filter(r=>r.paid),total=paid.reduce((s,r)=>s+r.amount,0);
+ $('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
+ $('#quotaReportBody').innerHTML=rows.map(r=>`<tr><td>${r.m.member_number??'—'}</td><td>${esc(r.m.full_name)}</td><td>${r.paid?'<span class="pill green">Pago</span>':'<span class="pill orange">Sem pagamento</span>'}</td><td>${r.amount.toLocaleString('pt-PT',{style:'currency',currency:'EUR'})}</td></tr>`).join('');
+}
+$('#quotaReportYear').onchange=e=>renderQuotaReport(e.target.value);
 function renderEmailRequests(items){
  const box=$('#adminEmailRequests'),count=$('#emailRequestCount');if(!box)return;
  if(count)count.textContent=`${items.length} pendente${items.length===1?'':'s'}`;

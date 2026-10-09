@@ -311,7 +311,7 @@ body.js-section-nav footer{margin-top:25px}
 </form>
 </div>
 <div class="panel season-admin admin-feature-card">
-<div class="toolbar"><div><h3>Jogos · Gestão</h3><p class="muted">Atualiza horário, competição, fase e resultado dos jogos já registados.</p></div></div>
+<div class="toolbar"><div><h3>Jogos · Gestão</h3><p class="muted">Atualiza horário, competição, fase e resultado dos jogos já registados.</p><div id="adminGamesAttention" class="mt-6"></div></div></div>
 <div class="actions mt-9"><button type="button" class="btn sm secondary game-filter active" data-game-filter="upcoming">Próximos</button><button type="button" class="btn sm ghost game-filter" data-game-filter="all">Todos</button><button type="button" class="btn sm ghost game-filter" data-game-filter="Campeonato">Campeonato</button><button type="button" class="btn sm ghost game-filter" data-game-filter="Taça">Taça</button><button type="button" class="btn sm ghost game-filter" data-game-filter="pending">Por confirmar</button><button type="button" class="btn sm ghost game-filter" data-game-filter="played">Realizados</button></div><div id="adminGamesList"></div>
 </div>
 <div class="panel season-admin">
@@ -650,7 +650,7 @@ async function loadAdmin(keepSelectedId=null){
 let adminGameFilter='upcoming',adminGameShowAll=false;
 function renderAdminGames(items){
  const box=$('#adminGamesList');if(!box)return;
- const now=new Date();let games=(items||[]).filter(x=>!masterTeamId||x.team_id===masterTeamId).sort((a,b)=>new Date(a.game_date)-new Date(b.game_date));
+ const now=new Date();const allGames=(items||[]).filter(x=>!masterTeamId||x.team_id===masterTeamId).sort((a,b)=>new Date(a.game_date)-new Date(b.game_date));const pendingSoon=allGames.filter(x=>{const d=new Date(x.game_date),hours=(d-now)/36e5;return hours>=0&&hours<=168&&!x.manually_confirmed_at&&!x.time_confirmed});const att=$('#adminGamesAttention');if(att)att.innerHTML=pendingSoon.length?`<span class="pill orange">⚠ ${pendingSoon.length} jogo${pendingSoon.length===1?'':'s'} nos próximos 7 dias por confirmar</span>`:'<span class="pill green">✓ Sem jogos próximos por confirmar</span>';let games=allGames;
  if(adminGameFilter==='upcoming')games=games.filter(x=>new Date(x.game_date)>=now&&x.goals_for==null&&x.goals_against==null);
  else if(adminGameFilter==='pending')games=games.filter(x=>new Date(x.game_date)>=now&&!x.manually_confirmed_at&&!x.time_confirmed);
  else if(adminGameFilter==='played')games=games.filter(x=>x.goals_for!=null&&x.goals_against!=null);

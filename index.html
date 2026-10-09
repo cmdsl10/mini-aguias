@@ -393,9 +393,9 @@ body.js-section-nav footer{margin-top:25px}
 <div class="stat"><span>Pagantes</span><strong id="qrPaid">—</strong></div>
 <div class="stat"><span>Sem pagamento</span><strong id="qrUnpaid">—</strong></div>
 <div class="stat"><span>% pagantes</span><strong id="qrPct">—</strong></div>
-<div class="stat"><span>Total recebido</span><strong id="qrTotal">—</strong></div>
+<div class="stat"><span>Total recebido</span><strong id="qrTotal">—</strong></div><div class="stat"><span>Média por pagante</span><strong id="qrAverage">—</strong></div>
 </div>
-<div class="actions mt-16"><button type="button" class="btn sm secondary quota-report-filter active" data-filter="all">Todos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="paid">Pagos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="unpaid">Por pagar</button></div>
+<div class="actions mt-16"><button type="button" id="quotaReportExport" class="btn sm primary">Exportar Excel</button><button type="button" class="btn sm secondary quota-report-filter active" data-filter="all">Todos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="paid">Pagos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="unpaid">Por pagar</button></div>
 <div class="table-wrap mt-16"><table><thead><tr><th>Nº</th><th>Nome</th><th>Estado</th><th>Valor registado</th></tr></thead><tbody id="quotaReportBody"></tbody></table></div>
 </div>
 <div class="admin-grid" id="adminMembersSection">
@@ -651,12 +651,16 @@ function renderQuotaReport(reportYear){
    return {m,paid,amount};
  });
  const paid=rows.filter(r=>r.paid),total=paid.reduce((s,r)=>s+r.amount,0),shown=rows.filter(r=>quotaReportFilter==='all'||(quotaReportFilter==='paid'?r.paid:!r.paid));
- $('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
+ $('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrAverage').textContent=(paid.length?total/paid.length:0).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
  $('#quotaReportBody').innerHTML=shown.map(r=>`<tr><td>${r.m.member_number??'—'}</td><td>${esc(r.m.full_name)}</td><td>${r.paid?'<span class="pill green">Pago</span>':'<span class="pill orange">Por pagar</span>'}</td><td>${r.amount.toLocaleString('pt-PT',{style:'currency',currency:'EUR'})}</td></tr>`).join('');
  document.querySelectorAll('.quota-report-filter').forEach(b=>b.classList.toggle('active',b.dataset.filter===quotaReportFilter));
 }
 $('#quotaReportYear').onchange=e=>renderQuotaReport(e.target.value);
 document.querySelectorAll('.quota-report-filter').forEach(b=>b.onclick=()=>{quotaReportFilter=b.dataset.filter;renderQuotaReport($('#quotaReportYear').value)});
+$('#quotaReportExport').onclick=()=>{
+ const y=Number($('#quotaReportYear').value),active=adminMembers.filter(m=>m.status==='active'),rows=active.map(m=>{const legacy=adminDues.find(d=>d.member_id===m.id&&Number(d.year)===y&&d.status==='paid'),pays=adminPayments.filter(p=>p.member_id===m.id&&p.coverage_start&&p.coverage_end&&p.coverage_start<=y+'-12-31'&&p.coverage_end>=y+'-01-01'),paid=!!legacy||pays.length>0,amount=pays.reduce((s,p)=>s+Number(p.amount||0),0)+(legacy&&!pays.length?Number(legacy.amount||0):0);return {'Nº de sócio':m.member_number,'Nome':m.full_name,'Estado':paid?'Pago':'Por pagar','Valor registado (€)':amount}}).filter(r=>quotaReportFilter==='all'||(quotaReportFilter==='paid'?r.Estado==='Pago':r.Estado==='Por pagar'));
+ const ws=XLSX.utils.json_to_sheet(rows);ws['!cols']=[{wch:12},{wch:34},{wch:14},{wch:20}];const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Quotas '+y);XLSX.writeFile(wb,`Mini-Aguias_Relatorio_Quotas_${y}.xlsx`);
+};
 function renderEmailRequests(items){
  const box=$('#adminEmailRequests'),count=$('#emailRequestCount');if(!box)return;
  if(count)count.textContent=`${items.length} pendente${items.length===1?'':'s'}`;

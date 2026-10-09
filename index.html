@@ -393,7 +393,7 @@ body.js-section-nav footer{margin-top:25px}
 <div class="stat"><span>Pagantes</span><strong id="qrPaid">—</strong></div>
 <div class="stat"><span>Sem pagamento</span><strong id="qrUnpaid">—</strong></div>
 <div class="stat"><span>% pagantes</span><strong id="qrPct">—</strong></div>
-<div class="stat"><span>Total recebido</span><strong id="qrTotal">—</strong></div><div class="stat"><span>Média por pagante</span><strong id="qrAverage">—</strong></div>
+<div class="stat"><span>Total recebido</span><strong id="qrTotal">—</strong></div><div class="stat"><span>Média por pagante</span><strong id="qrAverage">—</strong></div><div class="stat"><span>Previsto no ano</span><strong id="qrExpected">—</strong></div><div class="stat"><span>Por receber</span><strong id="qrOutstanding">—</strong></div>
 </div>
 <div class="actions mt-16"><button type="button" id="quotaReportExport" class="btn sm primary">Exportar Excel</button><button type="button" class="btn sm secondary quota-report-filter active" data-filter="all">Todos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="paid">Pagos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="unpaid">Por pagar</button></div>
 <div class="table-wrap mt-16"><table><thead><tr><th>Nº</th><th>Nome</th><th>Estado</th><th>Valor registado</th></tr></thead><tbody id="quotaReportBody"></tbody></table></div>
@@ -651,7 +651,7 @@ function renderQuotaReport(reportYear){
    return {m,paid,amount};
  });
  const paid=rows.filter(r=>r.paid),total=paid.reduce((s,r)=>s+r.amount,0),shown=rows.filter(r=>quotaReportFilter==='all'||(quotaReportFilter==='paid'?r.paid:!r.paid));
- $('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrAverage').textContent=(paid.length?total/paid.length:0).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
+ const expected=active.reduce((s,m)=>{const q=quotaMonthlyRate(m,y+'-01-01');return s+(q.rate===null?0:q.rate*12)},0),outstanding=Math.max(0,expected-total);$('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrAverage').textContent=(paid.length?total/paid.length:0).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrExpected').textContent=expected.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrOutstanding').textContent=outstanding.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
  $('#quotaReportBody').innerHTML=shown.map(r=>`<tr><td>${r.m.member_number??'—'}</td><td>${esc(r.m.full_name)}</td><td>${r.paid?'<span class="pill green">Pago</span>':'<span class="pill orange">Por pagar</span>'}</td><td>${r.amount.toLocaleString('pt-PT',{style:'currency',currency:'EUR'})}</td></tr>`).join('');
  document.querySelectorAll('.quota-report-filter').forEach(b=>b.classList.toggle('active',b.dataset.filter===quotaReportFilter));
 }

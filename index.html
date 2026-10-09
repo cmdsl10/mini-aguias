@@ -699,7 +699,7 @@ function renderEmailRequests(items){
    if(r.error){alert(r.error.message);return}
    const signupLink=location.origin+'/#area-socio';
    const mail=await db.from('email_queue').insert({member_id:member.id,recipient_email:x.requested_email,email_type:'account_invitation',subject:'Mini-Águias — Já podes criar a tua conta',body:'Olá '+member.full_name+', o teu email foi validado e associado à tua ficha de sócio do Grupo Desportivo Mini-Águias. Já podes criar a tua conta na Área de Sócio: '+signupLink+'\n\nEntra no link, escolhe “Criar conta de sócio” e utiliza este mesmo email.',status:'queued',scheduled_for:new Date().toISOString()});
-   if(mail.error)alert('Email aprovado, mas não foi possível preparar o aviso automático: '+mail.error.message);
+   if(mail.error)alert('Email aprovado, mas não foi possível preparar o aviso automático: '+mail.error.message);else{const {data:{session}}=await db.auth.getSession();const send=await db.functions.invoke('send-membership-email',{headers:{Authorization:'Bearer '+session.access_token}});if(send.error||send.data?.failed)alert('Email aprovado. O aviso ficou guardado, mas não foi possível enviá-lo agora.');}
    await loadAdmin(member.id)
  });
  document.querySelectorAll('.email-reject').forEach(b=>b.onclick=async()=>{

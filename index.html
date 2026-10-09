@@ -395,6 +395,7 @@ body.js-section-nav footer{margin-top:25px}
 <div class="stat"><span>% pagantes</span><strong id="qrPct">—</strong></div>
 <div class="stat"><span>Total recebido</span><strong id="qrTotal">—</strong></div>
 </div>
+<div class="actions mt-16"><button type="button" class="btn sm secondary quota-report-filter active" data-filter="all">Todos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="paid">Pagos</button><button type="button" class="btn sm secondary quota-report-filter" data-filter="unpaid">Por pagar</button></div>
 <div class="table-wrap mt-16"><table><thead><tr><th>Nº</th><th>Nome</th><th>Estado</th><th>Valor registado</th></tr></thead><tbody id="quotaReportBody"></tbody></table></div>
 </div>
 <div class="admin-grid" id="adminMembersSection">
@@ -641,18 +642,21 @@ function renderQuotaGenderQuick(){
  $('#quotaGenderQuickList').innerHTML=pending.length?pending.map(m=>`<div class="due-row"><div><b>Nº ${m.member_number??'—'} · ${esc(m.full_name)}</b><div class="muted">${memberAgeOn(m,today)} anos</div></div><div class="actions"><button type="button" class="btn sm secondary quick-gender" data-id="${m.id}" data-gender="male">Homem · 1 €</button><button type="button" class="btn sm secondary quick-gender" data-id="${m.id}" data-gender="female">Mulher · 0,75 €</button></div></div>`).join(''):'<div class="notice">Todos os sócios adultos têm o valor da quota definido. ✓</div>';
  document.querySelectorAll('.quick-gender').forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await db.from('members').update({gender:b.dataset.gender,updated_at:new Date().toISOString()}).eq('id',b.dataset.id);if(r.error){alert(r.error.message);b.disabled=false;return}const m=adminMembers.find(x=>x.id===b.dataset.id);if(m)m.gender=b.dataset.gender;renderQuotaGenderQuick();renderQuotaReport($('#quotaReportYear')?.value||year);if(selectedMember?.id===b.dataset.id)await selectMember(b.dataset.id)});
 }
+let quotaReportFilter='all';
 function renderQuotaReport(reportYear){
  const y=Number(reportYear||year),active=adminMembers.filter(m=>m.status==='active'),rows=active.map(m=>{
    const legacy=adminDues.find(d=>d.member_id===m.id&&Number(d.year)===y&&d.status==='paid');
-   const pays=adminPayments.filter(p=>p.member_id===m.id&&p.paid_at&&new Date(p.paid_at+'T12:00:00').getFullYear()===y);
+   const pays=adminPayments.filter(p=>p.member_id===m.id&&p.coverage_start&&p.coverage_end&&p.coverage_start<=y+'-12-31'&&p.coverage_end>=y+'-01-01');
    const paid=!!legacy||pays.length>0,amount=pays.reduce((s,p)=>s+Number(p.amount||0),0)+(legacy&&!pays.length?Number(legacy.amount||0):0);
    return {m,paid,amount};
  });
- const paid=rows.filter(r=>r.paid),total=paid.reduce((s,r)=>s+r.amount,0);
+ const paid=rows.filter(r=>r.paid),total=paid.reduce((s,r)=>s+r.amount,0),shown=rows.filter(r=>quotaReportFilter==='all'||(quotaReportFilter==='paid'?r.paid:!r.paid));
  $('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
- $('#quotaReportBody').innerHTML=rows.map(r=>`<tr><td>${r.m.member_number??'—'}</td><td>${esc(r.m.full_name)}</td><td>${r.paid?'<span class="pill green">Pago</span>':'<span class="pill orange">Sem pagamento</span>'}</td><td>${r.amount.toLocaleString('pt-PT',{style:'currency',currency:'EUR'})}</td></tr>`).join('');
+ $('#quotaReportBody').innerHTML=shown.map(r=>`<tr><td>${r.m.member_number??'—'}</td><td>${esc(r.m.full_name)}</td><td>${r.paid?'<span class="pill green">Pago</span>':'<span class="pill orange">Por pagar</span>'}</td><td>${r.amount.toLocaleString('pt-PT',{style:'currency',currency:'EUR'})}</td></tr>`).join('');
+ document.querySelectorAll('.quota-report-filter').forEach(b=>b.classList.toggle('active',b.dataset.filter===quotaReportFilter));
 }
 $('#quotaReportYear').onchange=e=>renderQuotaReport(e.target.value);
+document.querySelectorAll('.quota-report-filter').forEach(b=>b.onclick=()=>{quotaReportFilter=b.dataset.filter;renderQuotaReport($('#quotaReportYear').value)});
 function renderEmailRequests(items){
  const box=$('#adminEmailRequests'),count=$('#emailRequestCount');if(!box)return;
  if(count)count.textContent=`${items.length} pendente${items.length===1?'':'s'}`;

@@ -473,7 +473,7 @@ async function loadPublic(){
  const [t,p,g,se,sp,ga,fi,ch,mg,st]=await Promise.all([
   db.from('teams').select('id,slug'),
   db.from('players').select('*').eq('active',true).order('sort_order'),
-  db.from('games').select('*').gte('game_date',new Date().toISOString()).order('game_date',{ascending:true}).limit(4),
+  db.from('games').select('*').gte('game_date',new Date().toISOString()).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(8),
   db.from('seasons').select('*').eq('visible',true).order('sort_order').order('start_year',{ascending:false}),
   db.from('season_photos').select('*').eq('visible',true).order('sort_order'),
   db.from('gallery_items').select('*').eq('published',true).order('sort_order').order('event_date',{ascending:false}),
@@ -495,7 +495,7 @@ async function loadPublic(){
  $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  renderSeasonTabs();
  const games=(g.data||[]).filter(x=>x?.game_date&&x.opponent!=='Destaque livre');
- const featuredGame=games[0];
+ const featuredGame=games.find(x=>!masterTeamId||x.team_id===masterTeamId)||games[0];
  const homeFeature=(g.data||[]).find(x=>x?.home_feature&&x?.poster_url);
  // O destaque manual da Home nunca deve substituir o próximo jogo real.
  // Só é usado quando não existe nenhum jogo futuro no calendário.
@@ -793,7 +793,7 @@ $('#saveNextGamePoster').onclick=async()=>{
  const file=$('#nextGamePosterInput').files[0];
  if(!file){msg($('#nextGamePosterMsg'),'Escolhe primeiro uma imagem.','error');return}
  try{
-   const q=await db.from('games').select('*').gte('game_date',new Date().toISOString()).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(1);
+   const q=await db.from('games').select('*').eq('team_id',masterTeamId).gte('game_date',new Date().toISOString()).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(1);
    if(q.error)throw q.error;
    const game=q.data?.[0];
    if(!game){msg($('#nextGamePosterMsg'),'Ainda não existe um próximo jogo no calendário.','error');return}

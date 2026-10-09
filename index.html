@@ -607,14 +607,9 @@ $('#memberLogout').onclick=logout;$('#adminLogout').onclick=logout;const headerL
 async function loadMemberPortal(user){
  let q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();
  if(!q.data){
-   const c=await db.rpc('claim_my_member_account');
-   if(c.error){
-     const link=await db.rpc('admin_link_existing_auth_accounts').catch?.(()=>null);
-     q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();
-     if(!q.data){$('#memberAuth').classList.remove('hidden');msg($('#memberLoginMsg'),'A tua conta existe, mas este email ainda não está associado à tua ficha de sócio. Preenche o formulário “O teu email ainda não está registado?” abaixo e envia os teus dados para validação pela direção. Não precisas de criar outra conta.','error');setTimeout(()=>document.querySelector('#memberEmailRequest')?.scrollIntoView({behavior:'smooth',block:'start'}),150);return}
-   }else{
-     q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();
-   }
+   const claim=await db.rpc('claim_my_member_account');
+   if(!claim.error)q=await db.from('members').select('*').eq('user_id',user.id).maybeSingle();
+   if(!q.data){$('#memberAuth').classList.remove('hidden');msg($('#memberLoginMsg'),'A tua conta existe, mas este email ainda não está associado a uma ficha de sócio. Se o email da ficha ainda não foi validado pela direção, usa o formulário abaixo.','error');return}
  }
  const m=q.data;if(!m)return;
  $('#memberAuth').classList.add('hidden');$('#memberPortal').classList.remove('hidden');$('#memberWelcome').textContent=`Olá, ${m.full_name}`; const sf=$('#memberSelfEdit');if(sf){sf.dataset.memberId=m.id;['phone','locality','address','postal_code'].forEach(k=>sf.elements[k].value=m[k]||'')}

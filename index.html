@@ -298,7 +298,7 @@ body.js-section-nav footer{margin-top:25px}
 <div id="nextGamePosterPreview"></div>
 </div>
 <div class="panel season-admin admin-feature-card">
-<div class="toolbar"><div><h3>Adicionar próximo jogo</h3><p class="muted">O jogo criado aparece automaticamente no cartão da Home.</p></div></div>
+<div class="toolbar"><div><h3>Adicionar jogo</h3><p class="muted">Regista jogos de Campeonato, Taça ou outras competições. O próximo jogo aparece automaticamente no cartão da Home.</p></div></div>
 <form id="newGameForm" class="form-grid">
 <label>Adversário<input name="opponent" required placeholder="Ex.: A.D. Oeiras"></label>
 <label>Data e hora<input name="game_date" type="datetime-local" required></label>
@@ -307,7 +307,7 @@ body.js-section-nav footer{margin-top:25px}
 <label>Local<input name="venue" placeholder="Ex.: Campo do Moinho da Fonte"></label>
 <label><input name="home_game" type="checkbox" checked class="inline-check"> Jogamos em casa</label>
 <label class="full">Cartaz / fotografia do jogo<input name="poster" type="file" accept="image/jpeg,image/png,image/webp"></label>
-<button class="btn primary full">Guardar próximo jogo</button><div id="gameCreateMsg" class="full"></div>
+<button class="btn primary full">Guardar jogo</button><div id="gameCreateMsg" class="full"></div>
 </form>
 </div>
 <div class="panel season-admin admin-feature-card">
@@ -786,7 +786,7 @@ $('#newGameForm').addEventListener('submit',async e=>{
    msg($('#gameCreateMsg'),file&&file.size?'Jogo e cartaz guardados.':'Jogo guardado. Podes adicionar o cartaz depois.','success');
    e.target.reset();$('#newGameForm [name=home_game]').checked=true;await loadPublic();await loadAdmin();
  }catch(err){msg($('#gameCreateMsg'),err.message||'Erro ao guardar o próximo jogo.','error')}
- finally{if(btn){btn.disabled=false;btn.textContent='Guardar próximo jogo'}}
+ finally{if(btn){btn.disabled=false;btn.textContent='Guardar jogo'}}
 });
 
 $('#saveNextGamePoster').onclick=async()=>{

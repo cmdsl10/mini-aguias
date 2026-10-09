@@ -668,23 +668,39 @@ function renderQuotaGenderQuick(){
  document.querySelectorAll('.quick-gender').forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await db.from('members').update({gender:b.dataset.gender,updated_at:new Date().toISOString()}).eq('id',b.dataset.id);if(r.error){alert(r.error.message);b.disabled=false;return}const m=adminMembers.find(x=>x.id===b.dataset.id);if(m)m.gender=b.dataset.gender;renderQuotaGenderQuick();renderQuotaReport($('#quotaReportYear')?.value||year);if(selectedMember?.id===b.dataset.id)await selectMember(b.dataset.id)});
 }
 let quotaReportFilter='all';
+function quotaExpectedForMember(m,y){
+ let total=0;
+ for(let month=1;month<=12;month++){
+  const mm=String(month).padStart(2,'0'),first=y+'-'+mm+'-01',last=new Date(y,month,0).toISOString().slice(0,10);
+  if(m.joined_at&&String(m.joined_at).slice(0,10)>last)continue;
+  const q=quotaMonthlyRate(m,first);if(q.rate!==null)total+=q.rate;
+ }
+ return total;
+}
+function quotaPaymentAmountInYear(p,y){
+ if(!p.coverage_start||!p.coverage_end)return 0;
+ const ys=y+'-01-01',ye=y+'-12-31';if(p.coverage_end<ys||p.coverage_start>ye)return 0;
+ const amount=Number(p.amount||0),months=Number(p.months_count||0);
+ if(!amount||!months)return 0;
+ let covered=0;
+ for(let month=1;month<=12;month++){
+  const mm=String(month).padStart(2,'0'),first=y+'-'+mm+'-01',last=new Date(y,month,0).toISOString().slice(0,10);
+  if(p.coverage_start<=last&&p.coverage_end>=first)covered++;
+ }
+ return amount*(covered/months);
+}
 function renderQuotaReport(reportYear){
  const y=Number(reportYear||year),active=adminMembers.filter(m=>m.status==='active'),rows=active.map(m=>{
-   const legacy=adminDues.find(d=>d.member_id===m.id&&Number(d.year)===y&&d.status==='paid');
-   const pays=adminPayments.filter(p=>p.member_id===m.id&&p.coverage_start&&p.coverage_end&&p.coverage_start<=y+'-12-31'&&p.coverage_end>=y+'-01-01');
-   const paid=!!legacy||pays.length>0,amount=pays.reduce((s,p)=>s+Number(p.amount||0),0)+(legacy&&!pays.length?Number(legacy.amount||0):0);
-   return {m,paid,amount};
+  const legacy=adminDues.find(d=>d.member_id===m.id&&Number(d.year)===y&&d.status==='paid');
+  const pays=adminPayments.filter(p=>p.member_id===m.id&&p.coverage_start&&p.coverage_end&&p.coverage_start<=y+'-12-31'&&p.coverage_end>=y+'-01-01');
+  const periodAmount=pays.reduce((s,p)=>s+quotaPaymentAmountInYear(p,y),0);
+  const legacyAmount=legacy&&!pays.length?Number(legacy.amount||0):0;
+  const amount=periodAmount+legacyAmount,expected=quotaExpectedForMember(m,y);
+  const covered=pays.length>0||!!legacy,paid=covered;
+  return {m,paid,amount,expected,outstanding:Math.max(0,expected-amount)};
  });
- const paid=rows.filter(r=>r.paid),total=paid.reduce((s,r)=>s+r.amount,0),shown=rows.filter(r=>quotaReportFilter==='all'||(quotaReportFilter==='paid'?r.paid:!r.paid));
- const expected=active.reduce((sum,m)=>{
-   let memberExpected=0;
-   for(let month=1;month<=12;month++){
-     const d=y+'-'+String(month).padStart(2,'0')+'-01';
-     if(m.joined_at&&String(m.joined_at).slice(0,10)>y+'-'+String(month).padStart(2,'0')+'-31')continue;
-     const q=quotaMonthlyRate(m,d);if(q.rate!==null)memberExpected+=q.rate;
-   }
-   return sum+memberExpected;
- },0),outstanding=Math.max(0,expected-total);$('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrAverage').textContent=(paid.length?total/paid.length:0).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrExpected').textContent=expected.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrOutstanding').textContent=outstanding.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
+ const paid=rows.filter(r=>r.paid),total=rows.reduce((s,r)=>s+r.amount,0),expected=rows.reduce((s,r)=>s+r.expected,0),outstanding=rows.reduce((s,r)=>s+r.outstanding,0),shown=rows.filter(r=>quotaReportFilter==='all'||(quotaReportFilter==='paid'?r.paid:!r.paid));
+ $('#qrActive').textContent=active.length;$('#qrPaid').textContent=paid.length;$('#qrUnpaid').textContent=active.length-paid.length;$('#qrPct').textContent=active.length?Math.round(paid.length*100/active.length)+'%':'0%';$('#qrTotal').textContent=total.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrAverage').textContent=(paid.length?total/paid.length:0).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrExpected').textContent=expected.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});$('#qrOutstanding').textContent=outstanding.toLocaleString('pt-PT',{style:'currency',currency:'EUR'});
  $('#quotaReportBody').innerHTML=shown.map(r=>`<tr><td>${r.m.member_number??'—'}</td><td>${esc(r.m.full_name)}</td><td>${r.paid?'<span class="pill green">Pago</span>':'<span class="pill orange">Por pagar</span>'}</td><td>${r.amount.toLocaleString('pt-PT',{style:'currency',currency:'EUR'})}</td></tr>`).join('');
  document.querySelectorAll('.quota-report-filter').forEach(b=>b.classList.toggle('active',b.dataset.filter===quotaReportFilter));
 }

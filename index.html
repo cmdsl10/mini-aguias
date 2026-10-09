@@ -382,6 +382,10 @@ body.js-section-nav footer{margin-top:25px}
 <div class="toolbar"><div><h3>Backup de sócios e quotas</h3><p class="muted">Cria um ficheiro Excel com a lista completa de sócios e o histórico de quotas. Guarda-o fora do site como cópia de segurança.</p></div><button id="exportMembersBackup" type="button" class="btn secondary">Exportar backup Excel</button></div>
 <div id="backupMsg"></div>
 </div>
+<div class="panel season-admin admin-feature-card" id="quotaGenderQuickPanel">
+<div class="toolbar"><div><h3>Valores de quota por definir</h3><p class="muted">Só aparecem adultos dos 18 aos 66 anos sem sexo registado. Escolhe uma vez e o valor mensal fica automático.</p></div><span id="quotaGenderPendingCount" class="pill orange">0 por definir</span></div>
+<div id="quotaGenderQuickList"></div>
+</div>
 <div class="panel season-admin admin-feature-card" id="quotaReportPanel">
 <div class="toolbar"><div><h3>Relatório de quotas</h3><p class="muted">Resumo anual dos sócios pagantes e dos valores registados.</p></div><label>Ano<select id="quotaReportYear"><option value="2025">2025</option><option value="2026" selected>2026</option><option value="2027">2027</option><option value="2028">2028</option></select></label></div>
 <div class="stats">
@@ -626,10 +630,17 @@ async function loadAdmin(keepSelectedId=null){
  adminMembers=m.data||[];adminDues=d.data||[];adminPayments=pay.data||[];adminSeasons=se.data||[];adminPlayers=pl.data||[];const st=(s.data||[])[0]||{};
  $('#stActive').textContent=st.active_members??0;$('#stPaid').textContent=`${st.dues_paid??0} (${st.paid_percentage_known??0}%)`;$('#stUnknown').textContent=st.dues_unknown??0;$('#stAge').textContent=st.average_age?st.average_age+' anos':'—';$('#stEmail').textContent=st.members_with_email??0;$('#stPhoto').textContent=st.members_with_photo??0;$('#stLinked').textContent=st.linked_accounts??0;
  $('#coverageText').textContent=`Cobertura das quotas de ${year}: ${st.records_coverage_percentage??0}% dos sócios ativos têm estado registado.`;
- renderMemberTable(adminMembers);renderQuotaReport($('#quotaReportYear')?.value||year);renderBirthdays(b.data||[]);renderAdminSeasons();renderAdminGallery(ga.data||[]);renderAdminFishing(fi.data||[]);renderAdminClubHistory(ch.data);renderEmailRequests(er.data||[]);
+ renderMemberTable(adminMembers);renderQuotaGenderQuick();renderQuotaReport($('#quotaReportYear')?.value||year);renderBirthdays(b.data||[]);renderAdminSeasons();renderAdminGallery(ga.data||[]);renderAdminFishing(fi.data||[]);renderAdminClubHistory(ch.data);renderEmailRequests(er.data||[]);
  if(keepSelectedId && adminMembers.some(x=>x.id===keepSelectedId)) await selectMember(keepSelectedId);
 }
 
+function renderQuotaGenderQuick(){
+ const today=new Date().toISOString().slice(0,10);
+ const pending=adminMembers.filter(m=>{if(m.status!=='active'||m.gender)return false;const a=memberAgeOn(m,today);return a!==null&&a>=18&&a<67});
+ $('#quotaGenderPendingCount').textContent=pending.length+' por definir';
+ $('#quotaGenderQuickList').innerHTML=pending.length?pending.map(m=>`<div class="due-row"><div><b>Nº ${m.member_number??'—'} · ${esc(m.full_name)}</b><div class="muted">${memberAgeOn(m,today)} anos</div></div><div class="actions"><button type="button" class="btn sm secondary quick-gender" data-id="${m.id}" data-gender="male">Homem · 1 €</button><button type="button" class="btn sm secondary quick-gender" data-id="${m.id}" data-gender="female">Mulher · 0,75 €</button></div></div>`).join(''):'<div class="notice">Todos os sócios adultos têm o valor da quota definido. ✓</div>';
+ document.querySelectorAll('.quick-gender').forEach(b=>b.onclick=async()=>{b.disabled=true;const r=await db.from('members').update({gender:b.dataset.gender,updated_at:new Date().toISOString()}).eq('id',b.dataset.id);if(r.error){alert(r.error.message);b.disabled=false;return}const m=adminMembers.find(x=>x.id===b.dataset.id);if(m)m.gender=b.dataset.gender;renderQuotaGenderQuick();renderQuotaReport($('#quotaReportYear')?.value||year);if(selectedMember?.id===b.dataset.id)await selectMember(b.dataset.id)});
+}
 function renderQuotaReport(reportYear){
  const y=Number(reportYear||year),active=adminMembers.filter(m=>m.status==='active'),rows=active.map(m=>{
    const legacy=adminDues.find(d=>d.member_id===m.id&&Number(d.year)===y&&d.status==='paid');

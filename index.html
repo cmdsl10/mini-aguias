@@ -926,7 +926,20 @@ db.auth.onAuthStateChange(async(event,session)=>{
  });
  q('#gameHomePhotoInput')?.addEventListener('change',async e=>{
    const file=e.target.files[0];if(!await valid(file))return;
-   try{let r=await db.from('games').select('id').eq('home_feature',true).limit(1);if(r.error)throw r.error;let game=r.data?.[0];if(!game){const n=await db.from('games').insert({opponent:'Destaque livre',game_date:'2099-12-31T23:59:00.000Z',home_game:true,home_feature:true}).select('id').single();if(n.error)throw n.error;game=n.data}const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`home/highlight/${game.id}/${crypto.randomUUID()}.${ext}`);const u=await db.from('games').update({poster_url:url}).eq('id',game.id);if(u.error)throw u.error;await loadPublic()}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
+   try{
+     const now=new Date().toISOString();
+     let r=await db.from('games').select('id,team_id,game_date,opponent').gte('game_date',now).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(8);
+     if(r.error)throw r.error;
+     let candidates=r.data||[];
+     let game=(masterTeamId?candidates.find(x=>x.team_id===masterTeamId):null)||candidates[0];
+     if(!game)throw new Error('Não existe próximo jogo no calendário.');
+     const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
+     const url=await uploadPublicFile(file,`home/highlight/${game.id}/${crypto.randomUUID()}.${ext}`);
+     const fresh=url+'?v='+Date.now();
+     const u=await db.from('games').update({poster_url:fresh,updated_at:new Date().toISOString()}).eq('id',game.id);
+     if(u.error)throw u.error;
+     await loadPublic();
+   }catch(err){alert(err.message||'Erro ao trocar fotografia.')}
  });
  q('#mastersHomePhotoInput')?.addEventListener('change',async e=>{
    const file=e.target.files[0];if(!await valid(file))return;

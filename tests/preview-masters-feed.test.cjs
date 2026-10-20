@@ -1,0 +1,13 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { previewStandingsFeed, COMPETITION_ID } = require('../scripts/preview-masters-feed.cjs');
+const now = Date.parse('2026-10-20T12:00:00Z');
+const rows = () => Array.from({length:12},(_,i)=>({team_name:'Team '+i,position:i+1,played:0,wins:0,draws:0,losses:0,goals_for:0,goals_against:0,points:0}));
+const feed = () => ({competition_id:COMPETITION_ID,source_url:'https://example.org/verified-feed',fetched_at:'2026-10-20T11:00:00Z',standings:rows()});
+test('accepts fresh complete structured snapshot for preview',()=>assert.equal(previewStandingsFeed(feed(),rows(),{now}).ready,true));
+test('rejects wrong competition',()=>{const f=feed();f.competition_id='other';assert.equal(previewStandingsFeed(f,rows(),{now}).ready,false)});
+test('rejects stale snapshot',()=>{const f=feed();f.fetched_at='2026-10-15T11:00:00Z';assert.equal(previewStandingsFeed(f,rows(),{now}).ready,false)});
+test('rejects missing HTTPS provenance',()=>{const f=feed();f.source_url='http://example.org';assert.equal(previewStandingsFeed(f,rows(),{now}).ready,false)});
+test('rejects duplicate rank',()=>{const f=feed();f.standings[1].position=1;assert.equal(previewStandingsFeed(f,rows(),{now}).ready,false)});
+test('rejects missing required metric',()=>{const f=feed();delete f.standings[0].played;assert.equal(previewStandingsFeed(f,rows(),{now}).ready,false)});
+test('rejects zero regression from previous games',()=>{const current=rows();current[0]={...current[0],played:1,wins:1,points:3};assert.equal(previewStandingsFeed(feed(),current,{now}).ready,false)});

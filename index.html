@@ -481,7 +481,7 @@ async function loadPublic(){
  const [t,p,g,se,sp,ga,fi,ch,mg,st]=await Promise.all([
   db.from('teams').select('id,slug'),
   db.from('players').select('*').eq('active',true).order('sort_order'),
-  db.from('games').select('*').gte('game_date',new Date().toISOString()).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(8),
+  db.from('games').select('*').gte('game_date',new Date().toISOString()).neq('opponent','Destaque livre').order('game_date',{ascending:true}),
   db.from('seasons').select('*').eq('visible',true).order('sort_order').order('start_year',{ascending:false}),
   db.from('season_photos').select('*').eq('visible',true).order('sort_order'),
   db.from('gallery_items').select('*').eq('published',true).order('sort_order').order('event_date',{ascending:false}),
@@ -503,14 +503,15 @@ async function loadPublic(){
  $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  renderSeasonTabs();
  const games=(g.data||[]).filter(x=>x?.game_date&&x.opponent!=='Destaque livre');
- const featuredGame=games.find(x=>!masterTeamId||x.team_id===masterTeamId)||games[0];
+ const featuredGame=masterTeamId?games.find(x=>x.team_id===masterTeamId):null;
  const homeFeature=(g.data||[]).find(x=>x?.home_feature&&x?.poster_url);
  // O destaque manual da Home nunca deve substituir o próximo jogo real.
  // Só é usado quando não existe nenhum jogo futuro no calendário.
  const gameMedia=$('#nextGameSpotlight .home-highlight-media');
  if(!gameMedia){console.warn('Área do próximo jogo não encontrada.');}
  else if(featuredGame&&featuredGame.poster_url){
-   gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(featuredGame.poster_url)}" alt="Cartaz do próximo jogo">`;
+   const posterUrl=new URL(featuredGame.poster_url,window.location.href);posterUrl.searchParams.set('game_poster_version',featuredGame.updated_at||featuredGame.manually_confirmed_at||featuredGame.id);
+   gameMedia.innerHTML=`<img class="next-game-main-image" src="${esc(posterUrl.href)}" alt="Cartaz do próximo jogo">`;
  }else if(gameMedia&&featuredGame){
    const d=new Date(featuredGame.game_date), date=d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long'}), time=d.toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
    const homeTeam=featuredGame.home_game?'G.D. MINI-ÁGUIAS':featuredGame.opponent;
@@ -928,10 +929,10 @@ db.auth.onAuthStateChange(async(event,session)=>{
    const file=e.target.files[0];if(!await valid(file))return;
    try{
      const now=new Date().toISOString();
-     let r=await db.from('games').select('id,team_id,game_date,opponent').gte('game_date',now).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(8);
+     let r=await db.from('games').select('id,team_id,game_date,opponent').eq('team_id',masterTeamId).gte('game_date',now).neq('opponent','Destaque livre').order('game_date',{ascending:true}).limit(1);
      if(r.error)throw r.error;
      let candidates=r.data||[];
-     let game=(masterTeamId?candidates.find(x=>x.team_id===masterTeamId):null)||candidates[0];
+     let game=candidates[0];
      if(!game)throw new Error('Não existe próximo jogo no calendário.');
      const ext=(file.name.split('.').pop()||'jpg').toLowerCase();
      const url=await uploadPublicFile(file,`home/highlight/${game.id}/${crypto.randomUUID()}.${ext}`);

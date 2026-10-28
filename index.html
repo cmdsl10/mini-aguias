@@ -500,7 +500,7 @@ async function loadPublic(){
  // Se a época atual ainda não tiver foto, usa a foto oficial mais recente disponível.
  const homeMastersSeason=publicSeasons.find(s=>s.official_photo_url)||publicSeasons.find(s=>publicSeasonPhotos.some(p=>p.season_id===s.id&&p.photo_type==='official'));
  const mastersPhoto=homeMastersSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===homeMastersSeason?.id&&x.photo_type==='official')?.image_url;
- $('#mastersSpotlight .home-highlight-media').innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
+ const mastersMedia=$('#mastersSpotlight .home-highlight-media');if(mastersMedia)mastersMedia.innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  renderSeasonTabs();
  const games=(g.data||[]).filter(x=>x?.game_date&&x.opponent!=='Destaque livre');
  const featuredGame=games.find(x=>!masterTeamId||x.team_id===masterTeamId)||games[0];
@@ -521,7 +521,7 @@ async function loadPublic(){
  }else if(gameMedia){
    gameMedia.innerHTML='<div class="home-highlight-placeholder">Próximo jogo ainda não definido</div>';
  }
- $('#gamesGrid').innerHTML=games.length?games.map(x=>`<div class="card"><b>Mini-Águias ${x.home_game?'vs':'@'} ${esc(x.opponent)}</b><p>${new Date(x.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</p><p class="muted">${esc(x.venue||'Local a confirmar')}</p></div>`).join(''):'<div class="card muted">Calendário em atualização.</div>';
+ const gamesGrid=$('#gamesGrid');if(gamesGrid)gamesGrid.innerHTML=games.length?games.map(x=>`<div class="card"><b>Mini-Águias ${x.home_game?'vs':'@'} ${esc(x.opponent)}</b><p>${new Date(x.game_date).toLocaleString('pt-PT',{dateStyle:'medium',timeStyle:'short'})}</p><p class="muted">${esc(x.venue||'Local a confirmar')}</p></div>`).join(''):'<div class="card muted">Calendário em atualização.</div>';
 }
 function renderSeasonTabs(){
  const tabs=$('#seasonTabs'), content=$('#seasonContent');

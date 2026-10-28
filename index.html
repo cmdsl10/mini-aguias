@@ -499,7 +499,9 @@ async function loadPublic(){
  // O destaque da Home é independente da foto oficial da época atual.
  // Se a época atual ainda não tiver foto, usa a foto oficial mais recente disponível.
  const homeMastersSeason=publicSeasons.find(s=>s.official_photo_url)||publicSeasons.find(s=>publicSeasonPhotos.some(p=>p.season_id===s.id&&p.photo_type==='official'));
- const mastersPhoto=homeMastersSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===homeMastersSeason?.id&&x.photo_type==='official')?.image_url;
+ const defaultMastersPhoto=homeMastersSeason?.official_photo_url||publicSeasonPhotos.find(x=>x.season_id===homeMastersSeason?.id&&x.photo_type==='official')?.image_url;
+ const mastersSetting=await db.from('site_settings').select('value').eq('key','home_masters_image').maybeSingle();
+ const mastersPhoto=mastersSetting.data?.value||defaultMastersPhoto;
  const mastersMedia=$('#mastersSpotlight .home-highlight-media');if(mastersMedia)mastersMedia.innerHTML=mastersPhoto?`<img class="masters-main-image" src="${esc(mastersPhoto)}" alt="Fotografia da equipa Futebol Masters">`:'<div class="home-highlight-placeholder">Imagem em atualização</div>';
  renderSeasonTabs();
  const games=(g.data||[]).filter(x=>x?.game_date&&x.opponent!=='Destaque livre');
@@ -944,7 +946,7 @@ db.auth.onAuthStateChange(async(event,session)=>{
  });
  q('#mastersHomePhotoInput')?.addEventListener('change',async e=>{
    const file=e.target.files[0];if(!await valid(file))return;
-   try{const season=publicSeasons?.[0];if(!season)throw new Error('Não existe uma época ativa.');const ext=(file.name.split('.').pop()||'jpg').toLowerCase(),url=await uploadPublicFile(file,`football/${season.id}/official.${ext}`);const u=await db.from('seasons').update({official_photo_url:url,updated_at:new Date().toISOString()}).eq('id',season.id);if(u.error)throw u.error;await loadPublic()}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
+   try{const ext=(file.name.split('.').pop()||'jpg').toLowerCase();const url=await uploadPublicFile(file,`home/masters/${crypto.randomUUID()}.${ext}`);const u=await db.from('site_settings').upsert({key:'home_masters_image',value:url},{onConflict:'key'}).select('key').single();if(u.error)throw u.error;await loadPublic();alert('Foto da página inicial dos Masters atualizada.')}catch(err){alert(err.message||'Erro ao trocar fotografia.')}
  });
 })();
 </script>

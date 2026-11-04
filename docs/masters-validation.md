@@ -1,5 +1,22 @@
 # Masters privados — implementação local e revisão
 
+## Publicação concluída — 04/11/2026
+
+**PUBLICADO:** https://mini-aguias.vercel.app/#masters-private .
+Migração 20261104125552 aplicada pelo CLI no projeto correto, PR #1 integrado,
+Vercel production READY no commit funcional 1e3a0e0. Sete cenários online PASS;
+RLS e finanças na base remota PASS com rollback. Backup protegido recuperado e
+22 fingerprints de dados existentes preservados. Plantel privado com 28 membros,
+37 treinos abertos e nenhuma falta, pagamento ou dívida inicial.
+
+Contas dos jogadores continuam sem associação automática. Aires/Pereira com
+elegibilidade pendente. Login positivo/upload com conta real em produção e
+aparelhos físicos são NOT TESTED; não são inferidos dos testes de base de dados.
+[Relatório final de produção](masters-production-release.md).
+
+O restante documento conserva o histórico das fases anteriores e seus bloqueios,
+que foram entretanto resolvidos; não descreve o estado atual da publicação.
+
 ## Publicação autorizada — backup validado; confirmação da migração pendente
 
 Autorização expressa recebida em 04/11/2026. Alvos confirmados e testes repetidos.

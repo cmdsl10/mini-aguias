@@ -1,3 +1,10 @@
+# Atualização — produção publicada em 04/11/2026
+
+A migração Masters foi aplicada via CLI e o PR #1 integrado. O domínio oficial
+serve a área privada, com sete cenários online PASS. RLS e regras financeiras
+foram verificadas na base remota com rollback. [Relatório final](masters-production-release.md).
+O conteúdo abaixo é o registo histórico do ensaio anterior à publicação.
+
 # Masters — ensaio local real concluído; remoto não executado
 
 04/11/2026. Branch `feature/masters-training-management`.

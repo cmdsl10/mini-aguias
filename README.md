@@ -2,12 +2,12 @@
 
 Site oficial do G.D. Mini-Águias.
 
-## Masters privados — desenvolvimento
+## Masters privados
 
-Implementação e testes locais: [relatório Masters](docs/masters-validation.md).
-Executar `npm ci` e `npm test` (Chrome instalado). A migração deste módulo
-**não foi aplicada remotamente**; publicação autorizada, pendente do backup
-recuperável. Ver [preparação de produção](docs/masters-production-release.md).
+Área publicada: [Masters privados](https://mini-aguias.vercel.app/#masters-private).
+[Validação e estado de produção](docs/masters-production-release.md).
+Executar `npm ci` e `npm test` (Chrome instalado). A migração foi aplicada em produção após backup protegido e recuperação
+validada. As contas dos jogadores exigem associação explícita pela direção.
 O build `npm run build` gera apenas os ficheiros públicos em `dist/`.
 
 ## Estrutura atual

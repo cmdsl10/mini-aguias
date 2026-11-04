@@ -1,6 +1,6 @@
 # Masters — publicação em produção
 
-Estado em 04/11/2026: **migração aplicada e validada; publicação Vercel em curso**.
+Estado em 04/11/2026: **PUBLICADO em produção; migração e testes online aprovados**.
 Autorização expressa de publicação e backup registada. Não é necessária nova
 confirmação para as operações normais desta release.
 
@@ -84,7 +84,13 @@ O plantel público anterior não foi substituído nem reutilizado para finanças
 
 ## GitHub e Vercel
 
-PR #1 será concluído apenas depois dos controlos acima. O build publica só
+PR #1 integrado com sucesso em main. Commit funcional de publicação:
+`1e3a0e0fe20013f91e0d8724a69b1e8e3e0c7807`. Deployment de produção
+`dpl_Tbq1NmyVngevQxahMFzGSoza4REE`, target production, estado READY e SHA
+confirmado. O domínio oficial serve o botão Masters e os ficheiros do módulo.
+Atualizações documentais posteriores não alteram este código funcional.
+
+O build publica só
 index.html, scripts/estilos do site, manifesto e assets. SQL, testes, relatórios,
 backups, configurações e lista real de conferência ficam fora do alojamento.
 
@@ -99,10 +105,20 @@ recuperação sem função fora de âmbito e galeria privada sem sobrescrita.
 
 ## Verificação online e limitações
 
-A executar após deployment oficial: tests/masters-live-smoke.cjs. Usa apenas
+**PASS: sete cenários online** em https://mini-aguias.vercel.app , executados com
+`tests/masters-live-smoke.cjs`, sem simular respostas. Usa apenas
 visitante/chave pública, sem criar contas ou escrever dados. Verifica os assets,
 Auth HTTP/recusa de login inválido, recusa de leitura privada nas seis tabelas,
 bucket não público, navegação, menu Masters e larguras 360/390/768/1280.
+
+HTML e quatro assets do módulo: HTTP 200. Lista de conferência, manifesto de
+backup e SQL de migração: HTTP 404 no alojamento público. As seis tabelas privadas
+recusaram o visitante por HTTP. Auth respondeu ao health check e recusou o login
+fictício inválido. O browser apresentou apenas o formulário de login, sem dados
+privados, e não registou erros JavaScript. A captura móvel foi revista.
+
+Evidência sem dados privados: test-results/masters-production-online.json e
+test-results/masters-production-mobile.png, excluídos de Git e do build.
 
 NOT TESTED enquanto não houver contas reais disponibilizadas: login/logout
 positivo de administrador/jogador no browser, JPG de produção com conta real,
@@ -119,3 +135,24 @@ Deployment anterior de produção: dpl_BiFtb499E1fSDyUXVTb7TnJpXuJ6,
 commit f14677e3f6021cade1534732a517a461f0330716. Em falha crítica, reverter o
 código para essa versão e avaliar a migração separadamente, sem apagar dados
 Masters eventualmente criados. Backup protegido disponível e recuperação validada.
+
+## Resultado final
+
+| Item | Estado |
+| --- | --- |
+| Migração Supabase | PASS — 20261104125552 aplicada no projeto correto |
+| Dados anteriores | PASS — 22 fingerprints preservados após migração |
+| PR #1 | MERGED |
+| Vercel oficial | READY, produção, commit funcional 1e3a0e0 |
+| Testes online | PASS — sete cenários reais sem escritas |
+| Testes financeiros/RLS remotos | PASS — transação revertida antes da importação |
+| Plantel privado | 28 elementos, 26 jogadores e 2 staff com elegibilidade pendente |
+| Treinos | 37 abertos, 1.036 marcações pendentes |
+| Faltas, pagamentos e dívida inicial | Zero |
+| Contas de jogadores associadas | Zero, aguardam confirmação de identidade |
+| Login/logout positivo e upload autenticado em produção | NOT TESTED — sem credenciais de utilizador disponibilizadas |
+| Dispositivos físicos/Safari | NOT TESTED |
+| Novos serviços pagos | Nenhum |
+
+A publicação está concluída. Permanecem configurações de acesso e decisões da
+direção, não um bloqueio técnico de deployment. O backup continua protegido.

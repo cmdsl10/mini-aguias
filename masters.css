@@ -1,0 +1,27 @@
+#masters-private .masters-toolbar{display:flex;gap:12px;align-items:end;flex-wrap:wrap;margin:16px 0}
+#masters-private label{display:grid;gap:5px}
+#masters-private input,#masters-private select,#masters-private textarea{max-width:100%;padding:9px;border:1px solid #a8b2bd;border-radius:6px;background:white;color:#172033}
+#masters-private .masters-scroll{overflow:auto;max-height:65vh;border:1px solid #d8dce2;border-radius:10px}
+#masters-private table{border-collapse:separate;border-spacing:0;min-width:100%;font-size:13px}
+#masters-private th,#masters-private td{padding:8px;border-bottom:1px solid #ddd;white-space:nowrap;text-align:center}
+#masters-private th{position:sticky;top:0;background:#082b46;color:white;z-index:2}
+#masters-private th:first-child,#masters-private td:first-child{position:sticky;left:0;text-align:left;z-index:1;background:white;color:#172033;min-width:130px;max-width:180px;white-space:normal}
+#masters-private th:first-child{z-index:3;background:#082b46;color:white}
+#masters-private .masters-cell{min-width:116px;border:1px solid #7a8794;border-radius:6px;padding:8px;background:#f3f5f7;color:#172033}
+#masters-private .masters-cell.present{background:#e1f4e7}
+#masters-private .masters-cell.absent{background:#fff0ef}
+#masters-private .masters-cell.paid{background:#dcecff;color:#123d70}
+#masters-private .masters-cell.partial{background:#fff4ce}
+#masters-private .masters-stats{display:flex;gap:15px;flex-wrap:wrap;margin:15px 0}
+#masters-private .masters-stats div{border:1px solid #ddd;border-radius:8px;padding:14px;flex:1;min-width:120px}
+#masters-private .masters-stats strong{display:block;font-size:22px}
+#masters-private .masters-archive{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:15px}
+#masters-private .masters-archive img{width:100%;max-height:320px;object-fit:contain}
+#masters-private dialog{width:min(500px,92vw);max-height:90vh;overflow:auto;border:1px solid #8997a5;border-radius:12px;padding:22px}
+#masters-private dialog::backdrop{background:#082b4699}
+#masters-private .masters-rank{display:grid;grid-template-columns:minmax(110px,1fr) 2fr auto;gap:10px;align-items:center;margin:12px 0}
+#masters-private progress{width:100%;accent-color:#ab8021}
+#masters-private [hidden]{display:none!important}
+#masters-private .masters-error{color:#9c2017}
+@media(max-width:600px){#masters-private .masters-toolbar>*{max-width:100%}#masters-private .masters-rank{grid-template-columns:110px 1fr 45px}}
+#masters-private{scroll-margin-top:90px}

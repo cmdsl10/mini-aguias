@@ -2,3 +2,9 @@
 Thumbs.db
 .env
 .env.*
+node_modules/
+test-results/
+supabase/.temp/
+dist/
+.vercel/
+docs/masters-confirmed-roster.json

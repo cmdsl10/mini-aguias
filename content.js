@@ -202,6 +202,7 @@
       await loadEntries();
     } catch (e) { status('Não foi possível carregar os conteúdos: ' + e.message, 'error'); }
   };
+  window.refreshContentPublic = refreshPublic;
   refreshPublic();
   setInterval(() => { if (!document.hidden) refreshPublic(); }, 60000);
   window.addEventListener('focus', () => refreshPublic());

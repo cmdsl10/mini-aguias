@@ -1,0 +1,33 @@
+const assert = require('node:assert/strict');
+const {dates, cell, statistics} = require('../masters-domain');
+const days = dates();
+assert.equal(days[0], '2026-10-21'); assert.equal(days.at(-1), '2027-06-30');
+assert(days.every(d => new Date(d + 'T12:00:00Z').getUTCDay() === 3));
+const players = [{id:'p',display_name:'Jogador',attendance_eligible:true}];
+const trainings = ['closed','closed','closed','open','cancelled'].map((status,id) => ({id,status}));
+const attendance = trainings.map(t => ({training_id:t.id, player_id:'p',status:'absent'}));
+const allocations = [0,1].map(training_id => ({training_id,player_id:'p',amount_cents:100}));
+const [result] = statistics(players,trainings,attendance,allocations);
+assert.deepEqual([result.absent,result.due,result.paid,result.balance,result.rate],[3,300,200,100,0]);
+assert.equal(cell(players[0],trainings[3],attendance,allocations).due,0);
+assert.equal(cell(players[0],trainings[4],attendance,allocations).due,0);
+allocations[0].amount_cents=50;
+assert.equal(cell(players[0],trainings[0],attendance,allocations).balance,50);
+attendance[0].status='present'; attendance[1].status='excused';
+assert.equal(statistics(players,trainings,attendance,[])[0].rate,1/3);
+assert.equal(statistics(players,[],[],[])[0].rate,null);
+console.log('Masters domain: weekly dates, closed-only debts, partial payments and attendance statistics passed.');
+const {memberProfile} = require('../masters-domain');
+const roster = require('./fixtures/masters-roster.cjs').members.map(p => memberProfile(p.name));
+assert.equal(roster.length,28);
+assert.equal(roster.filter(p => p.sports_role === 'player').length,26);
+assert.equal(roster.find(p => p.display_name === 'Seabra').playing_position,'médio');
+for (const name of ['Aires','Pereira']) {
+ const member = {...memberProfile(name),id:'p'};
+ assert.equal(member.attendance_eligible,null);
+ assert.equal(cell(member,trainings[2],attendance,[]).due,0);
+ assert.equal(statistics([member],trainings,attendance,[])[0].rate,null);
+ assert.equal(cell({...member,attendance_eligible:false},trainings[2],attendance,[]).due,0);
+ assert.equal(cell({...member,attendance_eligible:true},trainings[2],attendance,[]).due,100);
+}
+console.log('Masters roster: 28 members, 26 players, staff eligibility pending, explicit inclusion/exclusion and Seabra position passed.');

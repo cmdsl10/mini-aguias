@@ -1,0 +1,1 @@
+Próxima fase: auditar autenticação e políticas RLS antes de disponibilizar a área Masters aos jogadores.

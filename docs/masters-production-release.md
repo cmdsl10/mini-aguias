@@ -142,6 +142,15 @@ trigger não devem ser tratadas como APIs normais. Não desativar RLS.
 - Migrações remotas: **BLOCKED**, confirmação da ferramenta expirou; nenhuma aplicada.
 - Importação real: **NOT EXECUTED**, lista local confirmada com 28.
 - Contas/permissões de jogadores: **NOT CONFIGURED**, sem associação automática.
-- Push/main/deployment novo: **NOT EXECUTED**.
+- Push da feature branch: **PASS**, código enviado para o GitHub.
+- PR de revisão: https://github.com/cmdsl10/mini-aguias/pull/1 (draft, sem merge).
+- Preview Vercel: **READY**, commit 07abc8a4fd0c096a560d678c7978e1c264fc712d,
+  https://mini-aguias-3to931q4e-mini-aguias.vercel.app . HTML e masters.js responderam
+  HTTP 200; o botão Masters e o script estão presentes. O SQL de migração responde
+  404 no alojamento. Isto valida o artefacto, não o módulo privado com base migrada.
+- Main/produção: **NOT EXECUTED**, mantêm o commit anterior.
 - Testes do módulo em produção: **NOT TESTED**.
 - Custos novos/recursos pagos: nenhum.
+
+Foi pedida apenas informação sobre a visibilidade do cartão de confirmação Supabase.
+Não foi solicitada nova autorização para o backup nem tentado contornar o conector.

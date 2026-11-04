@@ -1,6 +1,7 @@
 # Masters — preparação da publicação em produção
 
-Estado: **BLOCKED no backup; produção ainda não alterada**.
+Estado: **backup validado; migração bloqueada pela confirmação da ferramenta Supabase**.
+Produção ainda não alterada.
 Autorização de publicação recebida em 04/11/2026. Esta autorização inclui commit,
 push, migração aditiva verificada, merge e publicação. Não é necessário voltar a
 pedir aprovação dessas operações normais depois de ultrapassado o bloqueio abaixo.
@@ -40,7 +41,48 @@ pedir aprovação dessas operações normais depois de ultrapassado o bloqueio a
 - Nenhuma chave privilegiada é incluída no HTML público. A URL de produção e a
   chave publicável existentes são intencionais; não se trocaram por valores locais.
 
-## Bloqueio concreto — backup recuperável
+## Backup autorizado e validado — atualização
+
+Autorização específica recebida para exportação na pasta local protegida indicada.
+A exportação foi efetuada exclusivamente para esse destino, sem apresentar dados
+pessoais nos relatórios. ACL Windows limitada ao proprietário e SYSTEM, sem
+herança; pasta excluída do Git e do build público.
+
+PASS: hashes de seis ficheiros; 20 tabelas públicas recuperadas e comparadas,
+três buckets e metadados de 67 objetos recuperados, relações/foreign keys
+validadas em PostgreSQL 17 isolado sem rede. A comparação JSON foi corrigida para
+tratar números equivalentes (12 e 12.0) como o mesmo valor; não houve tolerância
+a diferenças de conteúdo. A sequência de identificadores foi validada em motor
+PostgreSQL/PGlite isolado; um probe Docker separado da sequência não completou.
+Os contentores descartáveis foram removidos. A cópia em disco foi preservada.
+
+Não foram incluídos registos Auth com passwords/tokens/chaves. Foram guardados
+apenas UUIDs de utilizadores necessários para verificar relações. A verificação
+por padrões não detetou segredos no conteúdo exportado. Foram exportados dados
+públicos do esquema do clube, incluindo os dados privados de sócios e quotas
+expressamente autorizados, e configurações/metadados Storage. Os binários dos
+ficheiros Storage não integram esta cópia: a migração aditiva não altera ou
+apaga nenhum desses ficheiros, bucket antigo ou objeto existente.
+
+Manifesto e relatório completo de recuperação ficam apenas na pasta protegida.
+Um resumo sem dados pessoais está em test-results/masters-backup-recovery-summary.json.
+Foram ainda recolhidas contagens e fingerprints agregados das 22 tabelas
+existentes para comparação imediatamente após a migração.
+
+## Bloqueio atual — confirmação da migração no conector
+
+A chamada apply_migration foi emitida duas vezes após validar o backup.
+Em ambas, o conector devolveu `status=expired` e a mensagem de que a confirmação
+expirou após dois minutos. A primeira verificação após a expiração confirmou
+zero tabelas privadas Masters. Não foi usada uma rota alternativa para contornar
+a confirmação da ferramenta. É necessário aceitar o pedido no cartão Supabase
+quando for reemitido, ou resolver a confirmação do conector.
+
+A autorização escrita de publicação continua válida. Este bloqueio é técnico,
+não uma nova decisão sobre backup, layout, regras ou custos. Não fazer merge
+para main nem publicar antes de aplicar/verificar a migração.
+
+## Histórico do bloqueio de backup — entretanto resolvido
 
 A revisão automática rejeitou a exportação dos registos pessoais/financeiros de
 produção para o contexto do agente e para ficheiros locais. A razão foi que o
@@ -97,7 +139,7 @@ trigger não devem ser tratadas como APIs normais. Não desativar RLS.
 
 ## Estado de publicação
 
-- Migrações remotas: **NOT EXECUTED**.
+- Migrações remotas: **BLOCKED**, confirmação da ferramenta expirou; nenhuma aplicada.
 - Importação real: **NOT EXECUTED**, lista local confirmada com 28.
 - Contas/permissões de jogadores: **NOT CONFIGURED**, sem associação automática.
 - Push/main/deployment novo: **NOT EXECUTED**.

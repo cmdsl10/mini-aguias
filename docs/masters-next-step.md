@@ -17,3 +17,7 @@ Não é necessário reenviar o Excel nem criar já um projeto Supabase pago.
 
 [Resultados detalhados](masters-local-integration.md) ·
 [Validação](masters-validation.md) · [Ensaio](masters-remote-rehearsal.md)
+
+Publicação autorizada: backup protegido e recuperação validados. A migração
+aguarda confirmação do conector Supabase; dois pedidos expiraram sem aplicação.
+Ver masters-production-release.md. Não é necessária nova autorização do backup.

@@ -1,12 +1,11 @@
 # Masters privados — implementação local e revisão
 
-## Publicação autorizada — bloqueada no backup
+## Publicação autorizada — backup validado; confirmação da migração pendente
 
-Autorização expressa recebida em 04/11/2026. Alvos GitHub/Vercel/Supabase
-confirmados e testes repetidos. Produção ainda não alterada: a revisão automática
-rejeitou exportar dados pessoais/financeiros sem autorização específica do
-conteúdo e destino. A consulta alternativa dos backups da plataforma exige
-autenticação ainda indisponível. [Preparação e desbloqueio](masters-production-release.md).
+Autorização expressa recebida em 04/11/2026. Alvos confirmados e testes repetidos.
+Backup específico autorizado, protegido e recuperado com sucesso. A migração
+continua sem aplicação: o conector Supabase devolveu confirmação expirada nas
+duas tentativas. Produção ainda não alterada; não contornar essa confirmação. [Preparação e desbloqueio](masters-production-release.md).
 
 ## Resultado mais recente — bloqueio resolvido em 04/11/2026
 

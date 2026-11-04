@@ -25,7 +25,7 @@ class Query {
  return {data:JSON.parse(JSON.stringify(this.one?selected[0]||null:selected)),error:null};
  }).then(resolve,reject);}
 }
-window.supabase={createClient:()=>({from:t=>new Query(t),rpc:async()=>({data:[],error:null}),auth:{getUser:async()=>({data:{user:{app_metadata:{role:'admin'}}}}),onAuthStateChange:()=>{}},storage:{from:()=>({upload:async(p,f)=>{if(window.failUpload)return {error:{message:'Upload de teste falhou'}};uploaded.set(p,f);return {data:{path:p}};},download:async p=>({data:uploaded.get(p)||new Blob(['test'],{type:'image/png'})}),remove:async paths=>{paths.forEach(p=>uploaded.delete(p));return {data:[]};}})}})};
+window.supabase={createClient:()=>({from:t=>new Query(t),rpc:async()=>({data:[],error:null}),auth:{getSession:async()=>({data:{session:{user:{app_metadata:{role:'admin'}}}}}),getUser:async()=>({data:{user:{app_metadata:{role:'admin'}}}}),onAuthStateChange:()=>{}},storage:{from:()=>({upload:async(p,f)=>{if(window.failUpload)return {error:{message:'Upload de teste falhou'}};uploaded.set(p,f);return {data:{path:p}};},download:async p=>({data:uploaded.get(p)||new Blob(['test'],{type:'image/png'})}),remove:async paths=>{paths.forEach(p=>uploaded.delete(p));return {data:[]};}})}})};
 `;
 (async()=>{
  const browser=await chromium.launch({channel:'chrome',headless:true});
@@ -33,20 +33,20 @@ window.supabase={createClient:()=>({from:t=>new Query(t),rpc:async()=>({data:[],
  const errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
  await page.route('**/*',async route=>{
   const url=new URL(route.request().url());
-  if(url.hostname==='cdn.jsdelivr.net')return route.fulfill({contentType:'application/javascript',body:mock});
+  if(url.hostname==='cdn.jsdelivr.net')return route.fulfill({contentType:'application/javascript',body:url.pathname.includes('supabase')?mock:''});
   if(url.hostname!=='mini.test')return route.abort();
   const filename=path.join(root,url.pathname==='/'?'index.html':url.pathname);
   if(!fs.existsSync(filename))return route.fulfill({status:404,body:''});
   return route.fulfill({contentType:filename.endsWith('.js')?'application/javascript':filename.endsWith('.css')?'text/css':filename.endsWith('.png')?'image/png':'text/html',body:fs.readFileSync(filename)});
  });
- await page.goto('https://mini.test');
+ await page.goto('https://mini.test/#admin');
  await page.locator('#historyForm input[name=title]').waitFor();
  await page.waitForFunction(()=>document.querySelector('#historyForm input[name=title]').value==='História dos Mini-Águias');
  const history=page.locator('#historyForm');
  await history.locator('[name=title]').fill('A nossa história');await history.locator('[name=body]').fill('Fundação\n\nMemória <script>alert(1)</script>');
  await history.getByRole('button',{name:'Guardar história'}).click();
- await page.waitForFunction(()=>document.querySelector('#historyContent').textContent.includes('A nossa história'));
- assert.equal(await page.locator('#historyContent script').count(),0);
+ await page.waitForFunction(()=>document.querySelector('#clubHistory').textContent.includes('A nossa história'));
+ assert.equal(await page.locator('#clubHistory script').count(),0);
  await page.locator('#newMemory').click();
  const form=page.locator('#memoryForm');await form.locator('[name=title]').fill('Jogo de estreia');await form.locator('[name=description]').fill('Duas fotografias\nUm grande dia.');await form.locator('[name=category]').fill('Jogos');
  const png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aF1cAAAAASUVORK5CYII=','base64');
@@ -56,6 +56,9 @@ window.supabase={createClient:()=>({from:t=>new Query(t),rpc:async()=>({data:[],
  assert(!await page.locator('#galleryGrid').textContent().then(t=>t.includes('Jogo de estreia')));
  await page.locator('#memoryList').getByRole('button',{name:'Publicar',exact:true}).click();
  await page.waitForFunction(()=>document.querySelectorAll('#galleryGrid img').length===2);
+ await page.evaluate(()=>loadPublic());
+ assert.equal(await page.locator('#galleryGrid img').count(),2,'Public refresh must preserve private multi-photo rendering');
+ assert((await page.locator('#galleryGrid img').first().getAttribute('src')).startsWith('blob:'));
  await page.locator('#memoryList').getByRole('button',{name:'Editar',exact:true}).click();
  await form.locator('[name=title]').fill('Vitória');await form.locator('[name=sort_order]').fill('2');
  await page.locator('#memoryPhotoList').getByRole('button',{name:'Retirar fotografia'}).first().click();
@@ -75,7 +78,8 @@ window.supabase={createClient:()=>({from:t=>new Query(t),rpc:async()=>({data:[],
   assert.equal(overflow,false,'Horizontal overflow at '+width);
  }
  await page.setViewportSize({width:390,height:844});await page.locator('.content-admin').scrollIntoViewIfNeeded();
- await page.screenshot({path:path.join(root,'../qa-mobile.png'),fullPage:true});
+ fs.mkdirSync(path.join(root,'test-results'),{recursive:true});
+ await page.screenshot({path:path.join(root,'test-results/content-mobile.png'),fullPage:true});
  const victory=page.locator('.memory-row').filter({hasText:'Vitória'});
  await victory.getByRole('button',{name:'Despublicar',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#galleryGrid').textContent.includes('Vitória'));
  await victory.getByRole('button',{name:'Apagar',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('#memoryList').textContent.includes('Vitória'));

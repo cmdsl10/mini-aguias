@@ -1,1 +1,19 @@
-Próxima fase: auditar autenticação e políticas RLS antes de disponibilizar a área Masters aos jogadores.
+# Masters — próximo passo
+
+Bloqueio técnico local resolvido em 04/11/2026.
+
+- PASS: 16 cenários de integração real, três de concorrência e 82 verificações
+  PGlite, mais cálculos, interface e regressão simulada.
+- Corrigidos os links de Auth, recuperação e sobrescrita de imagens da galeria.
+- Laboratório local encerrado com volumes fictícios preservados; nenhum projeto
+  remoto pago necessário, nenhuma migração remota/publicação/merge executada.
+- Lista: 28 elementos — 26 jogadores com Seabra médio, Aires treinador e Pereira
+  presidente. Original preservado. Os dois últimos ficam com elegibilidade por
+  decidir, sem dívida, até decisão da direção.
+
+Próximo passo humano: decidir elegibilidade, confirmar contas reais e rever a
+versão local. Aplicação em produção ou publicação requer autorização expressa.
+Não é necessário reenviar o Excel nem criar já um projeto Supabase pago.
+
+[Resultados detalhados](masters-local-integration.md) ·
+[Validação](masters-validation.md) · [Ensaio](masters-remote-rehearsal.md)

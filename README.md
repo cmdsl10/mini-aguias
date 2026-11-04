@@ -2,6 +2,14 @@
 
 Site oficial do G.D. Mini-Águias.
 
+## Masters privados — desenvolvimento
+
+Implementação e testes locais: [relatório Masters](docs/masters-validation.md).
+Executar `npm ci` e `npm test` (Chrome instalado). A migração deste módulo
+**não foi aplicada remotamente**; publicação autorizada, pendente do backup
+recuperável. Ver [preparação de produção](docs/masters-production-release.md).
+O build `npm run build` gera apenas os ficheiros públicos em `dist/`.
+
 ## Estrutura atual
 - Site público
 - Futebol Masters por épocas

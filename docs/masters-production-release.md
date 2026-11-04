@@ -1,156 +1,121 @@
-# Masters — preparação da publicação em produção
+# Masters — publicação em produção
 
-Estado: **backup validado; migração bloqueada pela confirmação da ferramenta Supabase**.
-Produção ainda não alterada.
-Autorização de publicação recebida em 04/11/2026. Esta autorização inclui commit,
-push, migração aditiva verificada, merge e publicação. Não é necessário voltar a
-pedir aprovação dessas operações normais depois de ultrapassado o bloqueio abaixo.
+Estado em 04/11/2026: **migração aplicada e validada; publicação Vercel em curso**.
+Autorização expressa de publicação e backup registada. Não é necessária nova
+confirmação para as operações normais desta release.
 
-## Alvos confirmados
+## Destinos confirmados
 
-- GitHub: cmdsl10/mini-aguias; branch feature/masters-training-management.
-- Main remoto antes desta fase: f14677e3f6021cade1534732a517a461f0330716.
-- Supabase: dchthzmnldvvwnmhhlvf, sem as seis tabelas privadas Masters nem o
-  schema masters_private; nenhum conflito nos nomes das novas políticas Storage.
-- Vercel: mini-aguias, prj_URaaRqJPWoHMAFg1Fic0b9AS9yB8,
-  equipa team_fQjs4oOBXznVuFvfCod3OVjl. Ligação ao repositório confirmada.
-- URL oficial existente: https://mini-aguias.vercel.app .
-- Produção anterior READY: dpl_BiFtb499E1fSDyUXVTb7TnJpXuJ6, commit main acima.
-  Esse deployment é candidato a rollback de código se uma publicação futura falhar.
+- GitHub: cmdsl10/mini-aguias, PR #1, feature/masters-training-management → main.
+- Supabase de produção: dchthzmnldvvwnmhhlvf, mini-aguias, PostgreSQL 17.
+- Vercel: prj_URaaRqJPWoHMAFg1Fic0b9AS9yB8, equipa team_fQjs4oOBXznVuFvfCod3OVjl.
+- Site oficial: https://mini-aguias.vercel.app .
+- Área Masters: https://mini-aguias.vercel.app/#masters-private .
 
-## Preparação concluída
+## Backup e proteção dos dados
 
-- Migração canónica revista: só cria tabelas/funções privadas e um bucket privado,
-  acrescentando políticas limitadas ao bucket novo. Não apaga/substitui dados do
-  clube. Não aplicar conjuntamente o draft histórico nem resetar a pasta principal.
-- Contagens reais verificadas apenas em agregado: 113 sócios, 112 quotas, 23 jogos,
-  28 elementos no plantel público, 57 pagamentos de sócios e 67 objetos Storage.
-  As contagens zero do catálogo eram estimativas, não ausência de dados.
-- Há dez contas Auth, uma administradora. Nenhuma conta foi criada ou alterada.
-  Não se associaram jogadores a UUIDs sem confirmação.
-- Três buckets existentes preservados: public-media, member-photos e club-memories.
-- Testes repetidos nesta fase: 82 verificações PGlite, cálculos, plantel, browser
-  Masters e regressão de conteúdos PASS. A integração real de 16 cenários e os
-  três cenários concorrentes PASS continuam documentados na fase local anterior;
-  não são apresentados como testes de produção.
-- Build estático preparado em dist com lista explícita de ficheiros públicos.
-  Vercel usa npm ci --ignore-scripts e npm run build. Testes, SQL, relatórios,
-  configurações locais e lista integral de conferência não entram no alojamento.
-- A lista real docs/masters-confirmed-roster.json foi preservada localmente e
-  excluída do Git. Os testes passam a usar um fixture sintético reproduzível.
-- Nenhuma chave privilegiada é incluída no HTML público. A URL de produção e a
-  chave publicável existentes são intencionais; não se trocaram por valores locais.
+Backup específico autorizado em test-results/production-backup-20261104/,
+excluído do Git/build. ACL Windows limitada ao proprietário e SYSTEM, sem
+herança. Nenhum dado pessoal foi enviado para GitHub ou Vercel.
 
-## Backup autorizado e validado — atualização
+PASS: hashes dos seis ficheiros, recuperação e comparação das 20 tabelas públicas,
+três buckets e metadados de 67 objetos; foreign keys verificadas em PostgreSQL
+isolado sem rede. Sequências verificadas no motor PostgreSQL/PGlite isolado.
+Os números JSON equivalentes foram normalizados na comparação (12 e 12.0),
+sem ignorar diferenças de conteúdo. Não foram incluídos passwords/tokens/chaves
+Auth; só UUIDs necessários à validação das relações. Os binários das imagens
+não fazem parte desta cópia e não foram alterados pela migração.
 
-Autorização específica recebida para exportação na pasta local protegida indicada.
-A exportação foi efetuada exclusivamente para esse destino, sem apresentar dados
-pessoais nos relatórios. ACL Windows limitada ao proprietário e SYSTEM, sem
-herança; pasta excluída do Git e do build público.
+Antes e depois da migração foram comparadas 22 contagens/fingerprints agregados:
+**22/22 iguais**, excluindo apenas o bucket novo da comparação com buckets antigos.
+Sócios, quotas, pagamentos de sócios, jogos, plantel público, conteúdos e objetos
+Storage existentes permaneceram intactos.
 
-PASS: hashes de seis ficheiros; 20 tabelas públicas recuperadas e comparadas,
-três buckets e metadados de 67 objetos recuperados, relações/foreign keys
-validadas em PostgreSQL 17 isolado sem rede. A comparação JSON foi corrigida para
-tratar números equivalentes (12 e 12.0) como o mesmo valor; não houve tolerância
-a diferenças de conteúdo. A sequência de identificadores foi validada em motor
-PostgreSQL/PGlite isolado; um probe Docker separado da sequência não completou.
-Os contentores descartáveis foram removidos. A cópia em disco foi preservada.
+## Migração aplicada pelo CLI
 
-Não foram incluídos registos Auth com passwords/tokens/chaves. Foram guardados
-apenas UUIDs de utilizadores necessários para verificar relações. A verificação
-por padrões não detetou segredos no conteúdo exportado. Foram exportados dados
-públicos do esquema do clube, incluindo os dados privados de sócios e quotas
-expressamente autorizados, e configurações/metadados Storage. Os binários dos
-ficheiros Storage não integram esta cópia: a migração aditiva não altera ou
-apaga nenhum desses ficheiros, bucket antigo ou objeto existente.
+CLI oficial 3.0.0 autenticado pelo proprietário. A conta lista o projeto exato;
+CLI confirmou explicitamente mini-aguias (dchthzmnldvvwnmhhlvf) · production.
 
-Manifesto e relatório completo de recuperação ficam apenas na pasta protegida.
-Um resumo sem dados pessoais está em test-results/masters-backup-recovery-summary.json.
-Foram ainda recolhidas contagens e fingerprints agregados das 22 tabelas
-existentes para comparação imediatamente após a migração.
+O histórico remoto de 58 migrações foi obtido numa pasta isolada
+`test-results/masters-production-cli/`. Foi acrescentado apenas o SQL canónico
+`20261104125552_masters_private_training_management.sql`. O dry-run propôs só
+esse ficheiro. Aplicação com --skip-vault, sem seeds, alterações de roles,
+include-all, repair ou reset. As confirmações expiradas do conector não foram
+repetidas; foi utilizado o mecanismo oficial do CLI conforme pedido.
 
-## Bloqueio atual — confirmação da migração no conector
+**PASS:** migração aplicada, seis tabelas novas com RLS ativo, dez triggers de
+guarda/auditoria e bucket masters-lead-foot privado, image/jpeg, máximo 5 MB.
+A pasta principal de migrações do clube não foi aplicada em lote.
 
-A chamada apply_migration foi emitida duas vezes após validar o backup.
-Em ambas, o conector devolveu `status=expired` e a mensagem de que a confirmação
-expirou após dois minutos. A primeira verificação após a expiração confirmou
-zero tabelas privadas Masters. Não foi usada uma rota alternativa para contornar
-a confirmação da ferramenta. É necessário aceitar o pedido no cartão Supabase
-quando for reemitido, ou resolver a confirmação do conector.
+## Verificação na base de produção
 
-A autorização escrita de publicação continua válida. Este bloqueio é técnico,
-não uma nova decisão sobre backup, layout, regras ou custos. Não fazer merge
-para main nem publicar antes de aplicar/verificar a migração.
+`tests/masters-production-rollback.sql` executado antes da importação real:
+PASS para contexto de administrador, leitor autorizado, externo e visitante;
+fecho incompleto recusado, treinador por decidir sem falta, pagamentos parciais,
+sobrealocação recusada, UUID repetido recusado, proteção de faltas pagas,
+estorno e auditoria. Toda a transação foi revertida. Confirmados zero jogadores,
+treinos, pagamentos e auditoria de teste depois do rollback.
 
-## Histórico do bloqueio de backup — entretanto resolvido
+Este teste usa roles e claims controlados na base remota; não é apresentado
+como login positivo de uma pessoa no browser. O script recusa execução depois
+de existir plantel real, para não tocar em registos reais.
 
-A revisão automática rejeitou a exportação dos registos pessoais/financeiros de
-produção para o contexto do agente e para ficheiros locais. A razão foi que o
-pedido genérico de backup não especificava a aprovação daquele conteúdo e destino.
-As tentativas foram rejeitadas antes de produzir ficheiros; não existe backup
-local criado nesta fase. Não contornar a rejeição por outro método de exportação.
+Advisor de segurança: os avisos anteriores sobre funções públicas SECURITY
+DEFINER e proteção de passwords comprometidas desativada permanecem; nenhum
+aviso novo atribuído ao módulo Masters. A função de classificação existente
+verifica app_metadata.role=admin; a função de auditoria é de trigger. Não foi
+desativada nenhuma política RLS nem alterada a configuração Auth.
+[Referência dos avisos](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable).
 
-Foi verificada uma alternativa sem exportação: listar os backups mantidos no
-Supabase. O CLI 3.0.0 não tem SUPABASE_ACCESS_TOKEN/sessão configurada; o conector
-não oferece listagem de backups. O browser Chrome estava minimizado e o controlo
-disponível não conseguiu consultar o painel. Não foi criada uma chave de acesso,
-nem se procuraram/exibiram credenciais privadas para contornar essa limitação.
+## Plantel e treinos
 
-Para prosseguir é necessário um dos seguintes:
+Pré-visualização local confirmada: 28 nomes distintos, 26 jogadores incluindo
+Seabra (médio), Aires treinador e Pereira presidente. Original preservado.
+A lista privada estava vazia. Os nomes não permitem associar automaticamente
+este conjunto ao plantel público; nenhuma associação por semelhança foi feita.
 
-1. Autorização específica para guardar localmente o backup dos dados pessoais e
-   financeiros do clube (nomes, contactos, datas de nascimento, quotas, pagamentos
-   e restantes tabelas públicas/configurações), em
-   C:/Users/CM/Documents/ChatGPT/Mini Águias/test-results/production-backup-20261104/,
-   excluído do Git e do alojamento, para validar recuperação antes da migração;
-   sem palavras-passe nem chaves privadas.
-2. Disponibilizar/verificar um backup recuperável já mantido no Supabase, sem
-   exportar esses dados, através de um acesso autenticado ao painel/listagem.
+**PASS:** 28 elementos importados apenas nas tabelas privadas. Aires/Pereira
+com elegibilidade nula, sem dívida. Zero contas associadas automaticamente;
+nenhuma conta Auth, palavra-passe ou permissão administrativa criada.
 
-Não aplicar a migração antes dessa verificação. A autorização geral de publicação
-mantém-se válida; este é um requisito de proteção dos dados e uma rejeição do
-controlo automático, não um pedido de nova aprovação de layout ou implementação.
+Criados 37 treinos abertos, de 21/10/2026 a 30/06/2027, às quartas-feiras.
+Todas as marcações pendentes. Zero faltas e pagamentos; nenhuma dívida criada.
+O plantel público anterior não foi substituído nem reutilizado para finanças.
 
-## Verificação de segurança existente
+## GitHub e Vercel
 
-O advisor reportou avisos anteriores sobre funções SECURITY DEFINER públicas e
-proteção de palavras-passe comprometidas desativada. Não foram gerados pelo
-módulo novo e não foram modificados nesta fase. As funções admin devem ser
-revistas quanto a guardas de autorização antes da verificação final; funções de
-trigger não devem ser tratadas como APIs normais. Não desativar RLS.
-[Advisor de funções](https://supabase.com/docs/guides/database/database-linter?lint=0028_anon_security_definer_function_executable).
+PR #1 será concluído apenas depois dos controlos acima. O build publica só
+index.html, scripts/estilos do site, manifesto e assets. SQL, testes, relatórios,
+backups, configurações e lista real de conferência ficam fora do alojamento.
 
-## Após desbloquear
+Os testes locais foram novamente executados antes da migração: 82 verificações
+PGlite, cálculos, browser Masters e regressão de conteúdos PASS; build PASS.
+A fase anterior contém 16 cenários reais locais e três cenários concorrentes
+PASS, que não são confundidos com testes de produção.
 
-1. Criar/confirmar backup e testar recuperação num ambiente isolado sem publicar
-   dados pessoais; conservar hashes e relatório, nunca enviar o backup para Git.
-2. Guardar snapshot de esquema e contagens/checksums antes da mudança.
-3. Aplicar só a migração canónica Masters, verificar RLS/advisors e invariantes.
-4. Comparar a pré-visualização do original com a lista confirmada, acrescentar
-   Seabra e conferir os 28. Aires/Pereira com elegibilidade nula, sem dívida.
-   Não copiar automaticamente contas nem conceder papel admin por função.
-5. Push da feature branch; rever preview; integrar main e acompanhar deployment
-   no projeto Vercel já confirmado. Confirmar SHA publicado e URL oficial.
-6. Testes online de visitante e perfis controlados. Não criar passwords fictícias
-   de produção nem gerar dívidas reais. Registar honestamente os testes que
-   exigirem uma conta real autorizada ainda indisponível.
-7. Se falha crítica, rollback do código para o deployment anterior; não eliminar
-   dados Masters criados entretanto e avaliar a migração separadamente.
+A release atualiza o cabeçalho e a área privada, preservando o futebol Masters
+público e a área de sócios. Inclui as correções já validadas dos retornos Auth,
+recuperação sem função fora de âmbito e galeria privada sem sobrescrita.
 
-## Estado de publicação
+## Verificação online e limitações
 
-- Migrações remotas: **BLOCKED**, confirmação da ferramenta expirou; nenhuma aplicada.
-- Importação real: **NOT EXECUTED**, lista local confirmada com 28.
-- Contas/permissões de jogadores: **NOT CONFIGURED**, sem associação automática.
-- Push da feature branch: **PASS**, código enviado para o GitHub.
-- PR de revisão: https://github.com/cmdsl10/mini-aguias/pull/1 (draft, sem merge).
-- Preview Vercel: **READY**, commit 07abc8a4fd0c096a560d678c7978e1c264fc712d,
-  https://mini-aguias-3to931q4e-mini-aguias.vercel.app . HTML e masters.js responderam
-  HTTP 200; o botão Masters e o script estão presentes. O SQL de migração responde
-  404 no alojamento. Isto valida o artefacto, não o módulo privado com base migrada.
-- Main/produção: **NOT EXECUTED**, mantêm o commit anterior.
-- Testes do módulo em produção: **NOT TESTED**.
-- Custos novos/recursos pagos: nenhum.
+A executar após deployment oficial: tests/masters-live-smoke.cjs. Usa apenas
+visitante/chave pública, sem criar contas ou escrever dados. Verifica os assets,
+Auth HTTP/recusa de login inválido, recusa de leitura privada nas seis tabelas,
+bucket não público, navegação, menu Masters e larguras 360/390/768/1280.
 
-Foi pedida apenas informação sobre a visibilidade do cartão de confirmação Supabase.
-Não foi solicitada nova autorização para o backup nem tentado contornar o conector.
+NOT TESTED enquanto não houver contas reais disponibilizadas: login/logout
+positivo de administrador/jogador no browser, JPG de produção com conta real,
+aparelhos físicos/Safari. Operações financeiras e perfis RLS foram testados na
+base remota com rollback; não são inventados resultados de interface autenticada.
+
+Pendências funcionais: confirmar identidade e UUID de cada jogador antes de
+associar a conta; direção decidir elegibilidade de Aires/Pereira. Estas decisões
+não geraram contas, privilégios ou dívidas automáticas.
+
+## Recuperação e rollback
+
+Deployment anterior de produção: dpl_BiFtb499E1fSDyUXVTb7TnJpXuJ6,
+commit f14677e3f6021cade1534732a517a461f0330716. Em falha crítica, reverter o
+código para essa versão e avaliar a migração separadamente, sem apagar dados
+Masters eventualmente criados. Backup protegido disponível e recuperação validada.

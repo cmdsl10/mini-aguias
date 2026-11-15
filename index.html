@@ -448,7 +448,11 @@ body.js-section-nav footer{margin-top:25px}
 <div id="quotaHelp" class="full muted">No pagamento anual, seleciona o ano da quota.</div><div id="quotaRateInfo" class="full notice"></div>
 <button id="saveQuotaPayment" type="button" class="btn primary full">Registar pagamento</button>
 </div>
-<div id="quotaCoverageStatus" class="mt-8"></div><div id="quotaYearHistory" class="dues-list mt-8"></div>
+<div id="quotaCoverageStatus" class="mt-8"></div>
+<div class="panel mt-8"><b>Corrigir regularização de quotas</b><p class="muted">Define o último ano regularizado. Todos os anos desde a admissão até esse ano ficam regularizados, sem registar receitas fictícias. A correção fica no histórico.</p>
+<label>Pago até ao final de <input id="quotaPaidThroughYear" type="number" min="1900" max="2100" step="1"></label>
+<label>Motivo da correção <input id="quotaCorrectionReason" type="text" maxlength="500" placeholder="Ex.: corrigir ano registado por engano"></label>
+<button id="saveQuotaCorrection" type="button" class="btn secondary full">Guardar correção</button></div><div id="quotaYearHistory" class="dues-list mt-8"></div>
 <div class="actions"><button data-q="pending" class="btn sm secondary qbtn">Marcar pendente</button><button data-q="exempt" class="btn sm ghost qbtn">Isento</button><button data-q="unknown" class="btn sm ghost qbtn">Por atualizar</button></div><div id="quotaMsg"></div>
 <div class="actions"><button id="queueQuotaEmail" class="btn ghost sm">Preparar email de quota</button></div>
 <div id="adminCardPreview" class="hidden mt-14"></div><hr class="section-divider"><details id="memberHistoryDetails"><summary><b>Histórico de alterações</b></summary><div id="memberHistory" class="mt-14"><p class="muted">Seleciona um sócio para consultar o histórico.</p></div></details>
@@ -471,7 +475,7 @@ const db=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,auto
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const year=new Date().getFullYear();
-let adminMembers=[], adminDues=[], adminPayments=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], publicMasterGames=[], publicMasterStandings=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
+let adminMembers=[], adminDues=[], adminPayments=[], adminRegularizations=[], selectedMember=null, masterTeamId=null, publicSeasons=[], publicPlayers=[], publicSeasonPhotos=[], publicMasterGames=[], publicMasterStandings=[], adminSeasons=[], adminPlayers=[], selectedSeasonAdmin=null;
 
 function msg(el,text,type='notice'){if(!el)return;el.innerHTML=text?`<div class="${type}">${esc(text)}</div>`:''}
 function dueLabel(status){return status==='paid'?'<span class="pill green">Paga</span>':status==='pending'?'<span class="pill red">Pendente</span>':status==='exempt'?'<span class="pill">Isento</span>':'<span class="pill gray">Por atualizar</span>'}
@@ -640,6 +644,9 @@ $('#memberSelfPhotoButton').onclick=async()=>{const form=$('#memberSelfEdit'),id
 async function loadAdmin(keepSelectedId=null){
  $('#adminAuth').classList.add('hidden');$('#adminPanel').classList.remove('hidden');
  const [m,d,pay,s,b,se,pl,ga,fi,ch,er,apps,games]=await Promise.all([db.from('members').select('*').order('member_number'),db.from('dues').select('*'),db.from('membership_payments').select('*').order('coverage_end',{ascending:false}),db.rpc('admin_member_stats',{target_year:year}),db.rpc('admin_upcoming_birthdays',{days_ahead:30}),db.from('seasons').select('*').order('sort_order').order('start_year',{ascending:false}),db.from('players').select('*').order('sort_order').order('full_name'),db.from('gallery_items').select('*').order('created_at',{ascending:false}),db.from('fishing_content').select('*').order('sort_order').order('created_at',{ascending:false}),db.from('club_history').select('*').eq('id','main').maybeSingle(),db.from('member_email_update_requests').select('*').eq('status','pending').order('created_at',{ascending:true}),db.from('membership_applications').select('*').eq('status','pending').order('created_at',{ascending:true}),db.from('games').select('*').order('game_date',{ascending:true})]);
+ const reg=await db.from('membership_regularizations').select('id,member_id,paid_through_year,reason,created_at').order('id',{ascending:false});
+ if(reg.error){console.error('Falha ao carregar regularizações',reg.error);alert('Não foi possível carregar as correções de quotas. Verifica a migração antes de editar.');return}
+ adminRegularizations=reg.data||[];
  const critical=[['sócios',m],['quotas',d],['pagamentos',pay],['épocas',se],['plantel',pl]];
  const failed=critical.filter(([,r])=>r.error);
  if(failed.length){console.error('Admin load errors',failed.map(([name,r])=>({name,error:r.error})));const box=$('#membersBody');if(box)box.innerHTML=`<tr><td colspan="5"><div class="notice">Não foi possível carregar todos os dados administrativos. Atualiza a página; se continuar, termina a sessão e entra novamente.</div></td></tr>`;}
@@ -836,8 +843,24 @@ $('#saveNextGamePoster').onclick=async()=>{
  }catch(err){msg($('#nextGamePosterMsg'),err.message||'Erro ao guardar cartaz.','error')}
 };
 
+function quotaRegularization(memberId){return adminRegularizations.find(x=>x.member_id===memberId)}
+function quotaPaidThroughYear(m){
+ const manual=quotaRegularization(m.id);
+ if(manual)return Number(manual.paid_through_year);
+ const payments=adminPayments.filter(p=>p.member_id===m.id&&p.coverage_end);
+ if(!payments.length)return null;
+ return Math.max(...payments.map(p=>Number(String(p.coverage_end).slice(0,4))));
+}
+function quotaYearStatus(m,y){
+ const joined=m.joined_at?Number(String(m.joined_at).slice(0,4)):null;
+ if(joined!==null&&y<joined)return 'not_member';
+ const through=quotaPaidThroughYear(m);
+ if(through!==null)return y<=through?'paid':'pending';
+ return adminDues.find(d=>d.member_id===m.id&&Number(d.year)===y)?.status||'unknown';
+}
 function currentDue(memberId){return adminDues.find(x=>x.member_id===memberId&&x.year===year)}
-function renderMemberTable(list){$('#membersBody').innerHTML=list.map(m=>{const d=currentDue(m.id),p=adminPayments.find(x=>x.member_id===m.id),today=new Date().toISOString().slice(0,10);const quota=p?`<span class="pill ${p.coverage_end>=today?'green':'orange'}">Pago até ${new Date(p.coverage_end+'T12:00:00').toLocaleDateString('pt-PT')}</span>`:dueLabel(d?.status||'unknown');return `<tr class="member-row" data-id="${m.id}"><td>${m.member_number??'—'}</td><td>${esc(m.full_name)}</td><td>${m.email?esc(m.email):'<span class="pill orange">Em falta</span>'}</td><td>${quota}</td><td>${m.user_id?'<span class="pill green">Ativa</span>':'<span class="pill gray">Sem conta</span>'}</td></tr>`}).join('');$$('.member-row').forEach(r=>r.onclick=()=>selectMember(r.dataset.id))}
+function renderMemberTable(list){$('#membersBody').innerHTML=list.map(m=>{const d=currentDue(m.id),p=adminPayments.find(x=>x.member_id===m.id),today=new Date().toISOString().slice(0,10);const manual=quotaRegularization(m.id),through=quotaPaidThroughYear(m);
+ const quota=through!==null?'<span class="pill '+(through>=year?'green':'orange')+'">Regularizado até 31/12/'+through+'</span>':dueLabel(d?.status||'unknown');return `<tr class="member-row" data-id="${m.id}"><td>${m.member_number??'—'}</td><td>${esc(m.full_name)}</td><td>${m.email?esc(m.email):'<span class="pill orange">Em falta</span>'}</td><td>${quota}</td><td>${m.user_id?'<span class="pill green">Ativa</span>':'<span class="pill gray">Sem conta</span>'}</td></tr>`}).join('');$$('.member-row').forEach(r=>r.onclick=()=>selectMember(r.dataset.id))}
 $('#memberSearch').addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();renderMemberTable(adminMembers.filter(m=>!q||String(m.member_number||'').includes(q)||m.full_name.toLowerCase().includes(q)))});
 $('#insertMemberForm').addEventListener('submit',async e=>{e.preventDefault();const f=new FormData(e.target),n=Number(f.get('member_number')),name=String(f.get('full_name')||'').trim(),gender=String(f.get('gender')||'');if(!n||!name)return;const occupied=adminMembers.find(x=>x.member_number===n);const question=occupied?`O nº ${n} pertence atualmente a ${occupied.full_name}. Ao inserir o novo sócio, este e todos os seguintes avançam um número. Continuar?`:`Adicionar ${name} como sócio nº ${n}?`;if(!confirm(question))return;msg($('#insertMemberMsg'),'A guardar...');const r=await db.rpc('admin_insert_member_at_number',{p_member_number:n,p_full_name:name});if(r.error){msg($('#insertMemberMsg'),r.error.message,'error');return}if(gender&&r.data){const g=await db.from('members').update({gender,updated_at:new Date().toISOString()}).eq('id',r.data);if(g.error){msg($('#insertMemberMsg'),'Sócio criado, mas não foi possível guardar o sexo: '+g.error.message,'error');await loadAdmin(r.data);return}}e.target.reset();msg($('#insertMemberMsg'),`Sócio adicionado no nº ${n}. Numeração seguinte reajustada.`,'success');await loadAdmin(r.data)});
 
@@ -848,7 +871,13 @@ async function selectMember(id){
  $('#adminPhotoSlot').innerHTML='<div class="photo-placeholder">👤</div>';if(selectedMember.photo_url){const u=await signedPhoto(selectedMember.photo_url);if(u)$('#adminPhotoSlot').innerHTML=`<img class="profile-photo" src="${u}" alt="">`}
  $('#adminCardPreview').classList.add('hidden');msg($('#editorMsg'),'');msg($('#quotaMsg'),'');$('#quotaCoverageStart').value=new Date().toISOString().slice(0,10);$('#quotaCoverageYear').value=String(year);$('#quotaPaymentType').value='annual';quotaPaymentUi();
  const pr=await db.from('membership_payments').select('coverage_start,coverage_end,months_count,payment_type').eq('member_id',selectedMember.id).order('coverage_end',{ascending:false}).limit(1);
- const p=pr.data?.[0];$('#quotaCoverageStatus').innerHTML=p?`<span class="pill green">Pago até ${new Date(p.coverage_end+'T12:00:00').toLocaleDateString('pt-PT')}</span> <span class="muted">(${p.months_count} ${p.months_count===1?'mês':'meses'})</span>`:'<span class="muted">Sem período de pagamento registado neste novo sistema.</span>';const yr=$('#quotaYearHistory');const duesYears=[2025,2026].map(y=>{const d=adminDues.find(x=>x.member_id===selectedMember.id&&x.year===y);return `<div class="due-row"><b>Quota ${y}</b><div>${dueLabel(d?.status||'unknown')}</div></div>`}).join('');yr.innerHTML=`<div class="muted"><b>Histórico por ano</b></div>${duesYears}`;
+ const p=pr.data?.[0],manual=quotaRegularization(selectedMember.id),through=quotaPaidThroughYear(selectedMember);
+ $('#quotaCoverageStatus').innerHTML=through!==null?'<span class="pill green">Regularizado até 31/12/'+through+'</span>'+(manual?'<span class="muted"> (correção administrativa)</span>':''):'<span class="muted">Sem período regularizado conhecido.</span>';
+ $('#quotaPaidThroughYear').value=through??year;
+ $('#quotaCorrectionReason').value='';
+ const first=selectedMember.joined_at?Number(String(selectedMember.joined_at).slice(0,4)):2025;
+ const duesYears=Array.from({length:Math.max(0,Math.min(year+5,through??year)-first+1)},(_,i)=>first+i).map(y=>'<div class="due-row"><b>Quota '+y+'</b><div>'+(quotaYearStatus(selectedMember,y)==='paid'?dueLabel('paid'):dueLabel(quotaYearStatus(selectedMember,y)))+'</div></div>').join('');
+ $('#quotaYearHistory').innerHTML='<div class="muted"><b>Histórico por ano</b></div>'+duesYears;
  await loadMemberHistory(selectedMember.id);
 }
 async function loadMemberHistory(memberId){
@@ -866,6 +895,18 @@ function memberAgeOn(m,dateStr){if(!m?.birth_date)return null;const b=new Date(m
 function quotaMonthlyRate(m,dateStr){const a=memberAgeOn(m,dateStr);if(a!==null&&a<18)return {rate:.50,label:'Criança (menos de 18 anos)'};if(a!==null&&a>=67)return {rate:.75,label:'67 anos ou mais'};if(m?.gender==='female')return {rate:.75,label:'Mulher adulta'};if(m?.gender==='male')return {rate:1,label:'Homem adulto'};return {rate:null,label:'Define primeiro o sexo na ficha para calcular a quota'};}
 function updateQuotaRateInfo(){if(!selectedMember)return;const t=$('#quotaPaymentType').value,annualYear=Number($('#quotaCoverageYear').value||year),start=t==='annual'?annualYear+'-01-01':($('#quotaCoverageStart').value||new Date().toISOString().slice(0,10)),q=quotaMonthlyRate(selectedMember,start),months=t==='annual'?12:Number($('#quotaMonths').value||1),box=$('#quotaRateInfo');box.innerHTML=q.rate===null?'<b>Valor:</b> '+esc(q.label):'<b>'+esc(q.label)+'</b> · '+q.rate.toLocaleString('pt-PT',{style:'currency',currency:'EUR'})+'/mês · Total do período: <b>'+(q.rate*months).toLocaleString('pt-PT',{style:'currency',currency:'EUR'})+'</b>'}
 function quotaPaymentUi(){const t=$('#quotaPaymentType').value,w=$('#quotaMonthsWrap'),s=$('#quotaMonths');w.classList.toggle('hidden',t==='annual');$('#quotaYearWrap').classList.toggle('hidden',t!=='annual');$('#quotaStartWrap').classList.toggle('hidden',t==='annual');[...s.options].forEach(o=>o.hidden=t==='years'?Number(o.value)<24:Number(o.value)>11);if(t==='years')s.value='24';else if(t==='months'&&Number(s.value)>11)s.value='1';$('#quotaHelp').textContent=t==='annual'?'No pagamento anual, seleciona o ano da quota.':t==='years'?'Seleciona a data a partir da qual começa o período pago e o número de anos.':'Seleciona a data a partir da qual começam os meses pagos.';updateQuotaRateInfo()}$('#quotaPaymentType').onchange=quotaPaymentUi;$('#quotaCoverageYear').onchange=updateQuotaRateInfo;$('#quotaCoverageStart').onchange=updateQuotaRateInfo;$('#quotaMonths').onchange=updateQuotaRateInfo;
+$('#saveQuotaCorrection').onclick=async()=>{
+ if(!selectedMember)return;
+ const y=Number($('#quotaPaidThroughYear').value),reason=$('#quotaCorrectionReason').value.trim(),joined=selectedMember.joined_at?Number(String(selectedMember.joined_at).slice(0,4)):null;
+ if(!Number.isInteger(y)||y<1900||y>2100||(joined!==null&&y<joined-1)){msg($('#quotaMsg'),'Indica um ano válido, posterior à admissão (ou o ano anterior para nenhuma quota regularizada).','error');return}
+ if(reason.length<5){msg($('#quotaMsg'),'Indica um motivo com pelo menos 5 caracteres.','error');return}
+ if(!confirm('Confirmas que o sócio nº '+selectedMember.member_number+' fica regularizado até 31/12/'+y+'? Esta correção não regista dinheiro recebido.'))return;
+ const btn=$('#saveQuotaCorrection');btn.disabled=true;
+ const r=await db.from('membership_regularizations').insert({member_id:selectedMember.id,paid_through_year:y,reason});
+ btn.disabled=false;
+ if(r.error){msg($('#quotaMsg'),r.error.message,'error');return}
+ const id=selectedMember.id;await loadAdmin(id);msg($('#quotaMsg'),'Regularização corrigida e registada no histórico.','success');
+};
 $('#saveQuotaPayment').onclick=async()=>{
  if(!selectedMember)return;
  const type=$('#quotaPaymentType').value,annualYear=Number($('#quotaCoverageYear').value||year),start=type==='annual'?annualYear+'-01-01':($('#quotaCoverageStart').value||new Date().toISOString().slice(0,10)),months=type==='annual'?12:Number($('#quotaMonths').value||1);

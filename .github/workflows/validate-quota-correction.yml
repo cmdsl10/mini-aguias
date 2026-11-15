@@ -1,0 +1,45 @@
+name: Validate membership quota correction
+on:
+  push:
+    branches: [fix/quotas-paid-through-reconciliation]
+  pull_request:
+    paths: [index.html, 'supabase/migrations/*', 'tests/quotas/**']
+permissions:
+  contents: read
+jobs:
+  quota-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
+      - name: Verify inline JavaScript syntax
+        run: |
+          python3 - <<'PY'
+          from html.parser import HTMLParser
+          from pathlib import Path
+          class Scripts(HTMLParser):
+              def __init__(self):
+                  super().__init__(); self.scripts=[]; self.inside=False
+              def handle_starttag(self,tag,attrs):
+                  if tag=='script' and not dict(attrs).get('src'): self.inside=True
+              def handle_endtag(self,tag):
+                  if tag=='script': self.inside=False
+              def handle_data(self,data):
+                  if self.inside: self.scripts.append(data)
+          p=Scripts();p.feed(Path('index.html').read_text())
+          Path('/tmp/mini-aguias-inline.js').write_text('\n'.join(p.scripts))
+          PY
+          node --check /tmp/mini-aguias-inline.js
+      - name: Verify quota correction wiring
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          s=Path('index.html').read_text()
+          sql=Path('supabase/migrations/20261115160000_membership_regularizations.sql').read_text()
+          for token in ('quotaPaidThroughYear','saveQuotaCorrection','quotaYearStatus','joined_at:f.get(\'joined_at\')','membership_regularizations'):
+              assert token in s, token
+          for token in ('enable row level security','actor_id=(select auth.uid())','admin_insert'):
+              assert token in sql, token
+          print('Quota correction wiring PASS')
+          PY

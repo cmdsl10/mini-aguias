@@ -202,10 +202,11 @@
     if (token !== generation) return;
     const admin = user.app_metadata?.role === 'admin' && !user.is_anonymous;
     if (!admin && !players.some(p => p.active && p.auth_user_id === user.id)) { status('Esta conta não tem acesso à área Masters.', true); return; }
-    const [trainings, attendance, staffAttendance, payments, allocations, audit] = await Promise.all([
+    const [trainings, attendance, staffAttendance, payments, allocations, audit, archiveExtras] = await Promise.all([
       all('masters_trainings', 'training_date'), all('masters_attendance', 'training_id'), all('masters_staff_attendance', 'training_id'),
       all('masters_payments', 'id'), all('masters_payment_allocations', 'payment_id'),
-      db.from('masters_audit').select('*').order('id', {ascending:false}).limit(100).then(checked)
+      db.from('masters_audit').select('*').order('id', {ascending:false}).limit(100).then(checked),
+      db.from('masters_archive_extras').select('*').order('photo_date',{ascending:false}).then(checked)
     ]);
     if (token !== generation) return;
     // Read-only public football roster: no fabricated audit actor or database write.
@@ -218,7 +219,7 @@
       }
     } catch (e) { console.warn('Não foi possível consultar posições do Futebol.',e); }
     if (token !== generation) return;
-    state = {players, trainings, attendance, staffAttendance, payments, allocations, audit, admin, footballPositions, userId:user.id}; render();
+    state = {players, trainings, attendance, staffAttendance, payments, allocations, audit, archiveExtras, admin, footballPositions, userId:user.id}; render();
     status(players.length ? 'Dados privados da equipa. Atualiza para consultar alterações recentes.' : 'Ainda não existem jogadores. A lista e as contas precisam de validação da direção.');
   }
   function showEditor(title) {
@@ -666,6 +667,33 @@
         card.append(frame);
         if(kind==='foot')card.append(el('p',leadFootNames(t,s.players)||'Jogador por definir','muted'));
         if(s.admin)card.append(button('Alterar fotografia',()=>trainingEditor(t)));
+        cards.append(card);
+      }
+      // Exceptional archive entries are independent of training dates and never affect attendance or debt.
+      for(const extra of s.archiveExtras.filter(x=>x.kind===kind)){
+        const card=el('article','','masters-weekly-photo panel');
+        card.append(el('h4',date(extra.photo_date)+' · Arquivo excecional'));
+        const frame=el('div','','masters-photo-frame');
+        if(extra.image_path)renderImage(extra.image_path,frame,generation);
+        else frame.append(el('span','Fotografia por carregar'));
+        card.append(frame,el('p',extra.caption,'muted'));
+        if(s.admin){
+          card.append(button(extra.image_path?'Substituir fotografia':'Adicionar fotografia',()=>{
+            const editor=showEditor('Arquivo excecional · '+date(extra.photo_date));
+            editor.append(el('p','Esta fotografia é independente dos treinos e não altera presenças nem dívidas.','muted'));
+            const upload=field('Fotografia JPG (máximo 5 MB)','file',editor);upload.accept='image/jpeg';
+            editor.append(button('Guardar fotografia',async()=>{
+              const file=upload.files[0];if(!file)throw Error('Escolhe a fotografia JPG.');
+              const signature=new Uint8Array(await file.slice(0,3).arrayBuffer());
+              if(file.type!=='image/jpeg'||file.size>5242880||signature[0]!==255||signature[1]!==216||signature[2]!==255)throw Error('Escolhe um JPG válido até 5 MB.');
+              const bitmap=await createImageBitmap(file);bitmap.close();
+              const path='archive/'+extra.id+'/'+crypto.randomUUID()+'.jpg';
+              checked(await db.storage.from('masters-lead-foot').upload(path,file,{contentType:'image/jpeg',upsert:false}));
+              checked(await db.from('masters_archive_extras').update({image_path:path}).eq('id',extra.id));
+              q('#mastersEditor').close();await load();
+            }));
+          }));
+        }
         cards.append(card);
       }
       if(!entries.length)panel.append(el('p','Ainda não existem fotografias neste arquivo.','muted'));

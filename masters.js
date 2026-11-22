@@ -319,7 +319,7 @@
       balanceList.replaceChildren();
       for(const p of freshStats.filter(p=>s.players.find(x=>x.id===p.id)?.sports_role==='player').sort((a,b)=>a.display_name.localeCompare(b.display_name,'pt'))){
         const row=el('div','','masters-balance-row');
-        row.append(el('strong',p.display_name),el('span','Faltas: '+p.absent+' · Pago: '+money(p.paid)+' · Em dívida: '+money(p.balance)));
+        row.append(el('strong',p.display_name),el('span','Presenças: '+p.present+' · Faltas: '+p.absent+' · Faltas pagas: '+p.paidAbsences+' · Pago: '+money(p.paid)+' · Por pagar: '+money(p.balance)));
         if(p.balance>0)row.classList.add('masters-has-debt');
         balanceList.append(row);
       }
@@ -327,7 +327,7 @@
       if(attendanceDetails){
         const open=attendanceDetails.open;
         attendanceDetails.replaceChildren(el('summary','Assiduidade por jogador'));
-        for(const p of freshStats){const row=el('div','','masters-rank'),bar=document.createElement('progress');bar.max=1;bar.value=p.rate||0;bar.setAttribute('aria-label','Assiduidade de '+p.display_name);row.append(el('span',p.display_name),bar,el('span',p.rate===null?'—':Math.round(p.rate*100)+'%'));attendanceDetails.append(row,el('small',p.present+' presenças · '+p.absent+' faltas · '+money(p.balance)+' em dívida'));}
+        for(const p of freshStats){const row=el('div','','masters-rank'),bar=document.createElement('progress');bar.max=1;bar.value=p.rate||0;bar.setAttribute('aria-label','Assiduidade de '+p.display_name);row.append(el('span',p.display_name),bar,el('span',p.rate===null?'—':Math.round(p.rate*100)+'%'));attendanceDetails.append(row,el('small',p.present+' presenças · '+p.absent+' faltas · '+p.paidAbsences+' pagas · '+money(p.balance)+' por pagar'));}
         attendanceDetails.open=open;
       }
       const p=sum('present'),a=sum('absent');
@@ -335,8 +335,7 @@
         const target=[...body.querySelectorAll('[data-masters-metric]')].find(e=>e.dataset.mastersMetric===key);if(target)target.textContent=String(val);
       }
     }
-    refreshStatistics();
-    trainingSection.append(el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos ainda não contabilizados. As faltas e dívidas só contam após o fecho do treino.`, 'muted'));
+    trainingSection.append(el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos. As presenças e faltas marcadas já contam para a assiduidade; as dívidas só são geradas após o fecho do treino.`, 'muted'));
     const tools = el('div', '', 'masters-toolbar');
     tools.append(button('Resumo semanal para WhatsApp', summary));
     if (s.admin) tools.append(button('Preparar quartas-feiras da época', seed), button('Adicionar jogador / autorizar conta', playerEditor), button('Importar lista Excel', importPlayers));
@@ -535,8 +534,9 @@
     for (const p of stats) {
       const row = el('div', '', 'masters-rank'), bar = document.createElement('progress'); bar.max = 1; bar.value = p.rate || 0; bar.setAttribute('aria-label', `Assiduidade de ${p.display_name}`);
       row.append(el('span', p.display_name), bar, el('span', p.rate === null ? '—' : `${Math.round(p.rate * 100)}%`));
-      attendanceDetails.append(row, el('small', `${p.present} presenças · ${p.absent} faltas · ${p.excused} justificadas · Saldo ${money(p.balance)}`));
+      attendanceDetails.append(row, el('small', `${p.present} presenças · ${p.absent} faltas · ${p.paidAbsences} pagas · Por pagar ${money(p.balance)}`));
     }
+    refreshStatistics();
     const paymentsDetails = el('details', '', 'masters-collapsible'); paymentsDetails.open=true; paymentsDetails.append(el('summary', `Pagamentos e correções (${s.payments.length})`)); paymentsSection.append(paymentsDetails);
     for (const payment of s.payments) {
       const p = s.players.find(x => x.id === payment.player_id), row = el('p', `${p?.display_name || 'Jogador'} · ${money(payment.amount_cents)} · ${new Date(payment.paid_at).toLocaleString('pt-PT')} · ${payment.note || ''}`);

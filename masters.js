@@ -54,6 +54,12 @@
     #masters-private .masters-roster-group h4{background:#173e79;color:#fff;border-left:5px solid #f0c531;padding:8px 10px;border-radius:5px;font-size:.92rem;margin:0 0 6px}
     #masters-private .masters-roster-group ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:5px 12px}
     #masters-private .masters-roster-group li{padding:5px 8px;border-bottom:1px solid #dde4ee}
+    #masters-private .masters-archive-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0 18px}
+    #masters-private .masters-archive-tabs button[aria-selected="true"]{background:#e1ad28;color:#102c4d;border-color:#e1ad28;font-weight:800}
+    #masters-private .masters-weekly-archive-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:14px}
+    #masters-private .masters-weekly-photo{padding:12px}
+    #masters-private .masters-weekly-photo h4{margin:0 0 10px;color:#102f53}
+    #masters-private .masters-weekly-photo .masters-photo-frame{aspect-ratio:4/3}
     #masters-private .masters-photo-column{display:grid;gap:16px}
     #masters-private .masters-photo-card{padding:16px}
     #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}
@@ -536,12 +542,45 @@
         if (!reason) return; checked(await db.rpc('masters_reverse_payment', {payment_uuid:payment.id, reason})); await load();
       })); paymentsDetails.append(row);
     }
-    const footDetails = el('details', '', 'masters-collapsible'); footDetails.open=true; footDetails.append(el('summary', 'Pé de Chumbo — arquivo')); footSection.append(footDetails);
-    const archive = el('div', '', 'masters-archive'); footDetails.append(archive);
-    for (const t of [...s.trainings].reverse().filter(t => leadFootIds(t).length && t.status === 'closed')) {
-      const card = el('article', '', 'panel'); card.append(el('h4', `${date(t.training_date)} · ${leadFootNames(t,s.players)}`)); archive.append(card);
-      if (t.lead_foot_image_path) renderImage(t.lead_foot_image_path, card, generation);
+    // Two independent weekly archives, each tied to the original training date.
+    const archiveTabs=el('nav','','masters-archive-tabs');
+    archiveTabs.setAttribute('aria-label','Arquivos de fotografias Masters');
+    const archivePanels={};
+    const archiveButtons={};
+    const selectArchive=kind=>{
+      for(const key of ['foot','training']){
+        archivePanels[key].hidden=key!==kind;
+        archiveButtons[key].setAttribute('aria-selected',String(key===kind));
+      }
+    };
+    for(const [kind,label] of [['foot','🏆 Pé de Chumbo'],['training','📷 Fotografias dos treinos']]){
+      const tab=el('button',label,'btn secondary');tab.type='button';
+      tab.onclick=()=>selectArchive(kind);archiveButtons[kind]=tab;archiveTabs.append(tab);
     }
+    footSection.append(el('h3','Arquivo semanal · Masters 2026/27'),archiveTabs);
+    const weekly=[...s.trainings].filter(t=>t.status!=='cancelled').sort((a,b)=>b.training_date.localeCompare(a.training_date));
+    for(const [kind,title] of [['foot','Pé de Chumbo'],['training','Fotografias dos treinos']]){
+      const panel=el('section','','masters-weekly-archive');
+      archivePanels[kind]=panel;footSection.append(panel);
+      const hasContent=t=>kind==='foot'?(!!t.lead_foot_image_path||leadFootIds(t).length>0):!!t.training_image_path;
+      const entries=weekly.filter(hasContent);
+      panel.append(el('p',entries.length+' semana'+(entries.length===1?'':'s')+' no arquivo de '+title+'.','muted'));
+      const cards=el('div','','masters-weekly-archive-grid');panel.append(cards);
+      for(const t of entries){
+        const card=el('article','','masters-weekly-photo panel');
+        card.append(el('h4',date(t.training_date)));
+        const frame=el('div','','masters-photo-frame');
+        const path=kind==='foot'?t.lead_foot_image_path:t.training_image_path;
+        if(path)renderImage(path,frame,generation);
+        else frame.append(el('span','Fotografia ainda não adicionada'));
+        card.append(frame);
+        if(kind==='foot')card.append(el('p',leadFootNames(t,s.players)||'Jogador por definir','muted'));
+        if(s.admin)card.append(button('Alterar fotografia',()=>trainingEditor(t)));
+        cards.append(card);
+      }
+      if(!entries.length)panel.append(el('p','Ainda não existem fotografias neste arquivo.','muted'));
+    }
+    selectArchive('foot');
     const summaryCards=el('div','','masters-summary-grid');
     const closed=s.trainings.filter(t=>t.status==='closed').length;
     const present=stats.reduce((n,p)=>n+p.present,0),absent=stats.reduce((n,p)=>n+p.absent,0);

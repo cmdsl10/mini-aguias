@@ -562,6 +562,22 @@
     for(const [kind,title] of [['foot','Pé de Chumbo'],['training','Fotografias dos treinos']]){
       const panel=el('section','','masters-weekly-archive');
       archivePanels[kind]=panel;footSection.append(panel);
+      if(s.admin){
+        const addPhoto=button('＋ Adicionar fotografia por data',()=>{
+          if(!weekly.length){status('Cria primeiro um treino com a data pretendida.',true);return;}
+          const editor=showEditor('Adicionar '+(kind==='foot'?'Pé de Chumbo':'fotografia do treino')+' ao arquivo');
+          editor.append(el('p','Escolhe a data do treino. A fotografia ficará arquivada nessa semana.','muted'));
+          const chosen=select('Data do treino',weekly.map(t=>[t.id,date(t.training_date)]),weekly[0].id,editor);
+          editor.append(button('Continuar',()=>{
+            const training=weekly.find(t=>t.id===chosen.value);
+            if(!training)return;
+            q('#mastersEditor').close();
+            trainingEditor(training);
+          }));
+        });
+        panel.append(addPhoto);
+        panel.append(el('p','Podes adicionar fotografias a qualquer treino já criado, mesmo que ainda não tenha fotografia.','muted'));
+      }
       const hasContent=t=>kind==='foot'?(!!t.lead_foot_image_path||leadFootIds(t).length>0):!!t.training_image_path;
       const entries=weekly.filter(hasContent);
       panel.append(el('p',entries.length+' semana'+(entries.length===1?'':'s')+' no arquivo de '+title+'.','muted'));

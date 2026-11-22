@@ -306,7 +306,7 @@
     if(s.admin){
       const emailPanel=el('section','','masters-email-panel');
       emailPanel.append(el('h3','Emails e acessos dos Masters'));
-      emailPanel.append(el('p','Guarda o email de cada jogador e utiliza «Enviar convite» para lhe dar acesso de consulta. Guardar o email, por si só, não envia qualquer mensagem.','muted'));
+      emailPanel.append(el('p','Guarda o email de cada jogador. Se já tiver conta de Sócio, usa «Associar conta existente» sem criar outro login; caso contrário, usa «Enviar convite». As permissões das duas áreas continuam independentes.','muted'));
       const emailList=el('div','','masters-email-list');
       emailPanel.append(emailList);
       const renderEmails=async()=>{
@@ -326,7 +326,7 @@
               const result=email?await db.from('masters_player_emails').upsert({player_id:p.id,email},{onConflict:'player_id'}):await db.from('masters_player_emails').delete().eq('player_id',p.id);
               checked(result);
               feedback.textContent=email?'Email guardado. Podes enviar o convite.':'Email removido.';
-              byPlayer.set(p.id,email);invite.disabled=!email||!!p.auth_user_id;
+              byPlayer.set(p.id,email);invite.disabled=!email||!!p.auth_user_id;linkExisting.disabled=!email||!!p.auth_user_id;
             }catch(error){feedback.textContent='Erro: '+error.message;}
             finally{save.disabled=false;}
           });
@@ -344,10 +344,26 @@
               invite.disabled=true;
             }catch(error){feedback.textContent='Erro: '+error.message;invite.disabled=false;}
           });
+          const linkExisting=button('Associar conta existente',async()=>{
+            const email=input.value.trim().toLowerCase();
+            if(!email||!input.reportValidity()){feedback.textContent='Indica um email válido e guarda-o primeiro.';return;}
+            if(email!==byPlayer.get(p.id)){feedback.textContent='Guarda primeiro o email alterado.';return;}
+            if(!window.confirm('Associar a conta já existente '+email+' ao jogador '+p.display_name+'? O acesso de Sócio mantém-se; Masters será apenas de consulta.'))return;
+            linkExisting.disabled=true;invite.disabled=true;feedback.textContent='A verificar conta existente…';
+            try{
+              const result=await db.functions.invoke('invite-masters-player',{body:{player_id:p.id,action:'link_existing'}});
+              if(result.error){let detail=result.data?.error;if(!detail&&result.error.context?.json){try{const body=await result.error.context.json();detail=body?.error||body?.message;}catch(_){/* Resposta sem JSON. */}}throw new Error(detail||result.error.message);}
+              if(!result.data?.ok)throw new Error(result.data?.error||'Associação não confirmada.');
+              feedback.textContent=result.data.message||'Conta associada.';
+              p.auth_user_id=true;
+              invite.textContent='Conta associada';
+            }catch(error){feedback.textContent='Erro: '+error.message;linkExisting.disabled=false;invite.disabled=false;}
+          });
+          linkExisting.disabled=!!p.auth_user_id||!byPlayer.get(p.id);
           invite.disabled=!!p.auth_user_id||!byPlayer.get(p.id);
           if(p.auth_user_id)invite.textContent='Conta associada';
           const feedback=el('small',p.auth_user_id?'Conta já associada.':'','muted');
-          row.append(label,input,save,invite,feedback);emailList.append(row);
+          row.append(label,input,save,invite,linkExisting,feedback);emailList.append(row);
         }
       };
       playerSection.append(emailPanel);

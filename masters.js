@@ -78,6 +78,19 @@
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.paid{background:#d9e9ff;color:#0758b6}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.pending{background:#eef0f4;color:#4e5866}
     #masters-private .masters-dashboard-main .masters-scroll button.masters-cell{width:100%;border:1px solid #cbd4de;cursor:pointer}
+    #masters-private .masters-quick-attendance{margin:12px 0 20px;padding:14px}
+    #masters-private .masters-quick-nav,#masters-private .masters-quick-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:end;margin:10px 0}
+    #masters-private .masters-quick-nav label{flex:1;min-width:175px}
+    #masters-private .masters-quick-actions button{flex:1;min-width:150px}
+    #masters-private .masters-quick-summary{font-weight:700;color:#123d70}
+    #masters-private .masters-quick-group{background:#082e58;color:#fff;padding:9px 12px;margin:12px 0 0;border-left:5px solid #ffd22e;border-radius:5px}
+    #masters-private .masters-quick-player{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 3px;border-bottom:1px solid #dce4ee}
+    #masters-private .masters-quick-player>span{font-weight:600;min-width:0;overflow-wrap:anywhere}
+    #masters-private .masters-quick-choices{display:flex;gap:5px;flex-shrink:0}
+    #masters-private .masters-quick-choice{min-width:68px;padding:9px 6px;border:1px solid #a6b8ca;border-radius:7px;background:#f6f8fa;color:#183b60}
+    #masters-private .masters-quick-choice.is-yes{background:#08772b;color:white;border-color:#08772b}
+    #masters-private .masters-quick-choice.is-no{background:#c8202c;color:white;border-color:#c8202c}
+    @media(max-width:640px){#masters-private .masters-quick-attendance{padding:10px}#masters-private .masters-quick-player{font-size:14px}#masters-private .masters-quick-choice{min-width:62px}}
     #masters-private .masters-dashboard-side{min-width:0;display:grid;gap:14px}
     #masters-private .masters-foot-multi{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;padding:12px;border:1px solid #b6c6d9;border-radius:8px;max-height:280px;overflow-y:auto}
     #masters-private .masters-foot-multi legend{font-weight:700;color:#103b70}
@@ -287,8 +300,74 @@
       const order = {GR:0,DEF:1,MED:2,AVZ:3,OUTROS:4,coach:5,president:6};
       return (order[positionOf(a)] ?? 7) - (order[positionOf(b)] ?? 7) || a.display_name.localeCompare(b.display_name,'pt');
     });
-    let currentPosition = null;
     const positionLabels = {GR:'GR · Guarda-redes',DEF:'DEF · Defesas',MED:'MED · Médios',AVZ:'AVZ · Avançados',OUTROS:'Posição por definir',coach:'Treinador',president:'Presidente'};
+    // Mobile-first quick attendance: one training, one save, no horizontal scrolling.
+    if (s.admin) {
+      const quick = el('section','','masters-quick-attendance panel');
+      quick.append(el('h3','Marcação rápida de presenças'));
+      const available = s.trainings.filter(t=>t.status!=='cancelled');
+      const today = new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Lisbon'});
+      const defaultTraining = [...available].filter(t=>t.training_date<=today).at(-1) || available.at(-1);
+      if (defaultTraining) {
+        const nav = el('div','','masters-quick-nav');
+        const dateSelect = select('Treino',available.map(t=>[t.id,date(t.training_date)]),defaultTraining.id,nav);
+        const prev = button('‹ Anterior',()=>move(-1)), next=button('Seguinte ›',()=>move(1));
+        nav.append(prev,next);quick.append(nav);
+        const actions = el('div','','masters-quick-actions');
+        const allPresent=button('✓ Marcar todos Sim',()=>{for(const p of eligible) draft.set(p.id,'present');paint();});
+        const save=button('Guardar presenças',async()=>{
+          const t=available.find(t=>t.id===dateSelect.value);
+          const changes=eligible.filter(p=>draft.has(p.id) && draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status);
+          if (!changes.length) {status('Não existem alterações para guardar.');return;}
+          // Existing paid absences must not be changed without a payment reversal.
+          for(const p of changes) {
+            const c=MastersDomain.cell(p,t,s.attendance,s.allocations);
+            if(c.paid && draft.get(p.id)!=='absent')throw Error('A falta de '+p.display_name+' tem pagamentos associados. Estorna o pagamento antes de alterar.');
+          }
+          checked(await db.from('masters_attendance').upsert(changes.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
+          status(changes.length+' presenças guardadas.');
+          // Refresh data in place without rebuilding the entire dashboard.
+          const fresh=await all('masters_attendance','training_id');
+          s.attendance=fresh;draft.clear();paint();
+        });
+        actions.append(allPresent,save);quick.append(actions);
+        const summary=el('p','','masters-quick-summary');quick.append(summary);
+        const list=el('div','','masters-quick-list');quick.append(list);
+        let draft=new Map(),eligible=[];
+        function move(step){const index=available.findIndex(t=>t.id===dateSelect.value);const target=available[index+step];if(target){dateSelect.value=target.id;draft.clear();paint();}}
+        function paint(){
+          const t=available.find(t=>t.id===dateSelect.value);list.replaceChildren();
+          eligible=orderedPlayers.filter(p=>p.active!==false&&p.sports_role==='player'&&p.attendance_eligible===true);
+          let yes=0,no=0,missing=0,group='';
+          for(const p of eligible){
+            const c=MastersDomain.cell(p,t,s.attendance,s.allocations);
+            const value=draft.get(p.id)||c.status;
+            if(value==='present')yes++;else if(value==='absent')no++;else missing++;
+            const pos=positionOf(p);
+            if(pos!==group){group=pos;list.append(el('h4',positionLabels[pos]||pos,'masters-quick-group'));}
+            const line=el('div','','masters-quick-player');
+            line.append(el('span',p.display_name));
+            const controls=el('div','','masters-quick-choices');
+            for(const [value,label] of [['present','✓ Sim'],['absent','✕ Não']]){
+              const b=button(label,()=>{draft.set(p.id,value);paint();});
+              b.className='masters-quick-choice '+(draft.get(p.id)===value||(!draft.has(p.id)&&c.status===value)?(value==='present'?'is-yes':'is-no'):'');
+              b.setAttribute('aria-pressed',String((draft.get(p.id)||c.status)===value));
+              controls.append(b);
+            }
+            line.append(controls);list.append(line);
+          }
+          summary.textContent=`Jogadores: ${eligible.length} · Sim: ${yes} · Não: ${no} · Por marcar: ${missing}`;
+          const index=available.findIndex(t=>t.id===dateSelect.value);
+          prev.disabled=index===0;next.disabled=index===available.length-1;
+          save.disabled=draft.size===0;
+        }
+        dateSelect.addEventListener('change',()=>{draft.clear();paint();});
+        paint();
+      } else quick.append(el('p','Ainda não existem treinos para marcar.'));
+      dashboardMain.append(quick);
+    }
+    let currentPosition = null;
+
     for (const p of orderedPlayers) {
       const position = positionOf(p);
       if (position !== currentPosition) {

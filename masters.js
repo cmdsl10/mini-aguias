@@ -333,13 +333,17 @@
           const staffChanges=staff.filter(p=>draft.has(p.id)&&draft.get(p.id)!==staffStatus(p,t));
           if (!changes.length && !staffChanges.length) {saveFeedback.textContent='Todas as presenças deste treino já estão guardadas. Para alterar, toca em Sim ou Não.';return;}
           saveFeedback.textContent='A guardar '+(changes.length+staffChanges.length)+' alterações…';
+          if(t.status==='closed' && changes.some(p=>draft.get(p.id)==='pending'))throw Error('Reabre o treino antes de desmarcar uma presença já fechada.');
           // Existing paid absences must not be changed without a payment reversal.
           for(const p of changes) {
             const c=MastersDomain.cell(p,t,s.attendance,s.allocations);
             if(c.paid && draft.get(p.id)!=='absent')throw Error('A falta de '+p.display_name+' tem pagamentos associados. Estorna o pagamento antes de alterar.');
           }
           if(changes.length) checked(await db.from('masters_attendance').upsert(changes.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
-          if(staffChanges.length) checked(await db.from('masters_staff_attendance').upsert(staffChanges.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
+          const staffMarked=staffChanges.filter(p=>draft.get(p.id)!=='pending');
+          const staffCleared=staffChanges.filter(p=>draft.get(p.id)==='pending');
+          if(staffMarked.length) checked(await db.from('masters_staff_attendance').upsert(staffMarked.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
+          if(staffCleared.length) checked(await db.from('masters_staff_attendance').delete().eq('training_id',t.id).in('player_id',staffCleared.map(p=>p.id)));
           status((changes.length+staffChanges.length)+' presenças guardadas.');
           saveFeedback.textContent='✓ '+(changes.length+staffChanges.length)+' presenças guardadas com sucesso no treino de '+date(t.training_date)+'.';
           // Refresh data in place without rebuilding the entire dashboard.
@@ -366,7 +370,7 @@
             line.append(el('span',p.display_name));
             const controls=el('div','','masters-quick-choices');
             for(const [value,label] of [['present','✓ Sim'],['absent','✕ Não']]){
-              const b=button(label,()=>{if(value===c.status)draft.delete(p.id);else draft.set(p.id,value);saveFeedback.textContent='';paint();});
+              const b=button(label,()=>{const selected=draft.has(p.id)?draft.get(p.id):c.status;const next=selected===value?'pending':value;if(next===c.status)draft.delete(p.id);else draft.set(p.id,next);saveFeedback.textContent='';paint();});
               b.className='masters-quick-choice '+(draft.get(p.id)===value||(!draft.has(p.id)&&c.status===value)?(value==='present'?'is-yes':'is-no'):'');
               b.setAttribute('aria-pressed',String((draft.get(p.id)||c.status)===value));
               controls.append(b);
@@ -381,7 +385,7 @@
               const controls=el('div','','masters-quick-choices');
               const current=staffStatus(p,t);
               for(const [value,label] of [['present','✓ Sim'],['absent','✕ Não']]){
-                const b=button(label,()=>{if(value===current)draft.delete(p.id);else draft.set(p.id,value);saveFeedback.textContent='';paint();});
+                const b=button(label,()=>{const selected=draft.has(p.id)?draft.get(p.id):current;const next=selected===value?'pending':value;if(next===current)draft.delete(p.id);else draft.set(p.id,next);saveFeedback.textContent='';paint();});
                 b.className='masters-quick-choice '+((draft.get(p.id)||current)===value?(value==='present'?'is-yes':'is-no'):'');
                 b.setAttribute('aria-pressed',String((draft.get(p.id)||current)===value));controls.append(b);
               }

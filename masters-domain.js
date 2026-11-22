@@ -8,22 +8,22 @@
   };
   function cell(player, training, attendance, allocations) {
     const status = attendance.find(a => a.player_id === player.id && a.training_id === training.id)?.status || 'pending';
-    const due = player.attendance_eligible === true && training.status === 'closed' && status === 'absent' ? 100 : 0;
+    const due = player.attendance_eligible === true && training.status !== 'cancelled' && status === 'absent' ? 100 : 0;
     const paid = allocations.filter(a => a.player_id === player.id && a.training_id === training.id).reduce((n, a) => n + a.amount_cents, 0);
     return {status, due, paid, balance: due - paid};
   }
   function statistics(players, trainings, attendance, allocations) {
     return players.map(p => {
       // Attendance is recorded as soon as a mark is saved, even on open trainings.
-      // Financial liability remains restricted to closed trainings.
+      // Each recorded absence incurs a charge immediately, except cancelled trainings.
       const eligible = trainings.filter(t => p.attendance_eligible === true && t.status !== 'cancelled');
       const recorded = eligible.map(t => ({training:t, ...cell(p,t,attendance,allocations)}))
         .filter(c => c.status !== 'pending');
       const present = recorded.filter(c => c.status === 'present').length;
       const absent = recorded.filter(c => c.status === 'absent').length;
-      const closedAbsences = recorded.filter(c => c.training.status === 'closed' && c.status === 'absent');
+      const closedAbsences = recorded.filter(c => c.status === 'absent');
       const paidAbsences = closedAbsences.filter(c => c.due > 0 && c.paid >= c.due).length;
-      const financial = recorded.filter(c => c.training.status === 'closed');
+      const financial = recorded;
       return {...p, present, absent, paidAbsences, recorded:recorded.length,
         rate: recorded.length ? present / recorded.length : null,
         due: financial.reduce((n,c) => n+c.due,0),

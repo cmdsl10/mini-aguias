@@ -39,6 +39,42 @@
     #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}
     #masters-private .masters-photo-frame img{width:100%;height:100%;object-fit:contain}
     #masters-private .masters-photo-card .muted{margin:10px 0 0}
+    #masters-private .masters-reference-header{background:linear-gradient(105deg,#071c38,#07528b);color:#fff;border-radius:12px;padding:18px 20px;margin:16px 0 10px;border-bottom:4px solid #f5c51b}
+    #masters-private .masters-reference-header h2{color:#fff;margin:0;font-size:clamp(20px,3vw,31px)}
+    #masters-private .masters-reference-header p{margin:5px 0 0;color:#e8f1ff}
+    #masters-private .masters-tabs{display:flex;gap:5px;overflow-x:auto;padding:4px 0 12px;scrollbar-width:thin}
+    #masters-private .masters-tabs button{flex:0 0 auto;border:1px solid #245580;border-radius:7px;background:#07315b;color:#fff;padding:11px 14px;font-weight:700;cursor:pointer}
+    #masters-private .masters-tabs button[aria-selected=true]{background:#f6c529;color:#102d4b;border-color:#c99d08}
+    #masters-private .masters-dashboard-grid{display:grid;grid-template-columns:minmax(0,2.1fr) minmax(250px,1fr);gap:14px;align-items:start}
+    #masters-private .masters-dashboard-main{min-width:0}
+    #masters-private .masters-section-title{background:#082f59;color:#fff;border-radius:7px 7px 0 0;padding:11px 14px;font-size:1.12rem;font-weight:800}
+    #masters-private .masters-dashboard-main .masters-scroll{margin:0;border:1px solid #b8c9dc;border-radius:0 0 8px 8px}
+    #masters-private .masters-dashboard-main .masters-scroll th{background:#092e51;color:#fff;padding:8px 6px}
+    #masters-private .masters-dashboard-main .masters-scroll td{padding:6px;text-align:center}
+    #masters-private .masters-dashboard-main .masters-scroll td:first-child{text-align:left;font-weight:650}
+    #masters-private .masters-dashboard-main .masters-scroll .masters-cell{min-height:38px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-weight:800;min-width:48px}
+    #masters-private .masters-dashboard-main .masters-scroll .masters-cell.present{background:#d5f4dd;color:#067632}
+    #masters-private .masters-dashboard-main .masters-scroll .masters-cell.absent{background:#ffe0e0;color:#b81919}
+    #masters-private .masters-dashboard-main .masters-scroll .masters-cell.paid{background:#d9e9ff;color:#0758b6}
+    #masters-private .masters-dashboard-main .masters-scroll .masters-cell.pending{background:#eef0f4;color:#4e5866}
+    #masters-private .masters-dashboard-main .masters-scroll button.masters-cell{width:100%;border:1px solid #cbd4de;cursor:pointer}
+    #masters-private .masters-dashboard-side{min-width:0;display:grid;gap:14px}
+    #masters-private .masters-dashboard-side .masters-photo-frame{aspect-ratio:16/10}
+    #masters-private .masters-dashboard-side .masters-photo-card h3{background:#082f59;color:#fff;padding:10px 12px;border-radius:7px;margin:-16px -16px 12px}
+    #masters-private .masters-tabs{background:#082f59;border-radius:9px;padding:5px;margin-bottom:12px}
+    #masters-private .masters-tabs button{background:transparent;border-color:transparent;border-right:1px solid #53718d;border-radius:3px}
+    #masters-private .masters-tabs button[aria-selected=true]{background:#f6c529;color:#092b4b;border-radius:6px}
+    #masters-private .masters-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
+    #masters-private .masters-dashboard-side .masters-photo-card{margin:0}
+    #masters-private .masters-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
+    #masters-private .masters-summary-card{background:#fff;border:1px solid #ced8e5;border-radius:9px;overflow:hidden;padding:0 13px 13px}
+    #masters-private .masters-summary-card h3{margin:0 -13px 12px;padding:10px 13px;background:#07315b;color:#fff;font-size:1rem}
+    #masters-private .masters-summary-card .masters-metric{display:flex;justify-content:space-between;gap:8px;padding:6px 0;border-bottom:1px solid #e9eef5}
+    #masters-private .masters-summary-card strong{font-size:1.15rem}
+    #masters-private .masters-summary-card .masters-debt{color:#b51e1e}
+    #masters-private .masters-section-panel[hidden]{display:none!important}
+    @media(max-width:850px){#masters-private .masters-dashboard-grid{grid-template-columns:1fr}#masters-private .masters-dashboard-side{max-width:520px}#masters-private .masters-summary-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media(max-width:470px){#masters-private .masters-summary-grid{grid-template-columns:1fr 1fr;gap:7px}#masters-private .masters-summary-card{padding:0 9px 9px}#masters-private .masters-summary-card h3{margin:0 -9px 8px;padding:9px;font-size:.86rem}#masters-private .masters-summary-card .masters-metric{font-size:.78rem}#masters-private .masters-reference-header{padding:14px}#masters-private .masters-tabs button{padding:9px 11px;font-size:12px}}
     #masters-private .masters-collapsible{margin:14px 0;border:1px solid #dce2eb;border-radius:10px;background:#fff;padding:12px 14px}
     #masters-private .masters-collapsible>summary{font-weight:700;color:#173e79;cursor:pointer;padding:5px 0}
     #masters-private .masters-collapsible[open]>summary{margin-bottom:12px}
@@ -127,6 +163,27 @@
   function render() {
     const s = state, body = q('#mastersData'); body.replaceChildren(); body.hidden = false;
     const stats = MastersDomain.statistics(s.players, s.trainings, s.attendance, s.allocations);
+    const header = el('div', '', 'masters-reference-header');
+    header.append(el('h2', 'G. D. MINI ÁGUIAS · MASTERS'), el('p', 'Controlo de Treinos · Época 2026/2027'));
+    body.append(header);
+    const tabs = el('nav', '', 'masters-tabs');
+    tabs.setAttribute('aria-label','Secções Masters');
+    const sections = {};
+    const activate = key => {
+      for (const [id, node] of Object.entries(sections)) node.hidden = id !== key;
+      for (const btn of tabs.querySelectorAll('button')) btn.setAttribute('aria-selected', String(btn.dataset.section === key));
+    };
+    for (const [key,label] of [['treinos','📅 Treinos'],['jogadores','👥 Jogadores'],['chumbo','🏆 Pé de Chumbo'],['estatisticas','📊 Estatísticas'],['pagamentos','💳 Pagamentos'],['resumo','↗ Resumo / WhatsApp']]) {
+      const btn = el('button',label);btn.type='button';btn.dataset.section=key;btn.setAttribute('aria-selected',String(key==='treinos'));btn.onclick=()=>activate(key);tabs.append(btn);
+    }
+    body.append(tabs);
+    const section = key => {const n=el('section','','masters-section-panel');n.hidden=key!=='treinos';sections[key]=n;body.append(n);return n;};
+    const trainingSection=section('treinos'), playerSection=section('jogadores'), footSection=section('chumbo'), statsSection=section('estatisticas'), paymentsSection=section('pagamentos'), summarySection=section('resumo');
+    const dashboard = el('div','','masters-dashboard-grid');
+    const dashboardMain=el('div','','masters-dashboard-main'),dashboardSide=el('aside','','masters-dashboard-side');
+    dashboard.append(dashboardMain,dashboardSide);trainingSection.append(dashboard);
+    dashboardMain.append(el('div','📅 Presenças nos Treinos','masters-section-title'));
+
     // Club-approved overview: position roster on the left, two photo slots on the right.
     const overview = el('div', '', 'masters-overview');
     const roster = el('section', '', 'masters-roster panel');
@@ -163,16 +220,17 @@
     trainingFrame.append(el('span', 'Espaço reservado para a fotografia do treino'));
     trainingPhoto.append(trainingFrame);
     photos.append(foot, trainingPhoto);
-    overview.append(roster, photos); body.append(overview);
+    overview.append(roster, photos); playerSection.append(roster); dashboardSide.append(foot, trainingPhoto);
+    footSection.append(el('h3','Arquivo Pé de Chumbo'));
     const totals = el('div', '', 'masters-stats');
     for (const [label, value] of [['Treinos fechados', s.trainings.filter(t => t.status === 'closed').length], ['Faltas', stats.reduce((n, p) => n + p.absent, 0)], ['Recebido', money(stats.reduce((n, p) => n + p.paid, 0))], ['Em dívida', money(stats.reduce((n, p) => n + p.balance, 0))]]) {
       const box = el('div', label); box.append(el('strong', value)); totals.append(box);
     }
-    body.append(totals, el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos ainda não contabilizados. As faltas e dívidas só contam após o fecho do treino.`, 'muted'));
+    statsSection.append(totals); trainingSection.append(el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos ainda não contabilizados. As faltas e dívidas só contam após o fecho do treino.`, 'muted'));
     const tools = el('div', '', 'masters-toolbar');
     tools.append(button('Resumo semanal para WhatsApp', summary));
     if (s.admin) tools.append(button('Preparar quartas-feiras da época', seed), button('Adicionar jogador / autorizar conta', playerEditor), button('Importar lista Excel', importPlayers));
-    body.append(tools, el('p', 'Legenda: Por marcar · Presente · Justificada · Falta por pagar / parcial / paga. O pagamento nunca apaga a falta.'));
+    summarySection.append(tools); trainingSection.append(el('p', 'Legenda: ✓ Presente · ✕ Falta · P Falta paga · ◷ Por marcar · J Justificada. O pagamento nunca apaga a falta.'));
     const scroll = el('div', '', 'masters-scroll'); scroll.tabIndex = 0; scroll.setAttribute('aria-label', 'Grelha de presenças e pagamentos. Desloca horizontalmente para consultar todos os treinos.');
     const table = el('table'); table.append(el('caption', 'Presenças e pagamentos individuais'));
     const head = el('thead'), hr = el('tr'); hr.append(el('th', 'Jogador'));
@@ -187,22 +245,22 @@
       if (s.admin) name.append(button('Conta', () => playerEditor(p)));
       for (const t of s.trainings) {
         const c = MastersDomain.cell(p, t, s.attendance, s.allocations), td = el('td');
-        const text = t.status === 'cancelled' ? 'Cancelado' : p.attendance_eligible !== true ? (p.attendance_eligible === false ? 'Fora do controlo' : 'Elegibilidade por decidir') : labels[c.status] + (c.due ? ` · ${c.paid === 100 ? 'Paga' : c.paid ? 'Parcial' : 'Por pagar'} (${money(c.paid)})` : '');
-        const cls = `masters-cell ${c.status} ${c.due && c.paid === 100 ? 'paid' : c.paid ? 'partial' : ''}`;
+        const text = t.status === 'cancelled' ? '—' : p.attendance_eligible !== true ? (p.attendance_eligible === false ? '—' : '?') : c.status === 'present' ? '✓' : c.status === 'excused' ? 'J' : c.status === 'pending' ? '◷' : c.status === 'absent' ? (c.due && c.paid >= 100 ? 'P' : c.paid ? 'P*' : '✕') : '—';
+        const cls = `masters-cell ${c.status} ${c.due && c.paid >= 100 ? 'paid' : c.paid ? 'partial' : ''}`;
         if (s.admin && p.attendance_eligible === true && t.status !== 'cancelled') {
           const b = button(text, () => attendanceEditor(p, t)); b.className = cls; b.setAttribute('aria-label', `${p.display_name}, ${date(t.training_date)}: ${text}`); td.append(b);
         } else td.append(el('div', text, cls)); row.append(td);
       }
       tb.append(row);
     }
-    table.append(tb); scroll.append(table); body.append(scroll);
-    const attendanceDetails = el('details', '', 'masters-collapsible'); attendanceDetails.append(el('summary', 'Assiduidade por jogador')); body.append(attendanceDetails);
+    table.append(tb); scroll.append(table); dashboardMain.append(scroll);
+    const attendanceDetails = el('details', '', 'masters-collapsible'); attendanceDetails.open=true; attendanceDetails.append(el('summary', 'Assiduidade por jogador')); statsSection.append(attendanceDetails);
     for (const p of stats) {
       const row = el('div', '', 'masters-rank'), bar = document.createElement('progress'); bar.max = 1; bar.value = p.rate || 0; bar.setAttribute('aria-label', `Assiduidade de ${p.display_name}`);
       row.append(el('span', p.display_name), bar, el('span', p.rate === null ? '—' : `${Math.round(p.rate * 100)}%`));
       attendanceDetails.append(row, el('small', `${p.present} presenças · ${p.absent} faltas · ${p.excused} justificadas · Saldo ${money(p.balance)}`));
     }
-    const paymentsDetails = el('details', '', 'masters-collapsible'); paymentsDetails.append(el('summary', `Pagamentos e correções (${s.payments.length})`)); body.append(paymentsDetails);
+    const paymentsDetails = el('details', '', 'masters-collapsible'); paymentsDetails.open=true; paymentsDetails.append(el('summary', `Pagamentos e correções (${s.payments.length})`)); paymentsSection.append(paymentsDetails);
     for (const payment of s.payments) {
       const p = s.players.find(x => x.id === payment.player_id), row = el('p', `${p?.display_name || 'Jogador'} · ${money(payment.amount_cents)} · ${new Date(payment.paid_at).toLocaleString('pt-PT')} · ${payment.note || ''}`);
       if (s.admin) row.append(button('Estornar', async () => {
@@ -210,13 +268,25 @@
         if (!reason) return; checked(await db.rpc('masters_reverse_payment', {payment_uuid:payment.id, reason})); await load();
       })); paymentsDetails.append(row);
     }
-    const footDetails = el('details', '', 'masters-collapsible'); footDetails.append(el('summary', 'Pé de Chumbo — arquivo')); body.append(footDetails);
+    const footDetails = el('details', '', 'masters-collapsible'); footDetails.open=true; footDetails.append(el('summary', 'Pé de Chumbo — arquivo')); footSection.append(footDetails);
     const archive = el('div', '', 'masters-archive'); footDetails.append(archive);
     for (const t of [...s.trainings].reverse().filter(t => t.lead_foot_player_id && t.status === 'closed')) {
       const card = el('article', '', 'panel'); card.append(el('h4', `${date(t.training_date)} · ${s.players.find(p => p.id === t.lead_foot_player_id)?.display_name || 'Jogador'}`)); archive.append(card);
       if (t.lead_foot_image_path) renderImage(t.lead_foot_image_path, card, generation);
     }
-    const auditDetails = el('details', '', 'masters-collapsible'); auditDetails.append(el('summary', `Histórico técnico (${s.audit.length} alterações)`)); body.append(auditDetails);
+    const summaryCards=el('div','','masters-summary-grid');
+    const closed=s.trainings.filter(t=>t.status==='closed').length;
+    const present=stats.reduce((n,p)=>n+p.present,0),absent=stats.reduce((n,p)=>n+p.absent,0);
+    const paid=stats.reduce((n,p)=>n+p.paid,0),debt=stats.reduce((n,p)=>n+p.balance,0);
+    const addCard=(title,rows)=>{const card=el('article','','masters-summary-card');card.append(el('h3',title));for(const [label,value,warning] of rows){const line=el('div','','masters-metric');line.append(el('span',label),el('strong',String(value),warning?'masters-debt':''));card.append(line);}summaryCards.append(card);};
+    addCard('Resumo da Época',[['Jogadores',s.players.filter(p=>p.active!==false&&p.sports_role==='player').length],['Treinos fechados',closed],['Presenças',present],['Faltas',absent],['Recebido',money(paid)],['Por pagar',money(debt),debt>0]]);
+    const denominator=present+absent;addCard('Assiduidade da Equipa',[['Presenças',present],['Faltas',absent],['Taxa',denominator?Math.round(present/denominator*100)+'%':'—']]);
+    const top=stats.filter(p=>p.absent>0).sort((a,b)=>b.absent-a.absent).slice(0,5);
+    addCard('Faltas · Top 5',top.length?top.map(p=>[p.display_name,p.absent]):[['Sem faltas registadas','—']]);
+    const next=[...s.trainings].filter(t=>t.status==='open'&&t.training_date>=new Date().toISOString().slice(0,10)).sort((a,b)=>a.training_date.localeCompare(b.training_date))[0];
+    addCard('Próximo Treino',[['Data',next?date(next.training_date):'Por definir'],['Estado',next?'Aberto':'Sem treino futuro']]);
+    trainingSection.append(summaryCards);
+    const auditDetails = el('details', '', 'masters-collapsible'); auditDetails.append(el('summary', `Histórico técnico (${s.audit.length} alterações)`)); paymentsSection.append(auditDetails);
     for (const a of s.audit) {
       const detail = el('details'); detail.append(el('summary', `${new Date(a.created_at).toLocaleString('pt-PT')} · ${a.event_type}`));
       detail.append(el('pre', JSON.stringify(a.details, null, 2))); detail.style.overflow = 'auto'; detail.className = 'masters-audit-entry'; auditDetails.append(detail);

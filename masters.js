@@ -334,12 +334,28 @@
             try{
               const result=email?await db.from('masters_player_emails').upsert({player_id:p.id,email},{onConflict:'player_id'}):await db.from('masters_player_emails').delete().eq('player_id',p.id);
               checked(result);
-              feedback.textContent=email?'Email guardado. Convite ainda não enviado.':'Email removido.';
+              feedback.textContent=email?'Email guardado. Podes enviar o convite.':'Email removido.';\n              byPlayer.set(p.id,email);invite.disabled=!email||!!p.auth_user_id;
             }catch(error){feedback.textContent='Erro: '+error.message;}
             finally{save.disabled=false;}
           });
-          const feedback=el('small','','muted');
-          row.append(label,input,save,feedback);emailList.append(row);
+          const invite=button('Enviar convite',async()=>{
+            const email=input.value.trim().toLowerCase();
+            if(!email||!input.reportValidity()){feedback.textContent='Indica um email válido e guarda-o primeiro.';return;}
+            if(email!==byPlayer.get(p.id)){feedback.textContent='Guarda primeiro o email alterado.';return;}
+            if(!window.confirm('Enviar convite de acesso aos Masters para '+p.display_name+' ('+email+')?'))return;
+            invite.disabled=true;feedback.textContent='A enviar convite…';
+            try{
+              const result=await db.functions.invoke('invite-masters-player',{body:{player_id:p.id}});
+              if(result.error)throw new Error(result.data?.error||result.error.message);
+              if(!result.data?.ok)throw new Error(result.data?.error||'Envio não confirmado.');
+              feedback.textContent=result.data.message||'Convite enviado.';
+              invite.disabled=true;
+            }catch(error){feedback.textContent='Erro: '+error.message;invite.disabled=false;}
+          });
+          invite.disabled=!!p.auth_user_id||!byPlayer.get(p.id);
+          if(p.auth_user_id)invite.textContent='Conta associada';
+          const feedback=el('small',p.auth_user_id?'Conta já associada.':'','muted');
+          row.append(label,input,save,invite,feedback);emailList.append(row);
         }
       };
       playerSection.append(emailPanel);

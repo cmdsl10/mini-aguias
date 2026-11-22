@@ -334,7 +334,8 @@
             try{
               const result=email?await db.from('masters_player_emails').upsert({player_id:p.id,email},{onConflict:'player_id'}):await db.from('masters_player_emails').delete().eq('player_id',p.id);
               checked(result);
-              feedback.textContent=email?'Email guardado. Podes enviar o convite.':'Email removido.';\n              byPlayer.set(p.id,email);invite.disabled=!email||!!p.auth_user_id;
+              feedback.textContent=email?'Email guardado. Podes enviar o convite.':'Email removido.';
+              byPlayer.set(p.id,email);invite.disabled=!email||!!p.auth_user_id;
             }catch(error){feedback.textContent='Erro: '+error.message;}
             finally{save.disabled=false;}
           });

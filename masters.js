@@ -284,7 +284,7 @@
     const photos = el('div', '', 'masters-photo-column');
     const foot = el('section', '', 'masters-photo-card panel');
     foot.append(el('h3', 'Pé de Chumbo'));
-    const latestFoot = [...s.trainings].filter(t => t.status === 'closed' && leadFootIds(t).length > 0).sort((a,b)=>b.training_date.localeCompare(a.training_date))[0];
+    const latestFoot = [...s.trainings].filter(t => t.status !== 'cancelled' && t.lead_foot_image_path).sort((a,b)=>b.training_date.localeCompare(a.training_date))[0];
     const footFrame = el('div', '', 'masters-photo-frame');
     if (latestFoot?.lead_foot_image_path) renderImage(latestFoot.lead_foot_image_path, footFrame, generation);
     else footFrame.append(el('span', 'Sem fotografia disponível'));

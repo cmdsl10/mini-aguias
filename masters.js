@@ -353,7 +353,7 @@
       const box = el('div', label), valueNode=el('strong',String(value));box.append(valueNode);totals.append(box);totalValues.set(label,valueNode);
     }
     statsSection.append(totals);
-    const balanceSection=el('section','','masters-player-balances');balanceSection.append(el('h3','Saldo por jogador · treinos fechados'));
+    const balanceSection=el('section','','masters-player-balances');balanceSection.append(el('h3','Saldo por jogador · faltas registadas'));
     const balanceList=el('div','','masters-balances-list');balanceSection.append(balanceList);
     paymentsSection.prepend(balanceSection);
     function refreshStatistics(){

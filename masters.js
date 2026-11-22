@@ -200,7 +200,7 @@
       }
     } catch (e) { console.warn('Não foi possível consultar posições do Futebol.',e); }
     if (token !== generation) return;
-    state = {players, trainings, attendance, staffAttendance, payments, allocations, audit, admin, footballPositions}; render();
+    state = {players, trainings, attendance, staffAttendance, payments, allocations, audit, admin, footballPositions, userId:user.id}; render();
     status(players.length ? 'Dados privados da equipa. Atualiza para consultar alterações recentes.' : 'Ainda não existem jogadores. A lista e as contas precisam de validação da direção.');
   }
   function showEditor(title) {
@@ -327,7 +327,7 @@
       const initialTraining=available.find(t=>t.training_date===rememberedDate)||defaultTraining;
       if (initialTraining) {
         // Drafts are local, per account and per training; never sent until Save.
-        const draftKey=t=>'mini-aguias-masters-draft-v1:'+user.id+':'+t.id;
+        const draftKey=t=>'mini-aguias-masters-draft-v1:'+s.userId+':'+t.id;
         const validIds=new Set(s.players.filter(p=>p.active!==false).map(p=>p.id));
         const validStatuses=new Set(['present','absent','pending']);
         function restoreDraft(t){

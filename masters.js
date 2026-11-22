@@ -37,7 +37,20 @@
     #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}
     #masters-private .masters-photo-frame img{width:100%;height:100%;object-fit:contain}
     #masters-private .masters-photo-card .muted{margin:10px 0 0}
-    @media(max-width:720px){#masters-private .masters-overview{grid-template-columns:1fr}#masters-private .masters-roster-group ul{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}}
+    #masters-private .masters-collapsible{margin:14px 0;border:1px solid #dce2eb;border-radius:10px;background:#fff;padding:12px 14px}
+    #masters-private .masters-collapsible>summary{font-weight:700;color:#173e79;cursor:pointer;padding:5px 0}
+    #masters-private .masters-collapsible[open]>summary{margin-bottom:12px}
+    #masters-private .masters-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-inline:contain;-webkit-overflow-scrolling:touch}
+    #masters-private .masters-scroll table{min-width:760px;border-collapse:separate;border-spacing:0}
+    #masters-private .masters-scroll th:first-child,#masters-private .masters-scroll td:first-child{position:sticky;left:0;z-index:1;background:#fff;min-width:145px;max-width:180px}
+    #masters-private .masters-scroll th:first-child{z-index:2;background:#0b2d4b;color:#fff}
+    #masters-private .masters-scroll td{min-width:145px}
+    #masters-private .masters-scroll .masters-cell{min-height:42px;white-space:normal;overflow-wrap:anywhere}
+    #masters-private .masters-rank{display:grid;grid-template-columns:minmax(90px,1fr) minmax(70px,2fr) 48px;align-items:center;gap:10px}
+    #masters-private .masters-rank progress{width:100%;min-width:0}
+    #masters-private .masters-audit-entry{margin:5px 0;font-size:.9rem}
+    @media(max-width:720px){#masters-private .masters-scroll table{font-size:13px}#masters-private .masters-scroll td{padding:7px 5px}#masters-private .masters-scroll .masters-cell{font-size:12px;padding:7px 5px}#masters-private .masters-roster-group ul{grid-template-columns:repeat(2,minmax(0,1fr))}#masters-private .masters-roster-group li{overflow-wrap:anywhere}
+#masters-private .masters-overview{grid-template-columns:1fr}#masters-private .masters-roster-group ul{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}}
   `;
   document.head.append(mastersLayoutStyle);
   panel.innerHTML = `<div class="wrap"><div class="ey">Época 2026/27 · Área privada</div><h2>Masters — Treinos</h2>
@@ -143,7 +156,7 @@
     for (const [label, value] of [['Treinos fechados', s.trainings.filter(t => t.status === 'closed').length], ['Faltas', stats.reduce((n, p) => n + p.absent, 0)], ['Recebido', money(stats.reduce((n, p) => n + p.paid, 0))], ['Em dívida', money(stats.reduce((n, p) => n + p.balance, 0))]]) {
       const box = el('div', label); box.append(el('strong', value)); totals.append(box);
     }
-    body.append(totals);
+    body.append(totals, el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos ainda não contabilizados. As faltas e dívidas só contam após o fecho do treino.`, 'muted'));
     const tools = el('div', '', 'masters-toolbar');
     tools.append(button('Resumo semanal para WhatsApp', summary));
     if (s.admin) tools.append(button('Preparar quartas-feiras da época', seed), button('Adicionar jogador / autorizar conta', playerEditor), button('Importar lista Excel', importPlayers));
@@ -170,30 +183,31 @@
       }
       tb.append(row);
     }
-    table.append(tb); scroll.append(table); body.append(scroll, el('h3', 'Assiduidade'));
+    table.append(tb); scroll.append(table); body.append(scroll);
+    const attendanceDetails = el('details', '', 'masters-collapsible'); attendanceDetails.append(el('summary', 'Assiduidade por jogador')); body.append(attendanceDetails);
     for (const p of stats) {
       const row = el('div', '', 'masters-rank'), bar = document.createElement('progress'); bar.max = 1; bar.value = p.rate || 0; bar.setAttribute('aria-label', `Assiduidade de ${p.display_name}`);
       row.append(el('span', p.display_name), bar, el('span', p.rate === null ? '—' : `${Math.round(p.rate * 100)}%`));
-      body.append(row, el('small', `${p.present} presenças · ${p.absent} faltas · ${p.excused} justificadas · Saldo ${money(p.balance)}`));
+      attendanceDetails.append(row, el('small', `${p.present} presenças · ${p.absent} faltas · ${p.excused} justificadas · Saldo ${money(p.balance)}`));
     }
-    body.append(el('h3', 'Pagamentos e correções'));
+    const paymentsDetails = el('details', '', 'masters-collapsible'); paymentsDetails.append(el('summary', `Pagamentos e correções (${s.payments.length})`)); body.append(paymentsDetails);
     for (const payment of s.payments) {
       const p = s.players.find(x => x.id === payment.player_id), row = el('p', `${p?.display_name || 'Jogador'} · ${money(payment.amount_cents)} · ${new Date(payment.paid_at).toLocaleString('pt-PT')} · ${payment.note || ''}`);
       if (s.admin) row.append(button('Estornar', async () => {
         const reason = prompt('Motivo do estorno (mínimo 3 caracteres). O original fica no histórico.');
         if (!reason) return; checked(await db.rpc('masters_reverse_payment', {payment_uuid:payment.id, reason})); await load();
-      })); body.append(row);
+      })); paymentsDetails.append(row);
     }
-    body.append(el('h3', 'Pé de Chumbo — destaque e arquivo'));
-    const archive = el('div', '', 'masters-archive'); body.append(archive);
+    const footDetails = el('details', '', 'masters-collapsible'); footDetails.append(el('summary', 'Pé de Chumbo — arquivo')); body.append(footDetails);
+    const archive = el('div', '', 'masters-archive'); footDetails.append(archive);
     for (const t of [...s.trainings].reverse().filter(t => t.lead_foot_player_id && t.status === 'closed')) {
       const card = el('article', '', 'panel'); card.append(el('h4', `${date(t.training_date)} · ${s.players.find(p => p.id === t.lead_foot_player_id)?.display_name || 'Jogador'}`)); archive.append(card);
       if (t.lead_foot_image_path) renderImage(t.lead_foot_image_path, card, generation);
     }
-    body.append(el('h3', 'Histórico — últimas 100 alterações'));
+    const auditDetails = el('details', '', 'masters-collapsible'); auditDetails.append(el('summary', `Histórico técnico (${s.audit.length} alterações)`)); body.append(auditDetails);
     for (const a of s.audit) {
       const detail = el('details'); detail.append(el('summary', `${new Date(a.created_at).toLocaleString('pt-PT')} · ${a.event_type}`));
-      detail.append(el('pre', JSON.stringify(a.details, null, 2))); detail.style.overflow = 'auto'; body.append(detail);
+      detail.append(el('pre', JSON.stringify(a.details, null, 2))); detail.style.overflow = 'auto'; detail.className = 'masters-audit-entry'; auditDetails.append(detail);
     }
   }
   async function renderImage(path, card, token) {

@@ -86,6 +86,7 @@
     #masters-private .masters-quick-nav label{flex:1;min-width:175px}
     #masters-private .masters-quick-actions button{flex:1;min-width:150px}
     #masters-private .masters-quick-summary{font-weight:700;color:#123d70}
+    #masters-private .masters-quick-feedback{font-weight:700;color:#14552e;margin:6px 0;min-height:1.3em}
     #masters-private .masters-quick-group{background:#082e58;color:#fff;padding:9px 12px;margin:12px 0 0;border-left:5px solid #ffd22e;border-radius:5px}
     #masters-private .masters-quick-player{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 3px;border-bottom:1px solid #dce4ee}
     #masters-private .masters-quick-player>span{font-weight:600;min-width:0;overflow-wrap:anywhere}
@@ -326,7 +327,8 @@
         const save=button('Guardar presenças',async()=>{
           const t=available.find(t=>t.id===dateSelect.value);
           const changes=eligible.filter(p=>draft.has(p.id) && draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status);
-          if (!changes.length) {status('Não existem alterações para guardar.');return;}
+          if (!changes.length) {saveFeedback.textContent='Todas as presenças deste treino já estão guardadas. Para alterar, toca em Sim ou Não num jogador.';return;}
+          saveFeedback.textContent='A guardar '+changes.length+' alterações…';
           // Existing paid absences must not be changed without a payment reversal.
           for(const p of changes) {
             const c=MastersDomain.cell(p,t,s.attendance,s.allocations);
@@ -334,15 +336,17 @@
           }
           checked(await db.from('masters_attendance').upsert(changes.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
           status(changes.length+' presenças guardadas.');
+          saveFeedback.textContent='✓ '+changes.length+' presenças guardadas com sucesso no treino de '+date(t.training_date)+'.';
           // Refresh data in place without rebuilding the entire dashboard.
           const fresh=await all('masters_attendance','training_id');
           s.attendance=fresh;draft.clear();paint();
         });
         actions.append(allPresent,save);quick.append(actions);
+        const saveFeedback=el('p','','masters-quick-feedback');saveFeedback.setAttribute('role','status');saveFeedback.setAttribute('aria-live','polite');quick.append(saveFeedback);
         const summary=el('p','','masters-quick-summary');quick.append(summary);
         const list=el('div','','masters-quick-list');quick.append(list);
         let draft=new Map(),eligible=[];
-        function move(step){const index=available.findIndex(t=>t.id===dateSelect.value);const target=available[index+step];if(target){dateSelect.value=target.id;draft.clear();paint();}}
+        function move(step){const index=available.findIndex(t=>t.id===dateSelect.value);const target=available[index+step];if(target){dateSelect.value=target.id;draft.clear();saveFeedback.textContent='';paint();}}
         function paint(){
           const t=available.find(t=>t.id===dateSelect.value);list.replaceChildren();
           eligible=orderedPlayers.filter(p=>p.active!==false&&p.sports_role==='player'&&p.attendance_eligible===true);
@@ -357,7 +361,7 @@
             line.append(el('span',p.display_name));
             const controls=el('div','','masters-quick-choices');
             for(const [value,label] of [['present','✓ Sim'],['absent','✕ Não']]){
-              const b=button(label,()=>{draft.set(p.id,value);paint();});
+              const b=button(label,()=>{if(value===c.status)draft.delete(p.id);else draft.set(p.id,value);saveFeedback.textContent='';paint();});
               b.className='masters-quick-choice '+(draft.get(p.id)===value||(!draft.has(p.id)&&c.status===value)?(value==='present'?'is-yes':'is-no'):'');
               b.setAttribute('aria-pressed',String((draft.get(p.id)||c.status)===value));
               controls.append(b);
@@ -367,9 +371,11 @@
           summary.textContent=`Jogadores: ${eligible.length} · Sim: ${yes} · Não: ${no} · Por marcar: ${missing}`;
           const index=available.findIndex(t=>t.id===dateSelect.value);
           prev.disabled=index===0;next.disabled=index===available.length-1;
-          save.disabled=draft.size===0;
+          const changed=eligible.filter(p=>draft.has(p.id)&&draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status).length;
+          save.textContent=changed ? 'Guardar '+changed+' alteração'+(changed===1?'':'ões') : 'Presenças guardadas ✓';
+          save.setAttribute('aria-label',changed ? 'Guardar '+changed+' alterações de presenças' : 'Todas as presenças estão guardadas; toca para ver informação');
         }
-        dateSelect.addEventListener('change',()=>{draft.clear();paint();});
+        dateSelect.addEventListener('change',()=>{draft.clear();saveFeedback.textContent='';paint();});
         paint();
       } else quick.append(el('p','Ainda não existem treinos para marcar.'));
       dashboardMain.append(quick);

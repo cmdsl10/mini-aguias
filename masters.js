@@ -5,7 +5,7 @@
   const q = s => panel.querySelector(s);
   const money = cents => (cents / 100).toLocaleString('pt-PT', {style:'currency', currency:'EUR'});
   const date = day => new Date(day + 'T12:00:00').toLocaleDateString('pt-PT');
-  const labels = {pending:'Por marcar', present:'Presente', absent:'Falta', excused:'Justificada'};
+  const labels = {pending:'Por marcar', present:'Presente', absent:'Falta'};
   const roles = {player:'Jogador', coach:'Treinador', president:'Presidente'};
   const checked = r => { if (r.error) throw r.error; return r.data; };
   const errors = {
@@ -13,7 +13,7 @@
     'Reopen marked trainings before changing eligibility':'Reabre os treinos com marcações deste membro antes de mudar a elegibilidade; estorna primeiro os pagamentos associados.',
     'Mark every player before closing':'Marca a presença de todos os jogadores antes de fechar o treino.',
     'Future training cannot close':'Só podes fechar um treino na própria data ou depois.',
-    'Reverse allocated payments before reopening or cancelling':'Estorna os pagamentos deste treino antes de o reabrir ou cancelar.',
+    'Reverse allocated payments before reopening or cancelling':'Estorna os pagamentos deste treino antes de o cancelar.',
     'Reverse allocated payments before changing this absence':'Estorna primeiro os pagamentos associados a esta falta.',
     'Reopen the training before marking pending':'Reabre o treino antes de voltar a marcar uma presença como pendente.',
     'Absence over-allocation':'Esta falta já recebeu esse valor. Atualiza os dados antes de continuar.',
@@ -161,7 +161,7 @@
   `;
   document.head.append(mastersLayoutStyle);
   panel.innerHTML = `<div class="wrap"><div class="ey">Época 2026/27 · Área privada</div><h2>Masters — Treinos</h2>
-    <p>Quartas-feiras desde 21/10/2026. Falta não justificada: 1 €. Só os treinos fechados contam.</p>
+    <p>Quartas-feiras desde 21/10/2026. Cada falta marcada: 1 € de dívida, mesmo com treino aberto.</p>
     <p id="mastersStatus" role="status" aria-live="polite"></p>
     <form id="mastersLogin" class="masters-toolbar"><label>Email<input name="email" type="email" autocomplete="username" required></label><label>Palavra-passe<input name="password" type="password" autocomplete="current-password" required></label><button class="btn primary">Entrar</button><a href="#area-socio">Recuperar palavra-passe</a></form>
     <div id="mastersSession" hidden class="masters-toolbar"><button id="mastersRefresh" type="button" class="btn secondary">Atualizar</button><button id="mastersLogout" type="button" class="btn ghost">Terminar sessão</button></div>
@@ -353,7 +353,7 @@
       const box = el('div', label), valueNode=el('strong',String(value));box.append(valueNode);totals.append(box);totalValues.set(label,valueNode);
     }
     statsSection.append(totals);
-    const balanceSection=el('section','','masters-player-balances');balanceSection.append(el('h3','Saldo por jogador · treinos fechados'));
+    const balanceSection=el('section','','masters-player-balances');balanceSection.append(el('h3','Saldo por jogador · faltas registadas'));
     const balanceList=el('div','','masters-balances-list');balanceSection.append(balanceList);
     paymentsSection.prepend(balanceSection);
     function refreshStatistics(){
@@ -382,11 +382,11 @@
         const target=[...body.querySelectorAll('[data-masters-metric]')].find(e=>e.dataset.mastersMetric===key);if(target)target.textContent=String(val);
       }
     }
-    trainingSection.append(el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos. As presenças e faltas marcadas já contam para a assiduidade; as dívidas só são geradas após o fecho do treino.`, 'muted'));
+    trainingSection.append(el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos. As presenças e faltas marcadas já contam para a assiduidade. Cada falta gera 1 € de dívida imediatamente, mesmo com o treino aberto.`, 'muted'));
     const tools = el('div', '', 'masters-toolbar');
     tools.append(button('Resumo semanal para WhatsApp', summary));
     if (s.admin) tools.append(button('Preparar quartas-feiras da época', seed), button('Adicionar jogador / autorizar conta', playerEditor), button('Importar lista Excel', importPlayers));
-    summarySection.append(tools); trainingSection.append(el('p', 'Legenda: ✓ Presente · ✕ Falta · P Falta paga · ◷ Por marcar · J Justificada. O pagamento nunca apaga a falta.'));
+    summarySection.append(tools); trainingSection.append(el('p', 'Legenda: ✓ Presente · ✕ vermelho Falta por pagar · ✕ verde Falta paga · ◷ Por marcar. O pagamento nunca apaga a falta.'));
     const scroll = el('div', '', 'masters-scroll'); scroll.tabIndex = 0; scroll.setAttribute('aria-label', 'Grelha de presenças e pagamentos. Desloca horizontalmente para consultar todos os treinos.');
     const table = el('table'); table.append(el('caption', 'Presenças e pagamentos individuais'));
     const head = el('thead'), hr = el('tr'); hr.append(el('th', 'Jogador'));
@@ -700,8 +700,8 @@
       checked(await db.from('masters_attendance').upsert({player_id:p.id,training_id:t.id,status:input.value}));
       await load();
     }));
-    if(t.status!=='closed'){
-      paymentPanel.append(el('p','O pagamento só pode ser registado depois de fechar o treino. Até lá, uma falta não gera dívida.','muted'));
+    if(t.status==='cancelled'){
+      paymentPanel.append(el('p','Treino cancelado: não é possível registar pagamentos.','muted'));
     }else if(c.status!=='absent'){
       paymentPanel.append(el('p','Este jogador não tem uma falta neste treino. Seleciona Falta no separador Presença, guarda e volta ao pagamento.','muted'));
     }else if(c.balance>0){
@@ -830,7 +830,7 @@
     if (!t) throw Error('Ainda não existe treino fechado.');
     const body = showEditor('Resumo semanal — copiar para WhatsApp');
     const cells = state.players.map(p => MastersDomain.cell(p,t,state.attendance,state.allocations));
-    const text = `Mini-Águias Masters · ${date(t.training_date)}\nPresentes: ${cells.filter(c => c.status === 'present').length}\nFaltas: ${cells.filter(c => c.status === 'absent').length}\nJustificadas: ${cells.filter(c => c.status === 'excused').length}\nPé de Chumbo: ${leadFootNames(t,state.players)}`;
+    const text = `Mini-Águias Masters · ${date(t.training_date)}\nPresentes: ${cells.filter(c => c.status === 'present').length}\nFaltas: ${cells.filter(c => c.status === 'absent').length}\nPé de Chumbo: ${leadFootNames(t,state.players)}`;
     const area = el('textarea'); area.value = text; area.rows = 8; area.style.width = '100%'; area.readOnly = true; body.append(area);
     body.append(button('Copiar resumo', async () => { await navigator.clipboard.writeText(text); status('Resumo copiado.'); }));
     body.append(el('p', 'Sem saldos individuais no resumo. Revê o texto antes de partilhar.'));

@@ -58,7 +58,13 @@
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.paid{background:#d9e9ff;color:#0758b6}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.pending{background:#eef0f4;color:#4e5866}
     #masters-private .masters-dashboard-main .masters-scroll button.masters-cell{width:100%;border:1px solid #cbd4de;cursor:pointer}
-    #masters-private .masters-dashboard-side{min-width:0}
+    #masters-private .masters-dashboard-side{min-width:0;display:grid;gap:14px}
+    #masters-private .masters-dashboard-side .masters-photo-frame{aspect-ratio:16/10}
+    #masters-private .masters-dashboard-side .masters-photo-card h3{background:#082f59;color:#fff;padding:10px 12px;border-radius:7px;margin:-16px -16px 12px}
+    #masters-private .masters-tabs{background:#082f59;border-radius:9px;padding:5px;margin-bottom:12px}
+    #masters-private .masters-tabs button{background:transparent;border-color:transparent;border-right:1px solid #53718d;border-radius:3px}
+    #masters-private .masters-tabs button[aria-selected=true]{background:#f6c529;color:#092b4b;border-radius:6px}
+    #masters-private .masters-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
     #masters-private .masters-dashboard-side .masters-photo-card{margin:0}
     #masters-private .masters-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
     #masters-private .masters-summary-card{background:#fff;border:1px solid #ced8e5;border-radius:9px;overflow:hidden;padding:0 13px 13px}
@@ -214,7 +220,8 @@
     trainingFrame.append(el('span', 'Espaço reservado para a fotografia do treino'));
     trainingPhoto.append(trainingFrame);
     photos.append(foot, trainingPhoto);
-    overview.append(roster, photos); playerSection.append(roster); dashboardSide.append(foot); footSection.append(trainingPhoto);
+    overview.append(roster, photos); playerSection.append(roster); dashboardSide.append(foot, trainingPhoto);
+    footSection.append(el('h3','Arquivo Pé de Chumbo'));
     const totals = el('div', '', 'masters-stats');
     for (const [label, value] of [['Treinos fechados', s.trainings.filter(t => t.status === 'closed').length], ['Faltas', stats.reduce((n, p) => n + p.absent, 0)], ['Recebido', money(stats.reduce((n, p) => n + p.paid, 0))], ['Em dívida', money(stats.reduce((n, p) => n + p.balance, 0))]]) {
       const box = el('div', label); box.append(el('strong', value)); totals.append(box);

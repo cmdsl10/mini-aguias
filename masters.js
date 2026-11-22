@@ -87,6 +87,7 @@
     #masters-private .masters-quick-actions button{flex:1;min-width:150px}
     #masters-private .masters-quick-summary{font-weight:700;color:#123d70}
     #masters-private .masters-quick-feedback{font-weight:700;color:#14552e;margin:6px 0;min-height:1.3em}
+    #masters-private .masters-quick-draft-notice{color:#71520c;font-size:0.92em;font-weight:600}
     #masters-private .masters-quick-group{background:#082e58;color:#fff;padding:9px 12px;margin:12px 0 0;border-left:5px solid #ffd22e;border-radius:5px}
     #masters-private .masters-quick-player{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 3px;border-bottom:1px solid #dce4ee}
     #masters-private .masters-quick-player>span{font-weight:600;min-width:0;overflow-wrap:anywhere}
@@ -325,6 +326,23 @@
       try { rememberedDate=window.localStorage.getItem(selectedDateKey); } catch(e) {}
       const initialTraining=available.find(t=>t.training_date===rememberedDate)||defaultTraining;
       if (initialTraining) {
+        // Drafts are local, per account and per training; never sent until Save.
+        const draftKey=t=>'mini-aguias-masters-draft-v1:'+user.id+':'+t.id;
+        const validIds=new Set(s.players.filter(p=>p.active!==false).map(p=>p.id));
+        const validStatuses=new Set(['present','absent','pending']);
+        function restoreDraft(t){
+          try{
+            const raw=JSON.parse(window.localStorage.getItem(draftKey(t))||'null');
+            if(!raw || !Array.isArray(raw.entries))return new Map();
+            return new Map(raw.entries.filter(e=>Array.isArray(e)&&e.length===2&&validIds.has(e[0])&&validStatuses.has(e[1])));
+          }catch(e){return new Map();}
+        }
+        function persistDraft(t){
+          try{
+            if(draft.size)window.localStorage.setItem(draftKey(t),JSON.stringify({entries:[...draft],savedAt:Date.now()}));
+            else window.localStorage.removeItem(draftKey(t));
+          }catch(e){console.warn('Não foi possível guardar o rascunho local.',e);}
+        }
         const nav = el('div','','masters-quick-nav');
         const dateSelect = select('Treino',available.map(t=>[t.id,date(t.training_date)]),initialTraining.id,nav);
         const rememberTraining=()=>{
@@ -335,7 +353,7 @@
         const prev = button('‹ Anterior',()=>move(-1)), next=button('Seguinte ›',()=>move(1));
         nav.append(prev,next);quick.append(nav);
         const actions = el('div','','masters-quick-actions');
-        const allPresent=button('✓ Marcar todos Sim',()=>{for(const p of eligible) draft.set(p.id,'present');paint();});
+        const allPresent=button('✓ Marcar todos Sim',()=>{for(const p of eligible) draft.set(p.id,'present');persistDraft(available.find(t=>t.id===dateSelect.value));paint();});
         const staff=s.players.filter(p=>p.active!==false&&(p.sports_role==='coach'||p.sports_role==='president')).sort((a,b)=>(a.sports_role==='coach'?0:1)-(b.sports_role==='coach'?0:1));
         const staffStatus=(p,t)=>s.staffAttendance.find(a=>a.training_id===t.id&&a.player_id===p.id)?.status||'pending';
         const save=button('Guardar presenças',async()=>{
@@ -359,14 +377,15 @@
           saveFeedback.textContent='✓ '+(changes.length+staffChanges.length)+' presenças guardadas com sucesso no treino de '+date(t.training_date)+'.';
           // Refresh data in place without rebuilding the entire dashboard.
           const [fresh, freshStaff]=await Promise.all([all('masters_attendance','training_id'),all('masters_staff_attendance','training_id')]);
-          s.attendance=fresh;s.staffAttendance=freshStaff;draft.clear();paint();
+          s.attendance=fresh;s.staffAttendance=freshStaff;draft.clear();persistDraft(t);paint();
         });
         actions.append(allPresent,save);quick.append(actions);
         const saveFeedback=el('p','','masters-quick-feedback');saveFeedback.setAttribute('role','status');saveFeedback.setAttribute('aria-live','polite');quick.append(saveFeedback);
+        const draftNotice=el('p','','masters-quick-draft-notice');quick.append(draftNotice);
         const summary=el('p','','masters-quick-summary');quick.append(summary);
         const list=el('div','','masters-quick-list');quick.append(list);
-        let draft=new Map(),eligible=[];
-        function move(step){const index=available.findIndex(t=>t.id===dateSelect.value);const target=available[index+step];if(target){dateSelect.value=target.id;rememberTraining();draft.clear();saveFeedback.textContent='';paint();}}
+        let draft=restoreDraft(initialTraining),eligible=[];
+        function move(step){const index=available.findIndex(t=>t.id===dateSelect.value);const target=available[index+step];if(target){dateSelect.value=target.id;rememberTraining();draft=restoreDraft(target);saveFeedback.textContent='';paint();}}
         function paint(){
           const t=available.find(t=>t.id===dateSelect.value);list.replaceChildren();
           eligible=orderedPlayers.filter(p=>p.active!==false&&p.sports_role==='player'&&p.attendance_eligible===true);
@@ -381,7 +400,7 @@
             line.append(el('span',p.display_name));
             const controls=el('div','','masters-quick-choices');
             for(const [value,label] of [['present','✓ Sim'],['absent','✕ Não']]){
-              const b=button(label,()=>{const selected=draft.has(p.id)?draft.get(p.id):c.status;const next=selected===value?'pending':value;if(next===c.status)draft.delete(p.id);else draft.set(p.id,next);saveFeedback.textContent='';paint();});
+              const b=button(label,()=>{const selected=draft.has(p.id)?draft.get(p.id):c.status;const next=selected===value?'pending':value;if(next===c.status)draft.delete(p.id);else draft.set(p.id,next);persistDraft(t);saveFeedback.textContent='';paint();});
               b.className='masters-quick-choice '+(draft.get(p.id)===value||(!draft.has(p.id)&&c.status===value)?(value==='present'?'is-yes':'is-no'):'');
               b.setAttribute('aria-pressed',String((draft.get(p.id)||c.status)===value));
               controls.append(b);
@@ -396,7 +415,7 @@
               const controls=el('div','','masters-quick-choices');
               const current=staffStatus(p,t);
               for(const [value,label] of [['present','✓ Sim'],['absent','✕ Não']]){
-                const b=button(label,()=>{const selected=draft.has(p.id)?draft.get(p.id):current;const next=selected===value?'pending':value;if(next===current)draft.delete(p.id);else draft.set(p.id,next);saveFeedback.textContent='';paint();});
+                const b=button(label,()=>{const selected=draft.has(p.id)?draft.get(p.id):current;const next=selected===value?'pending':value;if(next===current)draft.delete(p.id);else draft.set(p.id,next);persistDraft(t);saveFeedback.textContent='';paint();});
                 b.className='masters-quick-choice '+((draft.get(p.id)||current)===value?(value==='present'?'is-yes':'is-no'):'');
                 b.setAttribute('aria-pressed',String((draft.get(p.id)||current)===value));controls.append(b);
               }
@@ -407,10 +426,11 @@
           const index=available.findIndex(t=>t.id===dateSelect.value);
           prev.disabled=index===0;next.disabled=index===available.length-1;
           const changed=eligible.filter(p=>draft.has(p.id)&&draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status).length+staff.filter(p=>draft.has(p.id)&&draft.get(p.id)!==staffStatus(p,t)).length;
+          draftNotice.textContent=changed ? 'Rascunho guardado neste dispositivo · '+changed+' alteração'+(changed===1?' pendente':'ões pendentes')+'. Carrega em Guardar para confirmar.' : '';
           save.textContent=changed ? 'Guardar '+changed+' alteração'+(changed===1?'':'ões') : 'Presenças guardadas ✓';
           save.setAttribute('aria-label',changed ? 'Guardar '+changed+' alterações de presenças' : 'Todas as presenças estão guardadas; toca para ver informação');
         }
-        dateSelect.addEventListener('change',()=>{rememberTraining();draft.clear();saveFeedback.textContent='';paint();});
+        dateSelect.addEventListener('change',()=>{rememberTraining();draft=restoreDraft(available.find(t=>t.id===dateSelect.value));saveFeedback.textContent='';paint();});
         paint();
       } else quick.append(el('p','Ainda não existem treinos para marcar.'));
       dashboardMain.append(quick);

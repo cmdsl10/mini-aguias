@@ -47,7 +47,6 @@
   };
   const mastersLayoutStyle = document.createElement('style');
   mastersLayoutStyle.textContent = `
-    #masters-private .masters-overview{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,1fr);gap:18px;margin:18px 0;align-items:start}
     #masters-private .masters-roster{padding:18px}
     #masters-private .masters-roster h3,#masters-private .masters-photo-card h3{margin:0 0 12px}
     #masters-private .masters-roster-group{margin:12px 0}
@@ -66,7 +65,6 @@
     #masters-private .masters-email-row input{width:100%;min-width:0;padding:9px}\n    #masters-private .masters-email-row button{white-space:nowrap}
     #masters-private .masters-email-row small{grid-column:1/-1}
     @media(max-width:650px){#masters-private .masters-email-row{grid-template-columns:1fr 1fr}#masters-private .masters-email-row label,#masters-private .masters-email-row input{grid-column:1/-1}#masters-private .masters-email-row button{white-space:normal}}
-    #masters-private .masters-photo-column{display:grid;gap:16px}
     #masters-private .masters-photo-card{padding:16px}
     #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}
     #masters-private .masters-photo-frame img{width:100%;height:100%;object-fit:contain}
@@ -126,14 +124,12 @@
     #masters-private .masters-dashboard-side .masters-photo-frame{aspect-ratio:1/1;padding:0;min-height:0;background:#e8edf4;border:1px solid #b5c4d6}
     #masters-private .masters-dashboard-side .masters-photo-frame img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
     #masters-private .masters-dashboard-side .masters-photo-card{padding:12px}
-    #masters-private .masters-dashboard-side .masters-photo-card h3{margin:-12px -12px 12px}
-    @media(max-width:850px){#masters-private .masters-dashboard-side{max-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#masters-private .masters-dashboard-side .masters-photo-frame{min-height:0}}
-    @media(max-width:520px){#masters-private .masters-dashboard-side{grid-template-columns:1fr}#masters-private .masters-dashboard-side .masters-photo-frame{min-height:0}}
+    @media(max-width:850px){#masters-private .masters-dashboard-side{max-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}}
+    @media(max-width:520px){#masters-private .masters-dashboard-side{grid-template-columns:1fr}}
     #masters-private .masters-dashboard-side .masters-photo-card h3{background:#082f59;color:#fff;padding:10px 12px;border-radius:7px;margin:-16px -16px 12px}
     #masters-private .masters-tabs{background:#082f59;border-radius:9px;padding:5px;margin-bottom:12px}
     #masters-private .masters-tabs button{background:transparent;border-color:transparent;border-right:1px solid #53718d;border-radius:3px}
     #masters-private .masters-tabs button[aria-selected=true]{background:#f6c529;color:#092b4b;border-radius:6px}
-    #masters-private .masters-summary-grid{grid-template-columns:repeat(4,minmax(0,1fr))}
     #masters-private .masters-dashboard-side .masters-photo-card{margin:0}
     #masters-private .masters-summary-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:16px 0}
     #masters-private .masters-summary-card{background:#fff;border:1px solid #ced8e5;border-radius:9px;overflow:hidden;padding:0 13px 13px}
@@ -157,7 +153,7 @@
     #masters-private .masters-rank progress{width:100%;min-width:0}
     #masters-private .masters-audit-entry{margin:5px 0;font-size:.9rem}
     @media(max-width:720px){#masters-private .masters-scroll table{font-size:13px}#masters-private .masters-scroll td{padding:7px 5px}#masters-private .masters-scroll .masters-cell{font-size:12px;padding:7px 5px}#masters-private .masters-roster-group ul{grid-template-columns:repeat(2,minmax(0,1fr))}#masters-private .masters-roster-group li{overflow-wrap:anywhere}
-#masters-private .masters-overview{grid-template-columns:1fr}#masters-private .masters-roster-group ul{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}}
+#masters-private .masters-roster-group ul{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}}
   `;
   document.head.append(mastersLayoutStyle);
   panel.innerHTML = `<div class="wrap"><div class="ey">Época 2026/27 · Área privada</div><h2>Masters — Treinos</h2>
@@ -261,7 +257,6 @@
     dashboardMain.append(el('div','📅 Presenças nos Treinos','masters-section-title'));
 
     // Club-approved overview: position roster on the left, two photo slots on the right.
-    const overview = el('div', '', 'masters-overview');
     const roster = el('section', '', 'masters-roster panel');
     roster.append(el('h3', 'Plantel · Masters 2026/27'));
     const normalizePosition = value => {
@@ -281,7 +276,6 @@
       for (const p of group.sort((a,b) => a.display_name.localeCompare(b.display_name,'pt'))) list.append(el('li', p.display_name));
       section.append(list); roster.append(section);
     }
-    const photos = el('div', '', 'masters-photo-column');
     const foot = el('section', '', 'masters-photo-card panel');
     foot.append(el('h3', 'Pé de Chumbo'));
     const latestFoot = [...s.trainings].filter(t => t.status !== 'cancelled' && t.lead_foot_image_path).sort((a,b)=>b.training_date.localeCompare(a.training_date))[0];
@@ -299,7 +293,6 @@
     trainingPhoto.append(trainingFrame);
     if (latestTrainingPhoto) trainingPhoto.append(el('p', date(latestTrainingPhoto.training_date), 'muted'));
     if (s.admin) {
-      const photoActions = el('div', '', 'masters-photo-actions');
       const chooseTraining = (kind) => {
         const trainings = [...s.trainings].filter(t=>t.status!=='cancelled').sort((a,b)=>b.training_date.localeCompare(a.training_date));
         if (!trainings.length) { status('Ainda não existem treinos para associar fotografias.',true); return; }
@@ -310,12 +303,10 @@
       foot.append(button('Alterar Pé de Chumbo',()=>chooseTraining('foot')));
       trainingPhoto.append(button('Alterar foto do treino',()=>chooseTraining('training')));
     }
-    photos.append(foot, trainingPhoto);
-    overview.append(roster, photos);
     if(s.admin){
       const emailPanel=el('section','','masters-email-panel');
       emailPanel.append(el('h3','Emails e acessos dos Masters'));
-      emailPanel.append(el('p','Regista o email de cada jogador. Guardar o email não envia convite nem ativa automaticamente o login. Só a administração pode consultar ou alterar esta lista.','muted'));
+      emailPanel.append(el('p','Guarda o email de cada jogador e utiliza «Enviar convite» para lhe dar acesso de consulta. Guardar o email, por si só, não envia qualquer mensagem.','muted'));
       const emailList=el('div','','masters-email-list');
       emailPanel.append(emailList);
       const renderEmails=async()=>{

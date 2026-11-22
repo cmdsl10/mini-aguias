@@ -312,6 +312,7 @@
       return (order[positionOf(a)] ?? 7) - (order[positionOf(b)] ?? 7) || a.display_name.localeCompare(b.display_name,'pt');
     });
     const positionLabels = {GR:'GR · Guarda-redes',DEF:'DEF · Defesas',MED:'MED · Médios',AVZ:'AVZ · Avançados',OUTROS:'Posição por definir',coach:'Treinador',president:'Presidente'};
+    const gridCells=new Map();
     // Mobile-first quick attendance: one training, one save, no horizontal scrolling.
     if (s.admin) {
       const quick = el('section','','masters-quick-attendance panel');
@@ -377,7 +378,7 @@
           saveFeedback.textContent='✓ '+(changes.length+staffChanges.length)+' presenças guardadas com sucesso no treino de '+date(t.training_date)+'.';
           // Refresh data in place without rebuilding the entire dashboard.
           const [fresh, freshStaff]=await Promise.all([all('masters_attendance','training_id'),all('masters_staff_attendance','training_id')]);
-          s.attendance=fresh;s.staffAttendance=freshStaff;draft.clear();persistDraft(t);paint();
+          s.attendance=fresh;s.staffAttendance=freshStaff;draft.clear();persistDraft(t);refreshGrid(t);paint();
         });
         actions.append(allPresent,save);quick.append(actions);
         const saveFeedback=el('p','','masters-quick-feedback');saveFeedback.setAttribute('role','status');saveFeedback.setAttribute('aria-live','polite');quick.append(saveFeedback);
@@ -435,6 +436,17 @@
       } else quick.append(el('p','Ainda não existem treinos para marcar.'));
       dashboardMain.append(quick);
     }
+    function refreshGrid(training){
+      for(const p of orderedPlayers){
+        const buttonEl=gridCells.get(training.id+':'+p.id);
+        if(!buttonEl)continue;
+        const c=MastersDomain.cell(p,training,s.attendance,s.allocations);
+        const label=c.status==='present'?'✓':c.status==='excused'?'J':c.status==='pending'?'◷':c.status==='absent'?(c.due&&c.paid>=100?'P':c.paid?'P*':'✕'):'—';
+        buttonEl.textContent=label;
+        buttonEl.className='masters-cell '+c.status+' '+(c.due&&c.paid>=100?'paid':c.paid?'partial':'');
+        buttonEl.setAttribute('aria-label',p.display_name+', '+date(training.training_date)+': '+label);
+      }
+    }
     let currentPosition = null;
 
     for (const p of orderedPlayers) {
@@ -452,7 +464,7 @@
         const text = t.status === 'cancelled' ? '—' : p.attendance_eligible !== true ? (p.attendance_eligible === false ? '—' : '?') : c.status === 'present' ? '✓' : c.status === 'excused' ? 'J' : c.status === 'pending' ? '◷' : c.status === 'absent' ? (c.due && c.paid >= 100 ? 'P' : c.paid ? 'P*' : '✕') : '—';
         const cls = `masters-cell ${c.status} ${c.due && c.paid >= 100 ? 'paid' : c.paid ? 'partial' : ''}`;
         if (s.admin && p.attendance_eligible === true && t.status !== 'cancelled') {
-          const b = button(text, () => attendanceEditor(p, t)); b.className = cls; b.setAttribute('aria-label', `${p.display_name}, ${date(t.training_date)}: ${text}`); td.append(b);
+          const b = button(text, () => attendanceEditor(p, t)); b.className = cls; b.setAttribute('aria-label', `${p.display_name}, ${date(t.training_date)}: ${text}`); gridCells.set(t.id+':'+p.id,b); td.append(b);
         } else td.append(el('div', text, cls)); row.append(td);
       }
       tb.append(row);

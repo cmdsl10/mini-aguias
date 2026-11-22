@@ -106,7 +106,6 @@
     const overview = el('div', '', 'masters-overview');
     const roster = el('section', '', 'masters-roster panel');
     roster.append(el('h3', 'Plantel · Masters 2026/27'));
-    const positionName = {GR:'Guarda-redes',DEF:'Defesas',MED:'Médios',AVZ:'Avançados'};
     const normalizePosition = value => {
       const v = String(value || '').trim().toUpperCase();
       if (['GR','GK','GUARDA-REDES'].includes(v)) return 'GR';

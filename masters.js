@@ -247,7 +247,7 @@
         if (!trainings.length) { status('Ainda não existem treinos para associar fotografias.',true); return; }
         const editor = showEditor(kind==='foot'?'Alterar fotografia Pé de Chumbo':'Alterar fotografia do treino');
         const trainingSelect = select('Treino',trainings.map(t=>[t.id,date(t.training_date)]),trainings[0].id,editor);
-        editor.append(button('Continuar',()=>trainingEditor(trainings.find(t=>t.id===trainingSelect.value))));
+        editor.append(button('Continuar',()=>{q('#mastersEditor').close();trainingEditor(trainings.find(t=>t.id===trainingSelect.value));}));
       };
       foot.append(button('Alterar Pé de Chumbo',()=>chooseTraining('foot')));
       trainingPhoto.append(button('Alterar foto do treino',()=>chooseTraining('training')));

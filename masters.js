@@ -235,8 +235,23 @@
     const trainingPhoto = el('section', '', 'masters-photo-card panel');
     trainingPhoto.append(el('h3', 'Fotografia do treino'));
     const trainingFrame = el('div', '', 'masters-photo-frame');
-    trainingFrame.append(el('span', 'Espaço reservado para a fotografia do treino'));
+    const latestTrainingPhoto = [...s.trainings].filter(t=>t.training_image_path).sort((a,b)=>b.training_date.localeCompare(a.training_date))[0];
+    if (latestTrainingPhoto) renderImage(latestTrainingPhoto.training_image_path, trainingFrame, generation);
+    else trainingFrame.append(el('span', 'Sem fotografia do treino'));
     trainingPhoto.append(trainingFrame);
+    if (latestTrainingPhoto) trainingPhoto.append(el('p', date(latestTrainingPhoto.training_date), 'muted'));
+    if (s.admin) {
+      const photoActions = el('div', '', 'masters-photo-actions');
+      const chooseTraining = (kind) => {
+        const trainings = [...s.trainings].filter(t=>t.status!=='cancelled').sort((a,b)=>b.training_date.localeCompare(a.training_date));
+        if (!trainings.length) { status('Ainda não existem treinos para associar fotografias.',true); return; }
+        const editor = showEditor(kind==='foot'?'Alterar fotografia Pé de Chumbo':'Alterar fotografia do treino');
+        const trainingSelect = select('Treino',trainings.map(t=>[t.id,date(t.training_date)]),trainings[0].id,editor);
+        editor.append(button('Continuar',()=>trainingEditor(trainings.find(t=>t.id===trainingSelect.value))));
+      };
+      foot.append(button('Alterar Pé de Chumbo',()=>chooseTraining('foot')));
+      trainingPhoto.append(button('Alterar foto do treino',()=>chooseTraining('training')));
+    }
     photos.append(foot, trainingPhoto);
     overview.append(roster, photos); playerSection.append(roster); dashboardSide.append(foot, trainingPhoto);
     footSection.append(el('h3','Arquivo Pé de Chumbo'));
@@ -368,7 +383,9 @@
     const body = showEditor(`Treino ${date(t.training_date)}`);
     const statusInput = select('Estado', [['open','Aberto'],['closed','Fechado'],['cancelled','Cancelado']], t.status, body);
     const player = select('Pé de Chumbo', [['','Sem seleção'], ...state.players.map(p => [p.id,p.display_name])], t.lead_foot_player_id || '', body);
-    const image = field('JPG manual (máximo 5 MB)', 'file', body); image.accept = 'image/jpeg';
+    const image = field('Foto Pé de Chumbo · JPG (máximo 5 MB)', 'file', body); image.accept = 'image/jpeg';
+    const weeklyImage = field('Foto da semana de treino · JPG (máximo 5 MB)', 'file', body); weeklyImage.accept = 'image/jpeg';
+    body.append(el('p','Seleciona um ficheiro apenas para a fotografia que pretendes alterar. As fotografias anteriores ficam preservadas no armazenamento.','muted'));
     body.append(button('Guardar treino', async () => {
       let path = player.value === t.lead_foot_player_id ? t.lead_foot_image_path : null;
       const file = image.files[0];
@@ -380,9 +397,18 @@
         path = `${t.id}/${crypto.randomUUID()}.jpg`;
         checked(await db.storage.from('masters-lead-foot').upload(path, file, {contentType:'image/jpeg', upsert:false}));
       }
+      let weeklyPath = t.training_image_path || null;
+      const weeklyFile = weeklyImage.files[0];
+      if (weeklyFile) {
+        const signature = new Uint8Array(await weeklyFile.slice(0,3).arrayBuffer());
+        if (weeklyFile.type !== 'image/jpeg' || weeklyFile.size > 5242880 || signature[0] !== 255 || signature[1] !== 216 || signature[2] !== 255) throw Error('Escolhe um JPG válido até 5 MB para a fotografia do treino.');
+        const bitmap = await createImageBitmap(weeklyFile); bitmap.close();
+        weeklyPath = `${t.id}/training-${crypto.randomUUID()}.jpg`;
+        checked(await db.storage.from('masters-lead-foot').upload(weeklyPath,weeklyFile,{contentType:'image/jpeg',upsert:false}));
+      }
       // A lost response may follow a committed update. Keep the private JPG:
       // deleting here could break the saved record and its audit history.
-      checked(await db.from('masters_trainings').update({status:statusInput.value, lead_foot_player_id:player.value || null, lead_foot_image_path:player.value ? path : null}).eq('id', t.id));
+      checked(await db.from('masters_trainings').update({status:statusInput.value, lead_foot_player_id:player.value || null, lead_foot_image_path:player.value ? path : null, training_image_path:weeklyPath}).eq('id', t.id));
       await load();
     }));
   }

@@ -225,7 +225,14 @@
   }
   function render() {
     const s = state, body = q('#mastersData'); body.replaceChildren(); body.hidden = false;
-    const stats = MastersDomain.statistics(s.players, s.trainings, s.attendance, s.allocations);
+    const staffStats=()=>s.players.filter(p=>p.sports_role==='coach'||p.sports_role==='president').map(p=>{
+      const validTrainings=new Set(s.trainings.filter(t=>t.status!=='cancelled').map(t=>t.id));
+      const marks=s.staffAttendance.filter(a=>a.player_id===p.id&&validTrainings.has(a.training_id)&&['present','absent'].includes(a.status));
+      const present=marks.filter(a=>a.status==='present').length,absent=marks.filter(a=>a.status==='absent').length;
+      return {...p,present,absent,paidAbsences:0,paid:0,balance:0,rate:marks.length?present/marks.length:null};
+    });
+    const currentStats=()=>[...MastersDomain.statistics(s.players.filter(p=>p.sports_role!=='coach'&&p.sports_role!=='president'),s.trainings,s.attendance,s.allocations),...staffStats()];
+    const stats = currentStats();
     const header = el('div', '', 'masters-reference-header');
     header.append(el('h2', 'G. D. MINI ÁGUIAS · MASTERS'), el('p', 'Controlo de Treinos · Época 2026/2027'));
     body.append(header);
@@ -310,8 +317,8 @@
     const balanceList=el('div','','masters-balances-list');balanceSection.append(balanceList);
     paymentsSection.prepend(balanceSection);
     function refreshStatistics(){
-      const freshStats=MastersDomain.statistics(s.players,s.trainings,s.attendance,s.allocations);
-      const sum=(key)=>freshStats.reduce((n,p)=>n+p[key],0);
+      const freshStats=currentStats();
+      const sum=(key)=>freshStats.filter(p=>p.sports_role!=='coach'&&p.sports_role!=='president').reduce((n,p)=>n+(p[key]||0),0);
       totalValues.get('Treinos fechados').textContent=String(s.trainings.filter(t=>t.status==='closed').length);
       totalValues.get('Faltas').textContent=String(sum('absent'));
       totalValues.get('Recebido').textContent=money(sum('paid'));
@@ -326,8 +333,8 @@
       const attendanceDetails=statsSection.querySelector('.masters-collapsible');
       if(attendanceDetails){
         const open=attendanceDetails.open;
-        attendanceDetails.replaceChildren(el('summary','Assiduidade por jogador'));
-        for(const p of freshStats){const row=el('div','','masters-rank'),bar=document.createElement('progress');bar.max=1;bar.value=p.rate||0;bar.setAttribute('aria-label','Assiduidade de '+p.display_name);row.append(el('span',p.display_name),bar,el('span',p.rate===null?'—':Math.round(p.rate*100)+'%'));attendanceDetails.append(row,el('small',p.present+' presenças · '+p.absent+' faltas · '+p.paidAbsences+' pagas · '+money(p.balance)+' por pagar'));}
+        attendanceDetails.replaceChildren(el('summary','Assiduidade por jogador e staff'));
+        for(const p of freshStats){const row=el('div','','masters-rank'),bar=document.createElement('progress');bar.max=1;bar.value=p.rate||0;bar.setAttribute('aria-label','Assiduidade de '+p.display_name);row.append(el('span',p.display_name),bar,el('span',p.rate===null?'—':Math.round(p.rate*100)+'%'));attendanceDetails.append(row,el('small',p.present+' presenças · '+p.absent+' faltas'+(p.sports_role==='coach'||p.sports_role==='president'?' · Staff (sem dívida)':' · '+p.paidAbsences+' pagas · '+money(p.balance)+' por pagar')));}
         attendanceDetails.open=open;
       }
       const p=sum('present'),a=sum('absent');
@@ -530,11 +537,11 @@
       tb.append(row);
     }
     table.append(tb); scroll.append(table); dashboardMain.append(scroll);refreshGridBalances();
-    const attendanceDetails = el('details', '', 'masters-collapsible'); attendanceDetails.open=true; attendanceDetails.append(el('summary', 'Assiduidade por jogador')); statsSection.append(attendanceDetails);
+    const attendanceDetails = el('details', '', 'masters-collapsible'); attendanceDetails.open=true; attendanceDetails.append(el('summary', 'Assiduidade por jogador e staff')); statsSection.append(attendanceDetails);
     for (const p of stats) {
       const row = el('div', '', 'masters-rank'), bar = document.createElement('progress'); bar.max = 1; bar.value = p.rate || 0; bar.setAttribute('aria-label', `Assiduidade de ${p.display_name}`);
       row.append(el('span', p.display_name), bar, el('span', p.rate === null ? '—' : `${Math.round(p.rate * 100)}%`));
-      attendanceDetails.append(row, el('small', `${p.present} presenças · ${p.absent} faltas · ${p.paidAbsences} pagas · Por pagar ${money(p.balance)}`));
+      attendanceDetails.append(row, el('small', p.sports_role==='coach'||p.sports_role==='president'?`${p.present} presenças · ${p.absent} faltas · Staff (sem dívida)`:`${p.present} presenças · ${p.absent} faltas · ${p.paidAbsences} pagas · Por pagar ${money(p.balance)}`));
     }
     refreshStatistics();
     const paymentsDetails = el('details', '', 'masters-collapsible'); paymentsDetails.open=true; paymentsDetails.append(el('summary', `Pagamentos e correções (${s.payments.length})`)); paymentsSection.append(paymentsDetails);

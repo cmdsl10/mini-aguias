@@ -338,7 +338,7 @@
             invite.disabled=true;feedback.textContent='A enviar convite…';
             try{
               const result=await db.functions.invoke('invite-masters-player',{body:{player_id:p.id}});
-              if(result.error)throw new Error(result.data?.error||result.error.message);
+              if(result.error){let detail=result.data?.error; if(!detail&&result.error.context?.json){try{const body=await result.error.context.json();detail=body?.error||body?.message;}catch(_){/* Response may not contain JSON. */}} throw new Error(detail||result.error.message);}
               if(!result.data?.ok)throw new Error(result.data?.error||'Envio não confirmado.');
               feedback.textContent=result.data.message||'Convite enviado.';
               invite.disabled=true;

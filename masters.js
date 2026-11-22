@@ -67,6 +67,9 @@
     #masters-private .masters-dashboard-main .masters-scroll th{background:#092e51;color:#fff;padding:8px 6px}
     #masters-private .masters-dashboard-main .masters-scroll td{padding:6px;text-align:center}
     #masters-private .masters-dashboard-main .masters-scroll td:first-child{text-align:left;font-weight:650}
+    #masters-private .masters-dashboard-main .masters-scroll tr.masters-position-header th{background:#17467d;color:#fff;text-align:left;padding:7px 12px;border-top:3px solid #f6c529;font-size:.88rem;letter-spacing:.02em}
+    #masters-private .masters-dashboard-main .masters-scroll tr.masters-position-header th:first-child{position:sticky;left:0;z-index:3}
+    #masters-private .masters-dashboard-main .masters-scroll tr.masters-position-header th:not(:first-child){background:#17467d}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell{min-height:38px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-weight:800;min-width:48px}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.present{background:#d5f4dd;color:#067632}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.absent{background:#ffe0e0;color:#b81919}
@@ -254,7 +257,25 @@
       if (s.admin) th.append(button('Gerir', () => trainingEditor(t))); hr.append(th);
     }
     head.append(hr); table.append(head); const tb = el('tbody');
-    for (const p of s.players) {
+    const positionOf = p => {
+      if (p.sports_role === 'coach') return 'coach';
+      if (p.sports_role === 'president') return 'president';
+      const manual = normalizePosition(p.playing_position);
+      return manual !== 'OUTROS' ? manual : (footballGroup(s.footballPositions[footballNames[p.display_name]]) || verifiedPositions[p.display_name] || 'OUTROS');
+    };
+    const orderedPlayers = [...s.players].sort((a,b) => {
+      const order = {GR:0,DEF:1,MED:2,AVZ:3,OUTROS:4,coach:5,president:6};
+      return (order[positionOf(a)] ?? 7) - (order[positionOf(b)] ?? 7) || a.display_name.localeCompare(b.display_name,'pt');
+    });
+    let currentPosition = null;
+    const positionLabels = {GR:'GR · Guarda-redes',DEF:'DEF · Defesas',MED:'MED · Médios',AVZ:'AVZ · Avançados',OUTROS:'Posição por definir',coach:'Treinador',president:'Presidente'};
+    for (const p of orderedPlayers) {
+      const position = positionOf(p);
+      if (position !== currentPosition) {
+        currentPosition = position;
+        const groupRow = el('tr','','masters-position-header'), groupHead = el('th',positionLabels[position] || position);
+        groupHead.colSpan = s.trainings.length + 1; groupHead.scope = 'rowgroup'; groupRow.append(groupHead); tb.append(groupRow);
+      }
       const row = el('tr'), name = el('td', p.display_name); row.append(name);
       name.append(el('small', ` · ${roles[p.sports_role] || 'Jogador'}${p.playing_position ? ' · ' + p.playing_position : ''}`));
       if (s.admin) name.append(button('Conta', () => playerEditor(p)));

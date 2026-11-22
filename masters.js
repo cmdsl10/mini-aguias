@@ -90,6 +90,7 @@
     #masters-private .masters-quick-group{background:#082e58;color:#fff;padding:9px 12px;margin:12px 0 0;border-left:5px solid #ffd22e;border-radius:5px}
     #masters-private .masters-quick-player{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 3px;border-bottom:1px solid #dce4ee}
     #masters-private .masters-quick-player>span{font-weight:600;min-width:0;overflow-wrap:anywhere}
+    #masters-private .masters-quick-staff small{color:#52677f;text-align:right}
     #masters-private .masters-quick-choices{display:flex;gap:5px;flex-shrink:0}
     #masters-private .masters-quick-choice{min-width:68px;padding:9px 6px;border:1px solid #a6b8ca;border-radius:7px;background:#f6f8fa;color:#183b60}
     #masters-private .masters-quick-choice.is-yes{background:#08772b;color:white;border-color:#08772b}
@@ -368,7 +369,17 @@
             }
             line.append(controls);list.append(line);
           }
-          summary.textContent=`Jogadores: ${eligible.length} · Sim: ${yes} · Não: ${no} · Por marcar: ${missing}`;
+          const staff=s.players.filter(p=>p.active!==false&&(p.sports_role==='coach'||p.sports_role==='president')).sort((a,b)=>(a.sports_role==='coach'?0:1)-(b.sports_role==='coach'?0:1));
+          if(staff.length){
+            list.append(el('h4','Staff','masters-quick-group'));
+            for(const p of staff){
+              const line=el('div','','masters-quick-player masters-quick-staff');
+              line.append(el('span',p.display_name+' · '+(p.sports_role==='coach'?'Treinador':'Presidente')));
+              line.append(el('small','Sem registo de falta ou dívida'));
+              list.append(line);
+            }
+          }
+          summary.textContent=`Jogadores: ${eligible.length} · Sim: ${yes} · Não: ${no} · Por marcar: ${missing} · Staff: ${staff.length}`;
           const index=available.findIndex(t=>t.id===dateSelect.value);
           prev.disabled=index===0;next.disabled=index===available.length-1;
           const changed=eligible.filter(p=>draft.has(p.id)&&draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status).length;

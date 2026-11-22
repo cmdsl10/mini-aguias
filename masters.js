@@ -60,6 +60,12 @@
     #masters-private .masters-weekly-photo{padding:12px}
     #masters-private .masters-weekly-photo h4{margin:0 0 10px;color:#102f53}
     #masters-private .masters-weekly-photo .masters-photo-frame{aspect-ratio:4/3}
+    #masters-private .masters-email-panel{margin:0 0 20px;padding:16px;background:#fff;border:1px solid #d9e1e8;border-radius:12px}
+    #masters-private .masters-email-list{display:grid;gap:9px}
+    #masters-private .masters-email-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(180px,2fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e5e9ef}
+    #masters-private .masters-email-row input{width:100%;min-width:0;padding:9px}
+    #masters-private .masters-email-row small{grid-column:1/-1}
+    @media(max-width:650px){#masters-private .masters-email-row{grid-template-columns:1fr 1fr}#masters-private .masters-email-row label{grid-column:1/-1}}
     #masters-private .masters-photo-column{display:grid;gap:16px}
     #masters-private .masters-photo-card{padding:16px}
     #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}
@@ -305,7 +311,41 @@
       trainingPhoto.append(button('Alterar foto do treino',()=>chooseTraining('training')));
     }
     photos.append(foot, trainingPhoto);
-    overview.append(roster, photos); playerSection.append(roster); dashboardSide.append(foot, trainingPhoto);
+    overview.append(roster, photos);
+    if(s.admin){
+      const emailPanel=el('section','','masters-email-panel');
+      emailPanel.append(el('h3','Emails e acessos dos Masters'));
+      emailPanel.append(el('p','Regista o email de cada jogador. Guardar o email não envia convite nem ativa automaticamente o login. Só a administração pode consultar ou alterar esta lista.','muted'));
+      const emailList=el('div','','masters-email-list');
+      emailPanel.append(emailList);
+      const renderEmails=async()=>{
+        const response=await db.from('masters_player_emails').select('player_id,email');
+        if(response.error){emailList.replaceChildren(el('p','Não foi possível carregar os emails: '+response.error.message));return;}
+        const byPlayer=new Map((response.data||[]).map(row=>[row.player_id,row.email]));
+        emailList.replaceChildren();
+        for(const p of [...s.players].sort((a,b)=>a.display_name.localeCompare(b.display_name,'pt'))){
+          const row=el('div','','masters-email-row');
+          const label=el('label',p.display_name);
+          const input=document.createElement('input');input.type='email';input.autocomplete='off';input.maxLength=254;input.placeholder='email@exemplo.pt';input.value=byPlayer.get(p.id)||'';
+          const save=button('Guardar email',async()=>{
+            if(!input.reportValidity())return;
+            const email=input.value.trim().toLowerCase();
+            save.disabled=true;
+            try{
+              const result=email?await db.from('masters_player_emails').upsert({player_id:p.id,email},{onConflict:'player_id'}):await db.from('masters_player_emails').delete().eq('player_id',p.id);
+              checked(result);
+              feedback.textContent=email?'Email guardado. Convite ainda não enviado.':'Email removido.';
+            }catch(error){feedback.textContent='Erro: '+error.message;}
+            finally{save.disabled=false;}
+          });
+          const feedback=el('small','','muted');
+          row.append(label,input,save,feedback);emailList.append(row);
+        }
+      };
+      playerSection.append(emailPanel);
+      renderEmails();
+    }
+    playerSection.append(roster); dashboardSide.append(foot, trainingPhoto);
     footSection.append(el('h3','Arquivo Pé de Chumbo'));
     const totals = el('div', '', 'masters-stats');
     const totalValues=new Map();

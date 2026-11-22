@@ -315,7 +315,7 @@
         nav.append(prev,next);quick.append(nav);
         const actions = el('div','','masters-quick-actions');
         const allPresent=button('✓ Marcar todos Sim',()=>{for(const p of eligible) draft.set(p.id,'present');paint();});
-        const save=button('Guardar presenças',()=>action(async()=>{
+        const save=button('Guardar presenças',async()=>{
           const t=available.find(t=>t.id===dateSelect.value);
           const changes=eligible.filter(p=>draft.has(p.id) && draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status);
           if (!changes.length) {status('Não existem alterações para guardar.');return;}
@@ -329,7 +329,7 @@
           // Refresh data in place without rebuilding the entire dashboard.
           const fresh=await all('masters_attendance','training_id');
           s.attendance=fresh;draft.clear();paint();
-        }));
+        });
         actions.append(allPresent,save);quick.append(actions);
         const summary=el('p','','masters-quick-summary');quick.append(summary);
         const list=el('div','','masters-quick-list');quick.append(list);

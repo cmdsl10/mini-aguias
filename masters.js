@@ -62,10 +62,10 @@
     #masters-private .masters-weekly-photo .masters-photo-frame{aspect-ratio:4/3}
     #masters-private .masters-email-panel{margin:0 0 20px;padding:16px;background:#fff;border:1px solid #d9e1e8;border-radius:12px}
     #masters-private .masters-email-list{display:grid;gap:9px}
-    #masters-private .masters-email-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(180px,2fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e5e9ef}
-    #masters-private .masters-email-row input{width:100%;min-width:0;padding:9px}
+    #masters-private .masters-email-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(170px,2fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e5e9ef}
+    #masters-private .masters-email-row input{width:100%;min-width:0;padding:9px}\n    #masters-private .masters-email-row button{white-space:nowrap}
     #masters-private .masters-email-row small{grid-column:1/-1}
-    @media(max-width:650px){#masters-private .masters-email-row{grid-template-columns:1fr 1fr}#masters-private .masters-email-row label{grid-column:1/-1}}
+    @media(max-width:650px){#masters-private .masters-email-row{grid-template-columns:1fr 1fr}#masters-private .masters-email-row label,#masters-private .masters-email-row input{grid-column:1/-1}#masters-private .masters-email-row button{white-space:normal}}
     #masters-private .masters-photo-column{display:grid;gap:16px}
     #masters-private .masters-photo-card{padding:16px}
     #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}

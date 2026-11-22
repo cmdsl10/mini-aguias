@@ -318,9 +318,20 @@
       const available = s.trainings.filter(t=>t.status!=='cancelled');
       const today = new Date().toLocaleDateString('en-CA',{timeZone:'Europe/Lisbon'});
       const defaultTraining = [...available].filter(t=>t.training_date<=today).at(-1) || available.at(-1);
-      if (defaultTraining) {
+      // Remember the training across Android app suspension, navigation and page reloads.
+      // Only a date is persisted, never attendance records or private player data.
+      const selectedDateKey='mini-aguias-masters-selected-training-date';
+      let rememberedDate=null;
+      try { rememberedDate=window.localStorage.getItem(selectedDateKey); } catch(e) {}
+      const initialTraining=available.find(t=>t.training_date===rememberedDate)||defaultTraining;
+      if (initialTraining) {
         const nav = el('div','','masters-quick-nav');
-        const dateSelect = select('Treino',available.map(t=>[t.id,date(t.training_date)]),defaultTraining.id,nav);
+        const dateSelect = select('Treino',available.map(t=>[t.id,date(t.training_date)]),initialTraining.id,nav);
+        const rememberTraining=()=>{
+          const selected=available.find(t=>t.id===dateSelect.value);
+          if(selected)try{window.localStorage.setItem(selectedDateKey,selected.training_date);}catch(e){}
+        };
+        rememberTraining();
         const prev = button('‹ Anterior',()=>move(-1)), next=button('Seguinte ›',()=>move(1));
         nav.append(prev,next);quick.append(nav);
         const actions = el('div','','masters-quick-actions');
@@ -355,7 +366,7 @@
         const summary=el('p','','masters-quick-summary');quick.append(summary);
         const list=el('div','','masters-quick-list');quick.append(list);
         let draft=new Map(),eligible=[];
-        function move(step){const index=available.findIndex(t=>t.id===dateSelect.value);const target=available[index+step];if(target){dateSelect.value=target.id;draft.clear();saveFeedback.textContent='';paint();}}
+        function move(step){const index=available.findIndex(t=>t.id===dateSelect.value);const target=available[index+step];if(target){dateSelect.value=target.id;rememberTraining();draft.clear();saveFeedback.textContent='';paint();}}
         function paint(){
           const t=available.find(t=>t.id===dateSelect.value);list.replaceChildren();
           eligible=orderedPlayers.filter(p=>p.active!==false&&p.sports_role==='player'&&p.attendance_eligible===true);
@@ -399,7 +410,7 @@
           save.textContent=changed ? 'Guardar '+changed+' alteração'+(changed===1?'':'ões') : 'Presenças guardadas ✓';
           save.setAttribute('aria-label',changed ? 'Guardar '+changed+' alterações de presenças' : 'Todas as presenças estão guardadas; toca para ver informação');
         }
-        dateSelect.addEventListener('change',()=>{draft.clear();saveFeedback.textContent='';paint();});
+        dateSelect.addEventListener('change',()=>{rememberTraining();draft.clear();saveFeedback.textContent='';paint();});
         paint();
       } else quick.append(el('p','Ainda não existem treinos para marcar.'));
       dashboardMain.append(quick);

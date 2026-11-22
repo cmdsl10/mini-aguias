@@ -26,6 +26,8 @@
   const footballNames = {'Adérito':'Aderito Santos Curcialeiro Fernandes','Basílio':'Basílio António Seabra da Rocha','Campos':'José Campos','Cedric':'Cedric Ribeiro Ferreira','David':'David Humberto Marinho Antunes','Marco':'Marco Andrade','Marcos':'Marcos Daniel Gonçalves Ribeiro','Mika':'Micael Silva Coelho','Paquete':'Henrique Manuel Martins Paquete','Patrício':'Patrício Alberto Mendes Teixeira','Paulo Costa':'Paulo Sérgio Macedo Costa','Porfirio':'Porfírio Jorge Domingues Costa','Ribeiro':'José Alexandre Silva Ribeiro','Romano':'Romano Eurico Fernandes Magalhães','Vasco':'João Vasco Costa'};
   // Verified against Futebol 2026/27; fallback when public roster RLS is unavailable.
   // Never infer a position from a similar or abbreviated name without a verified match.
+  const leadFootIds = t => Array.isArray(t.lead_foot_player_ids) && t.lead_foot_player_ids.length ? t.lead_foot_player_ids : (t.lead_foot_player_id ? [t.lead_foot_player_id] : []);
+  const leadFootNames = (t, players) => leadFootIds(t).map(id => players.find(p=>p.id===id)?.display_name).filter(Boolean).join(', ') || 'Por selecionar';
   const verifiedPositions = Object.freeze({
     'Adérito':'AVZ','Basílio':'DEF','Campos':'DEF','Cedric':'MED',
     'David':'DEF','Marco':'GR','Marcos':'DEF','Mika':'AVZ',
@@ -77,6 +79,9 @@
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.pending{background:#eef0f4;color:#4e5866}
     #masters-private .masters-dashboard-main .masters-scroll button.masters-cell{width:100%;border:1px solid #cbd4de;cursor:pointer}
     #masters-private .masters-dashboard-side{min-width:0;display:grid;gap:14px}
+    #masters-private .masters-foot-multi{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;padding:12px;border:1px solid #b6c6d9;border-radius:8px;max-height:280px;overflow-y:auto}
+    #masters-private .masters-foot-multi legend{font-weight:700;color:#103b70}
+    #masters-private .masters-foot-choice{display:flex;gap:7px;align-items:center;padding:6px;border-bottom:1px solid #e7edf5;cursor:pointer}
     #masters-private .masters-dashboard-side .masters-photo-frame{aspect-ratio:16/10}
     #masters-private .masters-dashboard-side .masters-photo-card h3{background:#082f59;color:#fff;padding:10px 12px;border-radius:7px;margin:-16px -16px 12px}
     #masters-private .masters-tabs{background:#082f59;border-radius:9px;padding:5px;margin-bottom:12px}
@@ -226,12 +231,12 @@
     const photos = el('div', '', 'masters-photo-column');
     const foot = el('section', '', 'masters-photo-card panel');
     foot.append(el('h3', 'Pé de Chumbo'));
-    const latestFoot = [...s.trainings].filter(t => t.status === 'closed' && t.lead_foot_player_id).sort((a,b)=>b.training_date.localeCompare(a.training_date))[0];
+    const latestFoot = [...s.trainings].filter(t => t.status === 'closed' && leadFootIds(t).length > 0).sort((a,b)=>b.training_date.localeCompare(a.training_date))[0];
     const footFrame = el('div', '', 'masters-photo-frame');
     if (latestFoot?.lead_foot_image_path) renderImage(latestFoot.lead_foot_image_path, footFrame, generation);
     else footFrame.append(el('span', 'Sem fotografia disponível'));
     foot.append(footFrame);
-    if (latestFoot) foot.append(el('p', `${date(latestFoot.training_date)} · ${s.players.find(p=>p.id===latestFoot.lead_foot_player_id)?.display_name || 'Jogador'}`, 'muted'));
+    if (latestFoot) foot.append(el('p', `${date(latestFoot.training_date)} · ${leadFootNames(latestFoot,s.players)}`, 'muted'));
     const trainingPhoto = el('section', '', 'masters-photo-card panel');
     trainingPhoto.append(el('h3', 'Fotografia do treino'));
     const trainingFrame = el('div', '', 'masters-photo-frame');
@@ -321,8 +326,8 @@
     }
     const footDetails = el('details', '', 'masters-collapsible'); footDetails.open=true; footDetails.append(el('summary', 'Pé de Chumbo — arquivo')); footSection.append(footDetails);
     const archive = el('div', '', 'masters-archive'); footDetails.append(archive);
-    for (const t of [...s.trainings].reverse().filter(t => t.lead_foot_player_id && t.status === 'closed')) {
-      const card = el('article', '', 'panel'); card.append(el('h4', `${date(t.training_date)} · ${s.players.find(p => p.id === t.lead_foot_player_id)?.display_name || 'Jogador'}`)); archive.append(card);
+    for (const t of [...s.trainings].reverse().filter(t => leadFootIds(t).length && t.status === 'closed')) {
+      const card = el('article', '', 'panel'); card.append(el('h4', `${date(t.training_date)} · ${leadFootNames(t,s.players)}`)); archive.append(card);
       if (t.lead_foot_image_path) renderImage(t.lead_foot_image_path, card, generation);
     }
     const summaryCards=el('div','','masters-summary-grid');
@@ -382,14 +387,24 @@
   function trainingEditor(t) {
     const body = showEditor(`Treino ${date(t.training_date)}`);
     const statusInput = select('Estado', [['open','Aberto'],['closed','Fechado'],['cancelled','Cancelado']], t.status, body);
-    const player = select('Pé de Chumbo', [['','Sem seleção'], ...state.players.map(p => [p.id,p.display_name])], t.lead_foot_player_id || '', body);
+    const selected = new Set(leadFootIds(t));
+    const chooser = el('fieldset','','masters-foot-multi');
+    chooser.append(el('legend','Pé de Chumbo · seleciona um ou vários jogadores'));
+    const checks = [];
+    for (const p of state.players.filter(p=>p.active!==false && p.sports_role==='player').sort((a,b)=>a.display_name.localeCompare(b.display_name,'pt'))) {
+      const label = el('label','','masters-foot-choice'), checkbox=document.createElement('input');
+      checkbox.type='checkbox';checkbox.value=p.id;checkbox.checked=selected.has(p.id);
+      label.append(checkbox,document.createTextNode(' '+p.display_name));chooser.append(label);checks.push(checkbox);
+    }
+    body.append(chooser);
     const image = field('Foto Pé de Chumbo · JPG (máximo 5 MB)', 'file', body); image.accept = 'image/jpeg';
     const weeklyImage = field('Foto da semana de treino · JPG (máximo 5 MB)', 'file', body); weeklyImage.accept = 'image/jpeg';
     body.append(el('p','Seleciona um ficheiro apenas para a fotografia que pretendes alterar. As fotografias anteriores ficam preservadas no armazenamento.','muted'));
     body.append(button('Guardar treino', async () => {
-      let path = player.value === t.lead_foot_player_id ? t.lead_foot_image_path : null;
+      const ids = checks.filter(c=>c.checked).map(c=>c.value);
+      let path = ids.length ? t.lead_foot_image_path : null;
       const file = image.files[0];
-      if (file && !player.value) throw Error('Seleciona o jogador do Pé de Chumbo.');
+      if (file && !ids.length) throw Error('Seleciona pelo menos um jogador do Pé de Chumbo.');
       if (file) {
         const signature = new Uint8Array(await file.slice(0, 3).arrayBuffer());
         if (file.type !== 'image/jpeg' || file.size > 5242880 || signature[0] !== 255 || signature[1] !== 216 || signature[2] !== 255) throw Error('Escolhe um JPG válido até 5 MB.');
@@ -408,7 +423,7 @@
       }
       // A lost response may follow a committed update. Keep the private JPG:
       // deleting here could break the saved record and its audit history.
-      checked(await db.from('masters_trainings').update({status:statusInput.value, lead_foot_player_id:player.value || null, lead_foot_image_path:player.value ? path : null, training_image_path:weeklyPath}).eq('id', t.id));
+      checked(await db.from('masters_trainings').update({status:statusInput.value, lead_foot_player_id:ids[0] || null, lead_foot_player_ids:ids, lead_foot_image_path:ids.length ? path : null, training_image_path:weeklyPath}).eq('id', t.id));
       await load();
     }));
   }
@@ -476,7 +491,7 @@
     if (!t) throw Error('Ainda não existe treino fechado.');
     const body = showEditor('Resumo semanal — copiar para WhatsApp');
     const cells = state.players.map(p => MastersDomain.cell(p,t,state.attendance,state.allocations));
-    const text = `Mini-Águias Masters · ${date(t.training_date)}\nPresentes: ${cells.filter(c => c.status === 'present').length}\nFaltas: ${cells.filter(c => c.status === 'absent').length}\nJustificadas: ${cells.filter(c => c.status === 'excused').length}\nPé de Chumbo: ${state.players.find(p => p.id === t.lead_foot_player_id)?.display_name || 'Por selecionar'}`;
+    const text = `Mini-Águias Masters · ${date(t.training_date)}\nPresentes: ${cells.filter(c => c.status === 'present').length}\nFaltas: ${cells.filter(c => c.status === 'absent').length}\nJustificadas: ${cells.filter(c => c.status === 'excused').length}\nPé de Chumbo: ${leadFootNames(t,state.players)}`;
     const area = el('textarea'); area.value = text; area.rows = 8; area.style.width = '100%'; area.readOnly = true; body.append(area);
     body.append(button('Copiar resumo', async () => { await navigator.clipboard.writeText(text); status('Resumo copiado.'); }));
     body.append(el('p', 'Sem saldos individuais no resumo. Revê o texto antes de partilhar.'));

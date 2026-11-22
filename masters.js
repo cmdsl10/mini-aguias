@@ -123,12 +123,12 @@
     #masters-private .masters-foot-multi{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:7px;padding:12px;border:1px solid #b6c6d9;border-radius:8px;max-height:280px;overflow-y:auto}
     #masters-private .masters-foot-multi legend{font-weight:700;color:#103b70}
     #masters-private .masters-foot-choice{display:flex;gap:7px;align-items:center;padding:6px;border-bottom:1px solid #e7edf5;cursor:pointer}
-    #masters-private .masters-dashboard-side .masters-photo-frame{aspect-ratio:16/10;padding:0;min-height:190px;background:#e8edf4;border:1px solid #b5c4d6}
+    #masters-private .masters-dashboard-side .masters-photo-frame{aspect-ratio:1/1;padding:0;min-height:0;background:#e8edf4;border:1px solid #b5c4d6}
     #masters-private .masters-dashboard-side .masters-photo-frame img{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
     #masters-private .masters-dashboard-side .masters-photo-card{padding:12px}
     #masters-private .masters-dashboard-side .masters-photo-card h3{margin:-12px -12px 12px}
-    @media(max-width:850px){#masters-private .masters-dashboard-side{max-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#masters-private .masters-dashboard-side .masters-photo-frame{min-height:140px}}
-    @media(max-width:520px){#masters-private .masters-dashboard-side{grid-template-columns:1fr}#masters-private .masters-dashboard-side .masters-photo-frame{min-height:210px}}
+    @media(max-width:850px){#masters-private .masters-dashboard-side{max-width:none;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}#masters-private .masters-dashboard-side .masters-photo-frame{min-height:0}}
+    @media(max-width:520px){#masters-private .masters-dashboard-side{grid-template-columns:1fr}#masters-private .masters-dashboard-side .masters-photo-frame{min-height:0}}
     #masters-private .masters-dashboard-side .masters-photo-card h3{background:#082f59;color:#fff;padding:10px 12px;border-radius:7px;margin:-16px -16px 12px}
     #masters-private .masters-tabs{background:#082f59;border-radius:9px;padding:5px;margin-bottom:12px}
     #masters-private .masters-tabs button{background:transparent;border-color:transparent;border-right:1px solid #53718d;border-radius:3px}

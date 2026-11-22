@@ -87,6 +87,13 @@
     #masters-private .masters-quick-actions button{flex:1;min-width:150px}
     #masters-private .masters-quick-summary{font-weight:700;color:#123d70}
     #masters-private .masters-quick-feedback{font-weight:700;color:#14552e;margin:6px 0;min-height:1.3em}
+    #masters-private .masters-player-balances{margin:12px 0 20px}
+    #masters-private .masters-balance-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #d8e0ea;padding:9px 4px}
+    #masters-private .masters-has-debt{color:#8a351c}
+    #masters-private .masters-player-balance{display:block;color:#365978;font-size:.76em}
+    #masters-private .masters-quick-payment{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#145082}
+    #masters-private .masters-quick-payment button{padding:5px 9px;font-size:.85em}
+    #masters-private .masters-quick-player:has(.masters-quick-payment){flex-wrap:wrap}
     #masters-private .masters-quick-draft-notice{color:#71520c;font-size:0.92em;font-weight:600}
     #masters-private .masters-quick-group{background:#082e58;color:#fff;padding:9px 12px;margin:12px 0 0;border-left:5px solid #ffd22e;border-radius:5px}
     #masters-private .masters-quick-player{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 3px;border-bottom:1px solid #dce4ee}
@@ -285,10 +292,42 @@
     overview.append(roster, photos); playerSection.append(roster); dashboardSide.append(foot, trainingPhoto);
     footSection.append(el('h3','Arquivo Pé de Chumbo'));
     const totals = el('div', '', 'masters-stats');
+    const totalValues=new Map();
     for (const [label, value] of [['Treinos fechados', s.trainings.filter(t => t.status === 'closed').length], ['Faltas', stats.reduce((n, p) => n + p.absent, 0)], ['Recebido', money(stats.reduce((n, p) => n + p.paid, 0))], ['Em dívida', money(stats.reduce((n, p) => n + p.balance, 0))]]) {
-      const box = el('div', label); box.append(el('strong', value)); totals.append(box);
+      const box = el('div', label), valueNode=el('strong',String(value));box.append(valueNode);totals.append(box);totalValues.set(label,valueNode);
     }
-    statsSection.append(totals); trainingSection.append(el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos ainda não contabilizados. As faltas e dívidas só contam após o fecho do treino.`, 'muted'));
+    statsSection.append(totals);
+    const balanceSection=el('section','','masters-player-balances');balanceSection.append(el('h3','Saldo por jogador · treinos fechados'));
+    const balanceList=el('div','','masters-balances-list');balanceSection.append(balanceList);
+    paymentsSection.prepend(balanceSection);
+    function refreshStatistics(){
+      const freshStats=MastersDomain.statistics(s.players,s.trainings,s.attendance,s.allocations);
+      const sum=(key)=>freshStats.reduce((n,p)=>n+p[key],0);
+      totalValues.get('Treinos fechados').textContent=String(s.trainings.filter(t=>t.status==='closed').length);
+      totalValues.get('Faltas').textContent=String(sum('absent'));
+      totalValues.get('Recebido').textContent=money(sum('paid'));
+      totalValues.get('Em dívida').textContent=money(sum('balance'));
+      balanceList.replaceChildren();
+      for(const p of freshStats.filter(p=>s.players.find(x=>x.id===p.id)?.sports_role==='player').sort((a,b)=>a.display_name.localeCompare(b.display_name,'pt'))){
+        const row=el('div','','masters-balance-row');
+        row.append(el('strong',p.display_name),el('span','Faltas: '+p.absent+' · Pago: '+money(p.paid)+' · Em dívida: '+money(p.balance)));
+        if(p.balance>0)row.classList.add('masters-has-debt');
+        balanceList.append(row);
+      }
+      const attendanceDetails=statsSection.querySelector('.masters-collapsible');
+      if(attendanceDetails){
+        const open=attendanceDetails.open;
+        attendanceDetails.replaceChildren(el('summary','Assiduidade por jogador'));
+        for(const p of freshStats){const row=el('div','','masters-rank'),bar=document.createElement('progress');bar.max=1;bar.value=p.rate||0;bar.setAttribute('aria-label','Assiduidade de '+p.display_name);row.append(el('span',p.display_name),bar,el('span',p.rate===null?'—':Math.round(p.rate*100)+'%'));attendanceDetails.append(row,el('small',p.present+' presenças · '+p.absent+' faltas · '+money(p.balance)+' em dívida'));}
+        attendanceDetails.open=open;
+      }
+      const p=sum('present'),a=sum('absent');
+      for(const [key,val] of Object.entries({'Resumo da Época:Presenças':p,'Resumo da Época:Faltas':a,'Resumo da Época:Recebido':money(sum('paid')),'Resumo da Época:Por pagar':money(sum('balance')),'Assiduidade da Equipa:Presenças':p,'Assiduidade da Equipa:Faltas':a,'Assiduidade da Equipa:Taxa':p+a?Math.round(p/(p+a)*100)+'%':'—'})){
+        const target=[...body.querySelectorAll('[data-masters-metric]')].find(e=>e.dataset.mastersMetric===key);if(target)target.textContent=String(val);
+      }
+    }
+    refreshStatistics();
+    trainingSection.append(el('p', `${s.trainings.filter(t=>t.status==='open').length} treinos abertos ainda não contabilizados. As faltas e dívidas só contam após o fecho do treino.`, 'muted'));
     const tools = el('div', '', 'masters-toolbar');
     tools.append(button('Resumo semanal para WhatsApp', summary));
     if (s.admin) tools.append(button('Preparar quartas-feiras da época', seed), button('Adicionar jogador / autorizar conta', playerEditor), button('Importar lista Excel', importPlayers));
@@ -312,7 +351,7 @@
       return (order[positionOf(a)] ?? 7) - (order[positionOf(b)] ?? 7) || a.display_name.localeCompare(b.display_name,'pt');
     });
     const positionLabels = {GR:'GR · Guarda-redes',DEF:'DEF · Defesas',MED:'MED · Médios',AVZ:'AVZ · Avançados',OUTROS:'Posição por definir',coach:'Treinador',president:'Presidente'};
-    const gridCells=new Map();
+    const gridCells=new Map(),gridBalanceNodes=new Map();
     // Mobile-first quick attendance: one training, one save, no horizontal scrolling.
     if (s.admin) {
       const quick = el('section','','masters-quick-attendance panel');
@@ -378,7 +417,7 @@
           saveFeedback.textContent='✓ '+(changes.length+staffChanges.length)+' presenças guardadas com sucesso no treino de '+date(t.training_date)+'.';
           // Refresh data in place without rebuilding the entire dashboard.
           const [fresh, freshStaff]=await Promise.all([all('masters_attendance','training_id'),all('masters_staff_attendance','training_id')]);
-          s.attendance=fresh;s.staffAttendance=freshStaff;draft.clear();persistDraft(t);refreshGrid(t);paint();
+          s.attendance=fresh;s.staffAttendance=freshStaff;draft.clear();persistDraft(t);refreshGrid(t);refreshStatistics();paint();
         });
         actions.append(allPresent,save);quick.append(actions);
         const saveFeedback=el('p','','masters-quick-feedback');saveFeedback.setAttribute('role','status');saveFeedback.setAttribute('aria-live','polite');quick.append(saveFeedback);
@@ -406,7 +445,14 @@
               b.setAttribute('aria-pressed',String((draft.get(p.id)||c.status)===value));
               controls.append(b);
             }
-            line.append(controls);list.append(line);
+            line.append(controls);
+            if(t.status==='closed'&&c.status==='absent'){
+              const paymentLine=el('div','','masters-quick-payment');
+              if(c.balance>0){paymentLine.append(el('small','Por pagar: '+money(c.balance)),button('Registar pagamento',()=>attendanceEditor(p,t)));}
+              else if(c.paid>0)paymentLine.append(el('small','✓ Falta paga · '+money(c.paid)));
+              line.append(paymentLine);
+            }
+            list.append(line);
           }
           if(staff.length){
             list.append(el('h4','Staff','masters-quick-group'));
@@ -446,6 +492,11 @@
         buttonEl.className='masters-cell '+c.status+' '+(c.due&&c.paid>=100?'paid':c.paid?'partial':'');
         buttonEl.setAttribute('aria-label',p.display_name+', '+date(training.training_date)+': '+label);
       }
+      refreshGridBalances();
+    }
+    function refreshGridBalances(){
+      const current=MastersDomain.statistics(s.players,s.trainings,s.attendance,s.allocations);
+      for(const p of current){const node=gridBalanceNodes.get(p.id);if(node)node.textContent=' · Pago: '+money(p.paid)+' · Dívida: '+money(p.balance);}
     }
     let currentPosition = null;
 
@@ -459,6 +510,7 @@
       const row = el('tr'), name = el('td', p.display_name); row.append(name);
       name.append(el('small', ` · ${roles[p.sports_role] || 'Jogador'}${p.playing_position ? ' · ' + p.playing_position : ''}`));
       if (s.admin) name.append(button('Conta', () => playerEditor(p)));
+      if(p.sports_role==='player' && p.attendance_eligible===true){const balance=el('small','','masters-player-balance');name.append(balance);gridBalanceNodes.set(p.id,balance);}
       for (const t of s.trainings) {
         const c = MastersDomain.cell(p, t, s.attendance, s.allocations), td = el('td');
         const text = t.status === 'cancelled' ? '—' : p.attendance_eligible !== true ? (p.attendance_eligible === false ? '—' : '?') : c.status === 'present' ? '✓' : c.status === 'excused' ? 'J' : c.status === 'pending' ? '◷' : c.status === 'absent' ? (c.due && c.paid >= 100 ? 'P' : c.paid ? 'P*' : '✕') : '—';
@@ -469,7 +521,7 @@
       }
       tb.append(row);
     }
-    table.append(tb); scroll.append(table); dashboardMain.append(scroll);
+    table.append(tb); scroll.append(table); dashboardMain.append(scroll);refreshGridBalances();
     const attendanceDetails = el('details', '', 'masters-collapsible'); attendanceDetails.open=true; attendanceDetails.append(el('summary', 'Assiduidade por jogador')); statsSection.append(attendanceDetails);
     for (const p of stats) {
       const row = el('div', '', 'masters-rank'), bar = document.createElement('progress'); bar.max = 1; bar.value = p.rate || 0; bar.setAttribute('aria-label', `Assiduidade de ${p.display_name}`);
@@ -494,7 +546,7 @@
     const closed=s.trainings.filter(t=>t.status==='closed').length;
     const present=stats.reduce((n,p)=>n+p.present,0),absent=stats.reduce((n,p)=>n+p.absent,0);
     const paid=stats.reduce((n,p)=>n+p.paid,0),debt=stats.reduce((n,p)=>n+p.balance,0);
-    const addCard=(title,rows)=>{const card=el('article','','masters-summary-card');card.append(el('h3',title));for(const [label,value,warning] of rows){const line=el('div','','masters-metric');line.append(el('span',label),el('strong',String(value),warning?'masters-debt':''));card.append(line);}summaryCards.append(card);};
+    const addCard=(title,rows)=>{const card=el('article','','masters-summary-card');card.append(el('h3',title));for(const [label,value,warning] of rows){const line=el('div','','masters-metric'),strong=el('strong',String(value),warning?'masters-debt':'');if(['Presenças','Faltas','Recebido','Por pagar','Taxa'].includes(label)){strong.dataset.mastersMetric=title+':'+label;}line.append(el('span',label),strong);card.append(line);}summaryCards.append(card);};
     addCard('Resumo da Época',[['Jogadores',s.players.filter(p=>p.active!==false&&p.sports_role==='player').length],['Treinos fechados',closed],['Presenças',present],['Faltas',absent],['Recebido',money(paid)],['Por pagar',money(debt),debt>0]]);
     const denominator=present+absent;addCard('Assiduidade da Equipa',[['Presenças',present],['Faltas',absent],['Taxa',denominator?Math.round(present/denominator*100)+'%':'—']]);
     const top=stats.filter(p=>p.absent>0).sort((a,b)=>b.absent-a.absent).slice(0,5);

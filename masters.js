@@ -91,6 +91,9 @@
     #masters-private .masters-balance-row{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid #d8e0ea;padding:9px 4px}
     #masters-private .masters-has-debt{color:#8a351c}
     #masters-private .masters-player-balance{display:block;color:#365978;font-size:.76em}
+    #masters-private .masters-quick-payment{display:flex;align-items:center;gap:8px;flex-wrap:wrap;color:#145082}
+    #masters-private .masters-quick-payment button{padding:5px 9px;font-size:.85em}
+    #masters-private .masters-quick-player:has(.masters-quick-payment){flex-wrap:wrap}
     #masters-private .masters-quick-draft-notice{color:#71520c;font-size:0.92em;font-weight:600}
     #masters-private .masters-quick-group{background:#082e58;color:#fff;padding:9px 12px;margin:12px 0 0;border-left:5px solid #ffd22e;border-radius:5px}
     #masters-private .masters-quick-player{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 3px;border-bottom:1px solid #dce4ee}
@@ -318,8 +321,9 @@
         for(const p of freshStats){const row=el('div','','masters-rank'),bar=document.createElement('progress');bar.max=1;bar.value=p.rate||0;bar.setAttribute('aria-label','Assiduidade de '+p.display_name);row.append(el('span',p.display_name),bar,el('span',p.rate===null?'—':Math.round(p.rate*100)+'%'));attendanceDetails.append(row,el('small',p.present+' presenças · '+p.absent+' faltas · '+money(p.balance)+' em dívida'));}
         attendanceDetails.open=open;
       }
-      for(const [key, val] of Object.entries({present:sum('present'),absent:sum('absent'),paid:money(sum('paid')),debt:money(sum('balance'))})){
-        const target=body.querySelector('[data-masters-metric="'+key+'"]');if(target)target.textContent=String(val);
+      const p=sum('present'),a=sum('absent');
+      for(const [key,val] of Object.entries({'Resumo da Época:Presenças':p,'Resumo da Época:Faltas':a,'Resumo da Época:Recebido':money(sum('paid')),'Resumo da Época:Por pagar':money(sum('balance')),'Assiduidade da Equipa:Presenças':p,'Assiduidade da Equipa:Faltas':a,'Assiduidade da Equipa:Taxa':p+a?Math.round(p/(p+a)*100)+'%':'—'})){
+        const target=[...body.querySelectorAll('[data-masters-metric]')].find(e=>e.dataset.mastersMetric===key);if(target)target.textContent=String(val);
       }
     }
     refreshStatistics();
@@ -441,7 +445,14 @@
               b.setAttribute('aria-pressed',String((draft.get(p.id)||c.status)===value));
               controls.append(b);
             }
-            line.append(controls);list.append(line);
+            line.append(controls);
+            if(t.status==='closed'&&c.status==='absent'){
+              const paymentLine=el('div','','masters-quick-payment');
+              if(c.balance>0){paymentLine.append(el('small','Por pagar: '+money(c.balance)),button('Registar pagamento',()=>attendanceEditor(p,t)));}
+              else if(c.paid>0)paymentLine.append(el('small','✓ Falta paga · '+money(c.paid)));
+              line.append(paymentLine);
+            }
+            list.append(line);
           }
           if(staff.length){
             list.append(el('h4','Staff','masters-quick-group'));
@@ -535,7 +546,7 @@
     const closed=s.trainings.filter(t=>t.status==='closed').length;
     const present=stats.reduce((n,p)=>n+p.present,0),absent=stats.reduce((n,p)=>n+p.absent,0);
     const paid=stats.reduce((n,p)=>n+p.paid,0),debt=stats.reduce((n,p)=>n+p.balance,0);
-    const addCard=(title,rows)=>{const card=el('article','','masters-summary-card');card.append(el('h3',title));for(const [label,value,warning] of rows){const line=el('div','','masters-metric');line.append(el('span',label),el('strong',String(value),warning?'masters-debt':''));card.append(line);}summaryCards.append(card);};
+    const addCard=(title,rows)=>{const card=el('article','','masters-summary-card');card.append(el('h3',title));for(const [label,value,warning] of rows){const line=el('div','','masters-metric'),strong=el('strong',String(value),warning?'masters-debt':'');if(['Presenças','Faltas','Recebido','Por pagar','Taxa'].includes(label)){strong.dataset.mastersMetric=title+':'+label;}line.append(el('span',label),strong);card.append(line);}summaryCards.append(card);};
     addCard('Resumo da Época',[['Jogadores',s.players.filter(p=>p.active!==false&&p.sports_role==='player').length],['Treinos fechados',closed],['Presenças',present],['Faltas',absent],['Recebido',money(paid)],['Por pagar',money(debt),debt>0]]);
     const denominator=present+absent;addCard('Assiduidade da Equipa',[['Presenças',present],['Faltas',absent],['Taxa',denominator?Math.round(present/denominator*100)+'%':'—']]);
     const top=stats.filter(p=>p.absent>0).sort((a,b)=>b.absent-a.absent).slice(0,5);

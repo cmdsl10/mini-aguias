@@ -23,6 +23,23 @@
   const el = (tag, text, cls) => { const n = document.createElement(tag); n.textContent = text; if (cls) n.className = cls; return n; };
   const button = (label, run) => { const n = el('button', label, 'btn secondary'); n.type = 'button'; n.onclick = () => action(run); return n; };
   let state = null, generation = 0, imageUrls = [], busy = false, refreshPending = false;
+  const mastersLayoutStyle = document.createElement('style');
+  mastersLayoutStyle.textContent = `
+    #masters-private .masters-overview{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,1fr);gap:18px;margin:18px 0;align-items:start}
+    #masters-private .masters-roster{padding:18px}
+    #masters-private .masters-roster h3,#masters-private .masters-photo-card h3{margin:0 0 12px}
+    #masters-private .masters-roster-group{margin:12px 0}
+    #masters-private .masters-roster-group h4{background:#173e79;color:#fff;border-left:5px solid #f0c531;padding:8px 10px;border-radius:5px;font-size:.92rem;margin:0 0 6px}
+    #masters-private .masters-roster-group ul{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:5px 12px}
+    #masters-private .masters-roster-group li{padding:5px 8px;border-bottom:1px solid #dde4ee}
+    #masters-private .masters-photo-column{display:grid;gap:16px}
+    #masters-private .masters-photo-card{padding:16px}
+    #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}
+    #masters-private .masters-photo-frame img{width:100%;height:100%;object-fit:contain}
+    #masters-private .masters-photo-card .muted{margin:10px 0 0}
+    @media(max-width:720px){#masters-private .masters-overview{grid-template-columns:1fr}#masters-private .masters-roster-group ul{grid-template-columns:repeat(auto-fit,minmax(135px,1fr))}}
+  `;
+  document.head.append(mastersLayoutStyle);
   panel.innerHTML = `<div class="wrap"><div class="ey">Época 2026/27 · Área privada</div><h2>Masters — Treinos</h2>
     <p>Quartas-feiras desde 21/10/2026. Falta não justificada: 1 €. Só os treinos fechados contam.</p>
     <p id="mastersStatus" role="status" aria-live="polite"></p>
@@ -85,6 +102,44 @@
   function render() {
     const s = state, body = q('#mastersData'); body.replaceChildren(); body.hidden = false;
     const stats = MastersDomain.statistics(s.players, s.trainings, s.attendance, s.allocations);
+    // Club-approved overview: position roster on the left, two photo slots on the right.
+    const overview = el('div', '', 'masters-overview');
+    const roster = el('section', '', 'masters-roster panel');
+    roster.append(el('h3', 'Plantel · Masters 2026/27'));
+    const positionName = {GR:'Guarda-redes',DEF:'Defesas',MED:'Médios',AVZ:'Avançados'};
+    const normalizePosition = value => {
+      const v = String(value || '').trim().toUpperCase();
+      if (['GR','GK','GUARDA-REDES'].includes(v)) return 'GR';
+      if (['DEF','DF','DEFESA','DEFESAS'].includes(v)) return 'DEF';
+      if (['MED','MD','MÉDIO','MEDIO','MÉDIOS','MEDIOS'].includes(v)) return 'MED';
+      if (['AVZ','AV','AVANÇADO','AVANCADO','AVANÇADOS','AVANCADOS'].includes(v)) return 'AVZ';
+      return 'OUTROS';
+    };
+    for (const [key, label] of [['GR','GR · Guarda-redes'],['DEF','DEF · Defesas'],['MED','MED · Médios'],['AVZ','AVZ · Avançados'],['OUTROS','Posição por definir'],['coach','Treinador'],['president','Presidente']]) {
+      const group = s.players.filter(p => p.active !== false && (key === 'coach' || key === 'president' ? p.sports_role === key : p.sports_role === 'player' && normalizePosition(p.playing_position) === key));
+      if (!group.length) continue;
+      const section = el('div', '', 'masters-roster-group');
+      section.append(el('h4', label));
+      const list = el('ul');
+      for (const p of group.sort((a,b) => a.display_name.localeCompare(b.display_name,'pt'))) list.append(el('li', p.display_name));
+      section.append(list); roster.append(section);
+    }
+    const photos = el('div', '', 'masters-photo-column');
+    const foot = el('section', '', 'masters-photo-card panel');
+    foot.append(el('h3', 'Pé de Chumbo'));
+    const latestFoot = [...s.trainings].filter(t => t.status === 'closed' && t.lead_foot_player_id).sort((a,b)=>b.training_date.localeCompare(a.training_date))[0];
+    const footFrame = el('div', '', 'masters-photo-frame');
+    if (latestFoot?.lead_foot_image_path) renderImage(latestFoot.lead_foot_image_path, footFrame, generation);
+    else footFrame.append(el('span', 'Sem fotografia disponível'));
+    foot.append(footFrame);
+    if (latestFoot) foot.append(el('p', `${date(latestFoot.training_date)} · ${s.players.find(p=>p.id===latestFoot.lead_foot_player_id)?.display_name || 'Jogador'}`, 'muted'));
+    const trainingPhoto = el('section', '', 'masters-photo-card panel');
+    trainingPhoto.append(el('h3', 'Fotografia do treino'));
+    const trainingFrame = el('div', '', 'masters-photo-frame');
+    trainingFrame.append(el('span', 'Espaço reservado para a fotografia do treino'));
+    trainingPhoto.append(trainingFrame);
+    photos.append(foot, trainingPhoto);
+    overview.append(roster, photos); body.append(overview);
     const totals = el('div', '', 'masters-stats');
     for (const [label, value] of [['Treinos fechados', s.trainings.filter(t => t.status === 'closed').length], ['Faltas', stats.reduce((n, p) => n + p.absent, 0)], ['Recebido', money(stats.reduce((n, p) => n + p.paid, 0))], ['Em dívida', money(stats.reduce((n, p) => n + p.balance, 0))]]) {
       const box = el('div', label); box.append(el('strong', value)); totals.append(box);

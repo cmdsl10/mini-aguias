@@ -24,7 +24,22 @@
   const button = (label, run) => { const n = el('button', label, 'btn secondary'); n.type = 'button'; n.onclick = () => action(run); return n; };
   let state = null, generation = 0, imageUrls = [], busy = false, refreshPending = false;
   const footballNames = {'Adérito':'Aderito Santos Curcialeiro Fernandes','Basílio':'Basílio António Seabra da Rocha','Campos':'José Campos','Cedric':'Cedric Ribeiro Ferreira','David':'David Humberto Marinho Antunes','Marco':'Marco Andrade','Marcos':'Marcos Daniel Gonçalves Ribeiro','Mika':'Micael Silva Coelho','Paquete':'Henrique Manuel Martins Paquete','Patrício':'Patrício Alberto Mendes Teixeira','Paulo Costa':'Paulo Sérgio Macedo Costa','Porfirio':'Porfírio Jorge Domingues Costa','Ribeiro':'José Alexandre Silva Ribeiro','Romano':'Romano Eurico Fernandes Magalhães','Vasco':'João Vasco Costa'};
-  const footballGroup = value => {const v=String(value||'').normalize('NFD').replace(/[\\u0300-\\u036f]/g,'').toUpperCase();if(v.includes('GUARDA-REDES'))return 'GR';if(v.startsWith('DEFESA'))return 'DEF';if(v.startsWith('MEDIO'))return 'MED';if(v.startsWith('AVANCADO')||v.startsWith('PONTA'))return 'AVZ';return null;};
+  // Verified against Futebol 2026/27; fallback when public roster RLS is unavailable.
+  // Never infer a position from a similar or abbreviated name without a verified match.
+  const verifiedPositions = Object.freeze({
+    'Adérito':'AVZ','Basílio':'DEF','Campos':'DEF','Cedric':'MED',
+    'David':'DEF','Marco':'GR','Marcos':'DEF','Mika':'AVZ',
+    'Paquete':'GR','Patrício':'DEF','Paulo Costa':'AVZ',
+    'Porfirio':'DEF','Ribeiro':'MED','Romano':'MED','Vasco':'DEF'
+  });
+  const footballGroup = value => {
+    const v = String(value || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase();
+    if (v.includes('GUARDA-REDES')) return 'GR';
+    if (v.startsWith('DEFESA')) return 'DEF';
+    if (v.startsWith('MEDIO')) return 'MED';
+    if (v.startsWith('AVANCADO') || v.startsWith('PONTA')) return 'AVZ';
+    return null;
+  };
   const mastersLayoutStyle = document.createElement('style');
   mastersLayoutStyle.textContent = `
     #masters-private .masters-overview{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(250px,1fr);gap:18px;margin:18px 0;align-items:start}
@@ -197,7 +212,7 @@
       return 'OUTROS';
     };
     for (const [key, label] of [['GR','GR · Guarda-redes'],['DEF','DEF · Defesas'],['MED','MED · Médios'],['AVZ','AVZ · Avançados'],['OUTROS','Posição por definir'],['coach','Treinador'],['president','Presidente']]) {
-      const group = s.players.filter(p => p.active !== false && (key === 'coach' || key === 'president' ? p.sports_role === key : p.sports_role === 'player' && (normalizePosition(p.playing_position) !== 'OUTROS' ? normalizePosition(p.playing_position) : footballGroup(s.footballPositions[footballNames[p.display_name]]) || 'OUTROS') === key));
+      const group = s.players.filter(p => p.active !== false && (key === 'coach' || key === 'president' ? p.sports_role === key : p.sports_role === 'player' && (normalizePosition(p.playing_position) !== 'OUTROS' ? normalizePosition(p.playing_position) : footballGroup(s.footballPositions[footballNames[p.display_name]]) || verifiedPositions[p.display_name] || 'OUTROS') === key));
       if (!group.length) continue;
       const section = el('div', '', 'masters-roster-group');
       section.append(el('h4', label));

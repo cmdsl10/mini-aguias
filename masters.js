@@ -32,7 +32,10 @@
     'Adérito':'AVZ','Basílio':'DEF','Campos':'DEF','Cedric':'MED',
     'David':'DEF','Marco':'GR','Marcos':'DEF','Mika':'AVZ',
     'Paquete':'GR','Patrício':'DEF','Paulo Costa':'AVZ',
-    'Porfirio':'DEF','Ribeiro':'MED','Romano':'MED','Vasco':'DEF'
+    'Porfirio':'DEF','Ribeiro':'MED','Romano':'MED','Vasco':'DEF',
+    'Carlitos':'AVZ','Costinha':'AVZ','Daniel (Boxexas)':'DEF',
+    'Daniel (Rato)':'AVZ','Fausto':'MED','Guerra':'MED',
+    'Miguel':'MED','Peninha':'DEF','Pisco':'MED','Toni':'AVZ'
   });
   const footballGroup = value => {
     const v = String(value || '').normalize('NFD').replace(/[\\u0300-\\u036f]/g, '').toUpperCase();

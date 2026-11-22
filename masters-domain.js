@@ -14,13 +14,22 @@
   }
   function statistics(players, trainings, attendance, allocations) {
     return players.map(p => {
-      const cells = trainings.filter(t => p.attendance_eligible === true && t.status === 'closed').map(t => cell(p, t, attendance, allocations)).filter(c => c.status !== 'pending');
-      const present = cells.filter(c => c.status === 'present').length;
-      const absent = cells.filter(c => c.status === 'absent').length;
-      const excused = cells.filter(c => c.status === 'excused').length;
-      return {...p, present, absent, excused, rate: cells.length ? present / cells.length : null,
-        due: cells.reduce((n, c) => n + c.due, 0), paid: cells.reduce((n, c) => n + c.paid, 0), balance: cells.reduce((n, c) => n + c.balance, 0)};
-    }).sort((a, b) => (b.rate ?? -1) - (a.rate ?? -1) || a.display_name.localeCompare(b.display_name, 'pt'));
+      // Attendance is recorded as soon as a mark is saved, even on open trainings.
+      // Financial liability remains restricted to closed trainings.
+      const eligible = trainings.filter(t => p.attendance_eligible === true && t.status !== 'cancelled');
+      const recorded = eligible.map(t => ({training:t, ...cell(p,t,attendance,allocations)}))
+        .filter(c => c.status !== 'pending');
+      const present = recorded.filter(c => c.status === 'present').length;
+      const absent = recorded.filter(c => c.status === 'absent').length;
+      const closedAbsences = recorded.filter(c => c.training.status === 'closed' && c.status === 'absent');
+      const paidAbsences = closedAbsences.filter(c => c.due > 0 && c.paid >= c.due).length;
+      const financial = recorded.filter(c => c.training.status === 'closed');
+      return {...p, present, absent, paidAbsences, recorded:recorded.length,
+        rate: recorded.length ? present / recorded.length : null,
+        due: financial.reduce((n,c) => n+c.due,0),
+        paid: financial.reduce((n,c) => n+c.paid,0),
+        balance: financial.reduce((n,c) => n+c.balance,0)};
+    }).sort((a,b) => (b.rate ?? -1) - (a.rate ?? -1) || a.display_name.localeCompare(b.display_name,'pt'));
   }
   function memberProfile(name) {
     const key = name.trim().normalize('NFC').toLocaleLowerCase('pt-PT');

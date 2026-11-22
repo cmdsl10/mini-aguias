@@ -183,8 +183,8 @@
     if (token !== generation) return;
     const admin = user.app_metadata?.role === 'admin' && !user.is_anonymous;
     if (!admin && !players.some(p => p.active && p.auth_user_id === user.id)) { status('Esta conta não tem acesso à área Masters.', true); return; }
-    const [trainings, attendance, payments, allocations, audit] = await Promise.all([
-      all('masters_trainings', 'training_date'), all('masters_attendance', 'training_id'),
+    const [trainings, attendance, staffAttendance, payments, allocations, audit] = await Promise.all([
+      all('masters_trainings', 'training_date'), all('masters_attendance', 'training_id'), all('masters_staff_attendance', 'training_id'),
       all('masters_payments', 'id'), all('masters_payment_allocations', 'payment_id'),
       db.from('masters_audit').select('*').order('id', {ascending:false}).limit(100).then(checked)
     ]);
@@ -199,7 +199,7 @@
       }
     } catch (e) { console.warn('Não foi possível consultar posições do Futebol.',e); }
     if (token !== generation) return;
-    state = {players, trainings, attendance, payments, allocations, audit, admin, footballPositions}; render();
+    state = {players, trainings, attendance, staffAttendance, payments, allocations, audit, admin, footballPositions}; render();
     status(players.length ? 'Dados privados da equipa. Atualiza para consultar alterações recentes.' : 'Ainda não existem jogadores. A lista e as contas precisam de validação da direção.');
   }
   function showEditor(title) {
@@ -325,22 +325,26 @@
         nav.append(prev,next);quick.append(nav);
         const actions = el('div','','masters-quick-actions');
         const allPresent=button('✓ Marcar todos Sim',()=>{for(const p of eligible) draft.set(p.id,'present');paint();});
+        const staff=s.players.filter(p=>p.active!==false&&(p.sports_role==='coach'||p.sports_role==='president')).sort((a,b)=>(a.sports_role==='coach'?0:1)-(b.sports_role==='coach'?0:1));
+        const staffStatus=(p,t)=>s.staffAttendance.find(a=>a.training_id===t.id&&a.player_id===p.id)?.status||'pending';
         const save=button('Guardar presenças',async()=>{
           const t=available.find(t=>t.id===dateSelect.value);
           const changes=eligible.filter(p=>draft.has(p.id) && draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status);
-          if (!changes.length) {saveFeedback.textContent='Todas as presenças deste treino já estão guardadas. Para alterar, toca em Sim ou Não num jogador.';return;}
-          saveFeedback.textContent='A guardar '+changes.length+' alterações…';
+          const staffChanges=staff.filter(p=>draft.has(p.id)&&draft.get(p.id)!==staffStatus(p,t));
+          if (!changes.length && !staffChanges.length) {saveFeedback.textContent='Todas as presenças deste treino já estão guardadas. Para alterar, toca em Sim ou Não.';return;}
+          saveFeedback.textContent='A guardar '+(changes.length+staffChanges.length)+' alterações…';
           // Existing paid absences must not be changed without a payment reversal.
           for(const p of changes) {
             const c=MastersDomain.cell(p,t,s.attendance,s.allocations);
             if(c.paid && draft.get(p.id)!=='absent')throw Error('A falta de '+p.display_name+' tem pagamentos associados. Estorna o pagamento antes de alterar.');
           }
-          checked(await db.from('masters_attendance').upsert(changes.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
-          status(changes.length+' presenças guardadas.');
-          saveFeedback.textContent='✓ '+changes.length+' presenças guardadas com sucesso no treino de '+date(t.training_date)+'.';
+          if(changes.length) checked(await db.from('masters_attendance').upsert(changes.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
+          if(staffChanges.length) checked(await db.from('masters_staff_attendance').upsert(staffChanges.map(p=>({player_id:p.id,training_id:t.id,status:draft.get(p.id)})),{onConflict:'training_id,player_id'}));
+          status((changes.length+staffChanges.length)+' presenças guardadas.');
+          saveFeedback.textContent='✓ '+(changes.length+staffChanges.length)+' presenças guardadas com sucesso no treino de '+date(t.training_date)+'.';
           // Refresh data in place without rebuilding the entire dashboard.
-          const fresh=await all('masters_attendance','training_id');
-          s.attendance=fresh;draft.clear();paint();
+          const [fresh, freshStaff]=await Promise.all([all('masters_attendance','training_id'),all('masters_staff_attendance','training_id')]);
+          s.attendance=fresh;s.staffAttendance=freshStaff;draft.clear();paint();
         });
         actions.append(allPresent,save);quick.append(actions);
         const saveFeedback=el('p','','masters-quick-feedback');saveFeedback.setAttribute('role','status');saveFeedback.setAttribute('aria-live','polite');quick.append(saveFeedback);
@@ -369,20 +373,25 @@
             }
             line.append(controls);list.append(line);
           }
-          const staff=s.players.filter(p=>p.active!==false&&(p.sports_role==='coach'||p.sports_role==='president')).sort((a,b)=>(a.sports_role==='coach'?0:1)-(b.sports_role==='coach'?0:1));
           if(staff.length){
             list.append(el('h4','Staff','masters-quick-group'));
             for(const p of staff){
               const line=el('div','','masters-quick-player masters-quick-staff');
               line.append(el('span',p.display_name+' · '+(p.sports_role==='coach'?'Treinador':'Presidente')));
-              line.append(el('small','Sem registo de falta ou dívida'));
-              list.append(line);
+              const controls=el('div','','masters-quick-choices');
+              const current=staffStatus(p,t);
+              for(const [value,label] of [['present','✓ Sim'],['absent','✕ Não']]){
+                const b=button(label,()=>{if(value===current)draft.delete(p.id);else draft.set(p.id,value);saveFeedback.textContent='';paint();});
+                b.className='masters-quick-choice '+((draft.get(p.id)||current)===value?(value==='present'?'is-yes':'is-no'):'');
+                b.setAttribute('aria-pressed',String((draft.get(p.id)||current)===value));controls.append(b);
+              }
+              line.append(controls);list.append(line);
             }
           }
           summary.textContent=`Jogadores: ${eligible.length} · Sim: ${yes} · Não: ${no} · Por marcar: ${missing} · Staff: ${staff.length}`;
           const index=available.findIndex(t=>t.id===dateSelect.value);
           prev.disabled=index===0;next.disabled=index===available.length-1;
-          const changed=eligible.filter(p=>draft.has(p.id)&&draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status).length;
+          const changed=eligible.filter(p=>draft.has(p.id)&&draft.get(p.id)!==MastersDomain.cell(p,t,s.attendance,s.allocations).status).length+staff.filter(p=>draft.has(p.id)&&draft.get(p.id)!==staffStatus(p,t)).length;
           save.textContent=changed ? 'Guardar '+changed+' alteração'+(changed===1?'':'ões') : 'Presenças guardadas ✓';
           save.setAttribute('aria-label',changed ? 'Guardar '+changed+' alterações de presenças' : 'Todas as presenças estão guardadas; toca para ver informação');
         }

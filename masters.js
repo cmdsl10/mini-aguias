@@ -322,14 +322,14 @@
       // Only a date is persisted, never attendance records or private player data.
       const selectedDateKey='mini-aguias-masters-selected-training-date';
       let rememberedDate=null;
-      try { rememberedDate=window.sessionStorage.getItem(selectedDateKey); } catch(e) {}
+      try { rememberedDate=window.localStorage.getItem(selectedDateKey); } catch(e) {}
       const initialTraining=available.find(t=>t.training_date===rememberedDate)||defaultTraining;
       if (initialTraining) {
         const nav = el('div','','masters-quick-nav');
         const dateSelect = select('Treino',available.map(t=>[t.id,date(t.training_date)]),initialTraining.id,nav);
         const rememberTraining=()=>{
           const selected=available.find(t=>t.id===dateSelect.value);
-          if(selected)try{window.sessionStorage.setItem(selectedDateKey,selected.training_date);}catch(e){}
+          if(selected)try{window.localStorage.setItem(selectedDateKey,selected.training_date);}catch(e){}
         };
         rememberTraining();
         const prev = button('‹ Anterior',()=>move(-1)), next=button('Seguinte ›',()=>move(1));

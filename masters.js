@@ -84,7 +84,10 @@
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell{min-height:38px;display:flex;align-items:center;justify-content:center;border-radius:5px;font-weight:800;min-width:48px}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.present{background:#d5f4dd;color:#067632}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.absent{background:#ffe0e0;color:#b81919}
-    #masters-private .masters-dashboard-main .masters-scroll .masters-cell.paid{background:#d9e9ff;color:#0758b6}
+    #masters-private .masters-dashboard-main .masters-scroll .masters-cell.paid.absent{background:#c8f2d2;color:#087336}
+    #masters-private .masters-attendance-editor-tabs{display:flex;gap:8px;margin:12px 0}
+    #masters-private .masters-attendance-editor-tabs button[aria-selected="true"]{background:#e0ac28;color:#102b4a;font-weight:800}
+    #masters-private .masters-editor-tab-panel[hidden]{display:none}
     #masters-private .masters-dashboard-main .masters-scroll .masters-cell.pending{background:#eef0f4;color:#4e5866}
     #masters-private .masters-dashboard-main .masters-scroll button.masters-cell{width:100%;border:1px solid #cbd4de;cursor:pointer}
     #masters-private .masters-quick-attendance{margin:12px 0 20px;padding:14px}
@@ -493,7 +496,7 @@
         const buttonEl=gridCells.get(training.id+':'+p.id);
         if(!buttonEl)continue;
         const c=MastersDomain.cell(p,training,s.attendance,s.allocations);
-        const label=c.status==='present'?'✓':c.status==='excused'?'J':c.status==='pending'?'◷':c.status==='absent'?(c.due&&c.paid>=100?'P':c.paid?'P*':'✕'):'—';
+        const label=c.status==='present'?'✓':c.status==='excused'?'J':c.status==='pending'?'◷':c.status==='absent'?('✕'):'—';
         buttonEl.textContent=label;
         buttonEl.className='masters-cell '+c.status+' '+(c.due&&c.paid>=100?'paid':c.paid?'partial':'');
         buttonEl.setAttribute('aria-label',p.display_name+', '+date(training.training_date)+': '+label);
@@ -519,7 +522,7 @@
       if(p.sports_role==='player' && p.attendance_eligible===true){const balance=el('small','','masters-player-balance');name.append(balance);gridBalanceNodes.set(p.id,balance);}
       for (const t of s.trainings) {
         const c = MastersDomain.cell(p, t, s.attendance, s.allocations), td = el('td');
-        const text = t.status === 'cancelled' ? '—' : p.attendance_eligible !== true ? (p.attendance_eligible === false ? '—' : '?') : c.status === 'present' ? '✓' : c.status === 'excused' ? 'J' : c.status === 'pending' ? '◷' : c.status === 'absent' ? (c.due && c.paid >= 100 ? 'P' : c.paid ? 'P*' : '✕') : '—';
+        const text = t.status === 'cancelled' ? '—' : p.attendance_eligible !== true ? (p.attendance_eligible === false ? '—' : '?') : c.status === 'present' ? '✓' : c.status === 'excused' ? 'J' : c.status === 'pending' ? '◷' : c.status === 'absent' ? ('✕') : '—';
         const cls = `masters-cell ${c.status} ${c.due && c.paid >= 100 ? 'paid' : c.paid ? 'partial' : ''}`;
         if (s.admin && p.attendance_eligible === true && t.status !== 'cancelled') {
           const b = button(text, () => attendanceEditor(p, t)); b.className = cls; b.setAttribute('aria-label', `${p.display_name}, ${date(t.training_date)}: ${text}`); gridCells.set(t.id+':'+p.id,b); td.append(b);
@@ -631,25 +634,47 @@
     const wrap = el('label', label), input = el('input'); input.type = type; input.value = value; wrap.append(input); parent.append(wrap); return input;
   }
   function attendanceEditor(p, t) {
-    const body = showEditor(`${p.display_name} · ${date(t.training_date)}`);
-    const c = MastersDomain.cell(p, t, state.attendance, state.allocations);
-    const input = select('Presença', Object.entries(labels), c.status, body);
-    body.append(button('Guardar presença', async () => {
-      checked(await db.from('masters_attendance').upsert({player_id:p.id, training_id:t.id, status:input.value})); await load();
+    const body=showEditor(`${p.display_name} · ${date(t.training_date)}`);
+    const c=MastersDomain.cell(p,t,state.attendance,state.allocations);
+    const tabs=el('div','','masters-attendance-editor-tabs');
+    const presenceTab=button('Presença',()=>selectTab('presence'));
+    const paymentTab=button('Pagamento',()=>selectTab('payment'));
+    tabs.append(presenceTab,paymentTab);body.append(tabs);
+    const presencePanel=el('section','','masters-editor-tab-panel');
+    const paymentPanel=el('section','','masters-editor-tab-panel');
+    body.append(presencePanel,paymentPanel);
+    const selectTab=kind=>{
+      presencePanel.hidden=kind!=='presence';paymentPanel.hidden=kind!=='payment';
+      presenceTab.setAttribute('aria-selected',String(kind==='presence'));
+      paymentTab.setAttribute('aria-selected',String(kind==='payment'));
+    };
+    const input=select('Presença',Object.entries(labels),c.status,presencePanel);
+    presencePanel.append(button('Guardar presença',async()=>{
+      checked(await db.from('masters_attendance').upsert({player_id:p.id,training_id:t.id,status:input.value}));
+      await load();
     }));
-    if (c.balance > 0) {
-      const paymentId = crypto.randomUUID();
-      const amount = field(`Alocar pagamento a esta falta — máximo ${money(c.balance)}`, 'number', body, (c.balance / 100).toFixed(2)); amount.min = '0.01'; amount.max = (c.balance / 100).toFixed(2); amount.step = '0.01';
-      const note = field('Nota / referência', 'text', body); note.maxLength = 500;
-      body.append(button('Registar pagamento individual', async () => {
-        if (!amount.reportValidity()) return;
-        const cents = Math.round(Number(amount.value) * 100);
-        if (!Number.isInteger(cents) || cents <= 0 || cents > c.balance) throw Error('Valor inválido.');
-        checked(await db.rpc('masters_record_payment', {payment_uuid:paymentId, target_player:p.id, cents,
-          allocations:[{training_id:t.id, amount_cents:cents}], memo:note.value})); await load();
+    if(t.status!=='closed'){
+      paymentPanel.append(el('p','O pagamento só pode ser registado depois de fechar o treino. Até lá, uma falta não gera dívida.','muted'));
+    }else if(c.status!=='absent'){
+      paymentPanel.append(el('p','Este jogador não tem uma falta neste treino. Seleciona Falta no separador Presença, guarda e volta ao pagamento.','muted'));
+    }else if(c.balance>0){
+      paymentPanel.append(el('p','Falta: 1,00 € · Já pago: '+money(c.paid)+' · Por pagar: '+money(c.balance)));
+      const paymentId=crypto.randomUUID();
+      const amount=field('Valor a pagar — máximo '+money(c.balance),'number',paymentPanel,(c.balance/100).toFixed(2));
+      amount.min='0.01';amount.max=(c.balance/100).toFixed(2);amount.step='0.01';
+      const note=field('Nota / referência','text',paymentPanel);note.maxLength=500;
+      paymentPanel.append(button('Confirmar pagamento',async()=>{
+        if(!amount.reportValidity())return;
+        const cents=Math.round(Number(amount.value)*100);
+        if(!Number.isInteger(cents)||cents<=0||cents>c.balance)throw Error('Valor inválido.');
+        checked(await db.rpc('masters_record_payment',{payment_uuid:paymentId,target_player:p.id,cents,allocations:[{training_id:t.id,amount_cents:cents}],memo:note.value}));
+        await load();
       }));
+    }else{
+      paymentPanel.append(el('p','✓ Falta paga na totalidade ('+money(c.paid)+').','muted'));
     }
-    body.append(el('p', 'Para corrigir uma falta paga, estorna primeiro o pagamento. O histórico preserva a alteração.'));
+    paymentPanel.append(el('p','O pagamento não altera a falta: a grelha mantém ✕ e muda a cor para verde quando estiver totalmente paga. Para corrigir pagamentos, usa o estorno no histórico.','muted'));
+    selectTab('presence');
   }
   function trainingEditor(t) {
     const body = showEditor(`Treino ${date(t.training_date)}`);

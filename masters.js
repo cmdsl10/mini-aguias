@@ -62,10 +62,10 @@
     #masters-private .masters-weekly-photo .masters-photo-frame{aspect-ratio:4/3}
     #masters-private .masters-email-panel{margin:0 0 20px;padding:16px;background:#fff;border:1px solid #d9e1e8;border-radius:12px}
     #masters-private .masters-email-list{display:grid;gap:9px}
-    #masters-private .masters-email-row{display:grid;grid-template-columns:minmax(120px,1fr) minmax(180px,2fr) auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e5e9ef}
-    #masters-private .masters-email-row input{width:100%;min-width:0;padding:9px}
+    #masters-private .masters-email-row{display:grid;grid-template-columns:minmax(110px,1fr) minmax(170px,2fr) auto auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #e5e9ef}
+    #masters-private .masters-email-row input{width:100%;min-width:0;padding:9px}\n    #masters-private .masters-email-row button{white-space:nowrap}
     #masters-private .masters-email-row small{grid-column:1/-1}
-    @media(max-width:650px){#masters-private .masters-email-row{grid-template-columns:1fr 1fr}#masters-private .masters-email-row label{grid-column:1/-1}}
+    @media(max-width:650px){#masters-private .masters-email-row{grid-template-columns:1fr 1fr}#masters-private .masters-email-row label,#masters-private .masters-email-row input{grid-column:1/-1}#masters-private .masters-email-row button{white-space:normal}}
     #masters-private .masters-photo-column{display:grid;gap:16px}
     #masters-private .masters-photo-card{padding:16px}
     #masters-private .masters-photo-frame{aspect-ratio:4/3;display:flex;align-items:center;justify-content:center;background:#eef2f7;border:2px dashed #a8b7ca;border-radius:9px;overflow:hidden;text-align:center;padding:12px;color:#556477}
@@ -334,12 +334,28 @@
             try{
               const result=email?await db.from('masters_player_emails').upsert({player_id:p.id,email},{onConflict:'player_id'}):await db.from('masters_player_emails').delete().eq('player_id',p.id);
               checked(result);
-              feedback.textContent=email?'Email guardado. Convite ainda não enviado.':'Email removido.';
+              feedback.textContent=email?'Email guardado. Podes enviar o convite.':'Email removido.';\n              byPlayer.set(p.id,email);invite.disabled=!email||!!p.auth_user_id;
             }catch(error){feedback.textContent='Erro: '+error.message;}
             finally{save.disabled=false;}
           });
-          const feedback=el('small','','muted');
-          row.append(label,input,save,feedback);emailList.append(row);
+          const invite=button('Enviar convite',async()=>{
+            const email=input.value.trim().toLowerCase();
+            if(!email||!input.reportValidity()){feedback.textContent='Indica um email válido e guarda-o primeiro.';return;}
+            if(email!==byPlayer.get(p.id)){feedback.textContent='Guarda primeiro o email alterado.';return;}
+            if(!window.confirm('Enviar convite de acesso aos Masters para '+p.display_name+' ('+email+')?'))return;
+            invite.disabled=true;feedback.textContent='A enviar convite…';
+            try{
+              const result=await db.functions.invoke('invite-masters-player',{body:{player_id:p.id}});
+              if(result.error)throw new Error(result.data?.error||result.error.message);
+              if(!result.data?.ok)throw new Error(result.data?.error||'Envio não confirmado.');
+              feedback.textContent=result.data.message||'Convite enviado.';
+              invite.disabled=true;
+            }catch(error){feedback.textContent='Erro: '+error.message;invite.disabled=false;}
+          });
+          invite.disabled=!!p.auth_user_id||!byPlayer.get(p.id);
+          if(p.auth_user_id)invite.textContent='Conta associada';
+          const feedback=el('small',p.auth_user_id?'Conta já associada.':'','muted');
+          row.append(label,input,save,invite,feedback);emailList.append(row);
         }
       };
       playerSection.append(emailPanel);

@@ -472,8 +472,8 @@ body.js-section-nav footer{margin-top:25px}
 const SUPA_URL='https://dchthzmnldvvwnmhhlvf.supabase.co';
 const SUPA_KEY='sb_publishable_JBr7nkBvCX_t3d3NTUtZuA_lTM4XLT4';
 const mastersInviteParams=new URLSearchParams(location.hash.slice(1));
-const mastersInviteMode=new URLSearchParams(location.search).get('activate')==='masters' || mastersInviteParams.get('type')==='invite' && location.hash.includes('masters-private');
-const db=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true,storage:window.localStorage}});
+const mastersInviteMode=new URLSearchParams(location.search).get('activate')==='masters';
+const db=supabase.createClient(SUPA_URL,SUPA_KEY,{auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:!mastersInviteMode,storage:window.localStorage}});
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const year=new Date().getFullYear();
@@ -733,10 +733,12 @@ if(mastersInviteMode){
  dialog.innerHTML='<h2>Ativar conta Masters</h2><form><label>Email<input name="email" type="email" autocomplete="email" required></label><label>Nova palavra-passe<input name="password" type="password" autocomplete="new-password" minlength="8" required></label><label>Confirmar palavra-passe<input name="confirm" type="password" autocomplete="new-password" minlength="8" required></label><button class="btn primary" type="submit">Ativar conta</button><p role="status"></p></form>';
  document.body.append(dialog);dialog.addEventListener('cancel',e=>e.preventDefault());dialog.showModal();
  const form=dialog.querySelector('form'),out=dialog.querySelector('[role=status]'),btn=form.querySelector('button');
- const initial=await db.auth.getSession();
- const verified=await db.auth.getUser();
+ const access=mastersInviteParams.get('access_token'),refresh=mastersInviteParams.get('refresh_token');
+ const initial=access&&refresh&&mastersInviteParams.get('type')==='invite'?await db.auth.setSession({access_token:access,refresh_token:refresh}):{error:new Error('Convite inválido')};
+ const verified=initial.error?{error:initial.error,data:{user:null}}:await db.auth.getUser();
  if(initial.error||verified.error||!verified.data.user||mastersInviteParams.get('type')!=='invite'){out.textContent='Convite inválido ou expirado. Contacta a direção.';btn.disabled=true;return;}
  const uid=verified.data.user.id;
+ history.replaceState(null,'',location.pathname+'?activate=masters#masters-private');
  form.onsubmit=async e=>{e.preventDefault();const f=new FormData(form);if(f.get('password')!==f.get('confirm')){out.textContent='As palavras-passe não coincidem.';return;}btn.disabled=true;try{
  const check=await db.auth.getUser();const user=check.data.user;
  if(check.error||!user||user.id!==uid||user.email?.toLowerCase()!==String(f.get('email')).trim().toLowerCase())throw Error('O email não corresponde ao convite.');

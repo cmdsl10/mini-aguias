@@ -299,7 +299,7 @@
         if (!trainings.length) { status('Ainda não existem treinos para associar fotografias.',true); return; }
         const editor = showEditor(kind==='foot'?'Alterar fotografia Pé de Chumbo':'Alterar fotografia do treino');
         const trainingSelect = select('Treino',trainings.map(t=>[t.id,date(t.training_date)]),trainings[0].id,editor);
-        editor.append(button('Continuar',()=>{q('#mastersEditor').close();trainingEditor(trainings.find(t=>t.id===trainingSelect.value));}));
+        editor.append(button('Continuar',()=>{const training=trainings.find(t=>t.id===trainingSelect.value);q('#mastersEditor').close();if(kind==='foot')footPhotoEditor(training);else trainingEditor(training);}));
       };
       foot.append(button('Alterar Pé de Chumbo',()=>chooseTraining('foot')));
       trainingPhoto.append(button('Alterar foto do treino',()=>chooseTraining('training')));
@@ -774,6 +774,39 @@
     }
     paymentPanel.append(el('p','O pagamento não altera a falta: a grelha mantém ✕ e muda a cor para verde quando estiver totalmente paga. Para corrigir pagamentos, usa o estorno no histórico.','muted'));
     selectTab('presence');
+  }
+  function footPhotoEditor(t) {
+    const body=showEditor('Atualizar apenas Pé de Chumbo · '+date(t.training_date));
+    const existing=leadFootIds(t);
+    const checks=[];
+    if(!existing.length){
+      body.append(el('p','Este treino ainda não tem jogadores selecionados como Pé de Chumbo. Seleciona pelo menos um para associar a fotografia.','muted'));
+      const chooser=el('fieldset','','masters-foot-multi');
+      chooser.append(el('legend','Jogadores Pé de Chumbo'));
+      for(const p of state.players.filter(p=>p.active!==false&&p.sports_role==='player').sort((a,b)=>a.display_name.localeCompare(b.display_name,'pt'))){
+        const label=el('label','','masters-foot-choice'),checkbox=document.createElement('input');
+        checkbox.type='checkbox';checkbox.value=p.id;
+        label.append(checkbox,document.createTextNode(' '+p.display_name));chooser.append(label);checks.push(checkbox);
+      }
+      body.append(chooser);
+    }else body.append(el('p','Jogadores associados: '+leadFootNames(t,state.players)+'. Mantêm-se inalterados.','muted'));
+    const image=field('Nova fotografia Pé de Chumbo · JPG (máximo 5 MB)','file',body);
+    image.accept='image/jpeg';image.required=true;
+    body.append(el('p','Esta operação não altera o estado do treino, presenças, faltas, pagamentos nem a fotografia do treino.','muted'));
+    body.append(button('Guardar apenas Pé de Chumbo',async()=>{
+      if(!image.reportValidity())return;
+      const ids=existing.length?existing:checks.filter(c=>c.checked).map(c=>c.value);
+      if(!ids.length)throw Error('Seleciona pelo menos um jogador Pé de Chumbo.');
+      const file=image.files[0],signature=new Uint8Array(await file.slice(0,3).arrayBuffer());
+      if(file.type!=='image/jpeg'||file.size>5242880||signature[0]!==255||signature[1]!==216||signature[2]!==255)throw Error('Escolhe um JPG válido até 5 MB.');
+      const bitmap=await createImageBitmap(file);bitmap.close();
+      const path=`${t.id}/${crypto.randomUUID()}.jpg`;
+      checked(await db.storage.from('masters-lead-foot').upload(path,file,{contentType:'image/jpeg',upsert:false}));
+      const payload={lead_foot_image_path:path};
+      if(!existing.length){payload.lead_foot_player_id=ids[0];payload.lead_foot_player_ids=ids;}
+      checked(await db.from('masters_trainings').update(payload).eq('id',t.id));
+      await load();
+    }));
   }
   function trainingEditor(t) {
     const body = showEditor(`Treino ${date(t.training_date)}`);

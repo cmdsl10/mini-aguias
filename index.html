@@ -725,29 +725,7 @@ $('#quotaReportYear').onchange=e=>renderQuotaReport(e.target.value);
 document.querySelectorAll('.quota-report-filter').forEach(b=>b.onclick=()=>{quotaReportFilter=b.dataset.filter;renderQuotaReport($('#quotaReportYear').value)});
 $('#quotaReportPrint').onclick=()=>{
  const panel=$('#quotaReportPanel'),y=$('#quotaReportYear').value,w=window.open('','_blank','width=1000,height=800');if(!w)return alert('O navegador bloqueou a janela de impressão.');
- w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Relatório de Quotas ${y} · Mini-Águias</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#172033}h1{margin:0 0 6px}p{color:#586174}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{border:1px solid #ddd;padding:12px;border-radius:8px}.stat span{display:block;font-size:12px;color:#666}.stat strong{font-size:20px}.actions,.toolbar label{display:none}@media print{body{padding:0}}</style></head><body><h1>Grupo Desportivo Mini-Águias</h1><p>Relatório de quotas · ${y}</p>${panel.querySelector('.stats').outerHTML}${panel.querySelector('.table-wrap').outerHTML}<script>
-if(mastersInviteMode){
-(async()=>{
- const dialog=document.createElement('dialog');
- dialog.style.cssText='width:min(92vw,440px);border:1px solid #ddd;border-radius:14px;padding:24px;color:#12345b';
- dialog.innerHTML='<h2>Ativar conta Masters</h2><form><label>Email<input name="email" type="email" autocomplete="email" required></label><label>Nova palavra-passe<input name="password" type="password" autocomplete="new-password" minlength="8" required></label><label>Confirmar palavra-passe<input name="confirm" type="password" autocomplete="new-password" minlength="8" required></label><button class="btn primary" type="submit">Ativar conta</button><p role="status"></p></form>';
- document.body.append(dialog);dialog.addEventListener('cancel',e=>e.preventDefault());dialog.showModal();
- const form=dialog.querySelector('form'),out=dialog.querySelector('[role=status]'),btn=form.querySelector('button');
- const access=mastersInviteParams.get('access_token'),refresh=mastersInviteParams.get('refresh_token');
- const initial=access&&refresh&&mastersInviteParams.get('type')==='invite'?await db.auth.setSession({access_token:access,refresh_token:refresh}):{error:new Error('Convite inválido')};
- const verified=initial.error?{error:initial.error,data:{user:null}}:await db.auth.getUser();
- if(initial.error||verified.error||!verified.data.user||mastersInviteParams.get('type')!=='invite'){out.textContent='Convite inválido ou expirado. Contacta a direção.';btn.disabled=true;return;}
- const uid=verified.data.user.id;
- history.replaceState(null,'',location.pathname+'?activate=masters#masters-private');
- form.onsubmit=async e=>{e.preventDefault();const f=new FormData(form);if(f.get('password')!==f.get('confirm')){out.textContent='As palavras-passe não coincidem.';return;}btn.disabled=true;try{
- const check=await db.auth.getUser();const user=check.data.user;
- if(check.error||!user||user.id!==uid||user.email?.toLowerCase()!==String(f.get('email')).trim().toLowerCase())throw Error('O email não corresponde ao convite.');
- const result=await db.auth.updateUser({password:f.get('password')});if(result.error)throw result.error;
- form.reset();dialog.close();dialog.remove();history.replaceState(null,'',location.pathname+'#masters-private');location.reload();
- }catch(err){out.textContent=err.message||'Não foi possível ativar a conta.';btn.disabled=false;}};
-})().catch(console.error);
-}
-</script></body></html>`);
+ w.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>Relatório de Quotas ${y} · Mini-Águias</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#172033}h1{margin:0 0 6px}p{color:#586174}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{padding:8px;border-bottom:1px solid #ddd;text-align:left}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.stat{border:1px solid #ddd;padding:12px;border-radius:8px}.stat span{display:block;font-size:12px;color:#666}.stat strong{font-size:20px}.actions,.toolbar label{display:none}@media print{body{padding:0}}</style></head><body><h1>Grupo Desportivo Mini-Águias</h1><p>Relatório de quotas · ${y}</p>${panel.querySelector('.stats').outerHTML}${panel.querySelector('.table-wrap').outerHTML}</body></html>`);
  w.document.close();setTimeout(()=>{w.focus();w.print()},250);
 };
 $('#quotaReportExport').onclick=()=>{
@@ -1095,4 +1073,26 @@ db.auth.onAuthStateChange(async(event,session)=>{
   window.addEventListener('hashchange',function(){ showView(targetFromHash(),true); });
 })();
 </script>
-<script src="masters-domain.js"></script><script src="masters.js"></script></body></html>
+<script src="masters-domain.js"></script><script src="masters.js"></script><script>
+if(mastersInviteMode){
+(async()=>{
+ const dialog=document.createElement('dialog');
+ dialog.style.cssText='width:min(92vw,440px);border:1px solid #ddd;border-radius:14px;padding:24px;color:#12345b';
+ dialog.innerHTML='<h2>Ativar conta Masters</h2><form><label>Email<input name="email" type="email" autocomplete="email" required></label><label>Nova palavra-passe<input name="password" type="password" autocomplete="new-password" minlength="8" required></label><label>Confirmar palavra-passe<input name="confirm" type="password" autocomplete="new-password" minlength="8" required></label><button class="btn primary" type="submit">Ativar conta</button><p role="status"></p></form>';
+ document.body.append(dialog);dialog.addEventListener('cancel',e=>e.preventDefault());dialog.showModal();
+ const form=dialog.querySelector('form'),out=dialog.querySelector('[role=status]'),btn=form.querySelector('button');
+ const access=mastersInviteParams.get('access_token'),refresh=mastersInviteParams.get('refresh_token');
+ const initial=access&&refresh&&mastersInviteParams.get('type')==='invite'?await db.auth.setSession({access_token:access,refresh_token:refresh}):{error:new Error('Convite inválido')};
+ const verified=initial.error?{error:initial.error,data:{user:null}}:await db.auth.getUser();
+ if(initial.error||verified.error||!verified.data.user||mastersInviteParams.get('type')!=='invite'){out.textContent='Convite inválido ou expirado. Contacta a direção.';btn.disabled=true;return;}
+ const uid=verified.data.user.id;
+ history.replaceState(null,'',location.pathname+'?activate=masters#masters-private');
+ form.onsubmit=async e=>{e.preventDefault();const f=new FormData(form);if(f.get('password')!==f.get('confirm')){out.textContent='As palavras-passe não coincidem.';return;}btn.disabled=true;try{
+ const check=await db.auth.getUser();const user=check.data.user;
+ if(check.error||!user||user.id!==uid||user.email?.toLowerCase()!==String(f.get('email')).trim().toLowerCase())throw Error('O email não corresponde ao convite.');
+ const result=await db.auth.updateUser({password:f.get('password')});if(result.error)throw result.error;
+ form.reset();dialog.close();dialog.remove();history.replaceState(null,'',location.pathname+'#masters-private');location.reload();
+ }catch(err){out.textContent=err.message||'Não foi possível ativar a conta.';btn.disabled=false;}};
+})().catch(console.error);
+}
+</script></body></html>
